@@ -1,0 +1,2 @@
+queue_index,build_id,metal_symbol,Atomic Number_metal,metal_ox,smiles_for_architector_used,COORDLIST,DENTATE,coreCN,n_ligs,inner_sphere_anion,geometry_key,attempts_run,best_qc_class,best_coreCN_max_dist,best_gap_after_coreCN,best_xyz_path,best_failed_xyz_path,failure_note,accepted_for_clean_3d_features,ligtype_override
+6,03b447c331ab,Eu,63,3,CCCCCCCCN(C)C(=O)C(CCOCCCCCC)C(=O)N(C)CCCCCCCC,"[11, 23]",2,9,4,nitrate,,2,,,,,,free(): corrupted unsorted chunks,False,bi_cis_chelating

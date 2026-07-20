@@ -1,0 +1,1 @@
+queue_index,build_id,metal_symbol,Atomic Number_metal,metal_ox,smiles_for_architector_used,COORDLIST,DENTATE,coreCN,n_ligs,inner_sphere_anion,geometry_key,accepted_attempt,accepted_xyz_path,accepted_mol2_path,qc_class,coreCN_max_dist,gap_after_coreCN,nearest_coreCN_sig,accepted_for_clean_3d_features,ligtype_override

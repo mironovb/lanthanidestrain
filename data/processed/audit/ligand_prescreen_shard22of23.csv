@@ -1,0 +1,2 @@
+build_id,metal_symbol,coreCN,DENTATE,n_ligs,inner_sphere_anion,fill_ligand,n_fill,rows_covered,heavy_atoms,mol_weight,n_rotatable_bonds,estimated_complex_heavy_atoms,heavy_ligand,recommended_profile_sequence,SMILES_FOR_ARCHITECTOR
+d655b942946b,La,9,7,1,nitrate,nitrate,2,1,22,302.24,1,30,0,standard,O=c1c(O)c(-c2ccc(O)c(O)c2)oc2cc(O)cc(O)c12

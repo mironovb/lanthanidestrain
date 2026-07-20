@@ -1,0 +1,130 @@
+{
+  "description": "3D feature artifacts from QC-accepted existing complex geometries",
+  "keys": {
+    "row": "safe_exp_id",
+    "scientific_geometry": "geometry_key",
+    "accepted_geometry_provenance": "geometry_feature_build_id"
+  },
+  "row_count": 5992,
+  "clean_geometry_count": 956,
+  "geometry_features_computed": 956,
+  "geometry_feature_failures": 0,
+  "feature_blocks": {
+    "complex_physical_scalars": {
+      "role": "model_feature",
+      "priority": 1,
+      "path": "data/processed/feature_blocks/complex_physical_scalars.parquet",
+      "computed_columns": [
+        "coordination_number",
+        "observed_donors_within_3p10A",
+        "complex_total_energy_eV",
+        "complex_free_energy_eV",
+        "dipole_x",
+        "dipole_y",
+        "dipole_z",
+        "dipole_magnitude",
+        "metal_partial_charge",
+        "ln_donor_distance_mean",
+        "ln_donor_distance_std",
+        "ln_donor_distance_min",
+        "ln_donor_distance_max",
+        "donor_partial_charge_mean",
+        "donor_partial_charge_std",
+        "donor_partial_charge_min",
+        "donor_partial_charge_max",
+        "donor_partial_charge_01",
+        "donor_partial_charge_02",
+        "donor_partial_charge_03",
+        "donor_partial_charge_04",
+        "donor_partial_charge_05",
+        "donor_partial_charge_06",
+        "donor_partial_charge_07",
+        "donor_partial_charge_08",
+        "donor_partial_charge_09"
+      ],
+      "uncomputed_null_columns": [
+        "binding_energy_eV",
+        "strain_energy_eV",
+        "homo_eV",
+        "lumo_eV",
+        "homo_lumo_gap_eV"
+      ],
+      "uncomputed_reason": "existing extxyz lacks free-ion/free-ligand reference energies and individual frontier orbital energies",
+      "reference_queue": "data/processed/feature_blocks/xtb_reference_calculation_queue.csv"
+    },
+    "coordination_polyhedron": {
+      "role": "model_feature",
+      "priority": 2,
+      "path": "data/processed/feature_blocks/coordination_polyhedron.parquet",
+      "donor_order": "nearest-to-metal radial rank",
+      "max_coordination_number": 9,
+      "representation": "raw distances and donor-M-donor angles; no averaging"
+    },
+    "complex_gfn2xtb_persistence_image": {
+      "role": "model_feature_image_native",
+      "priority": 3,
+      "path": "data/processed/feature_blocks/complex_gfn2xtb_pi_images.npz",
+      "shape": [
+        953,
+        1,
+        20,
+        20
+      ],
+      "per_sample_shape": [
+        1,
+        20,
+        20
+      ],
+      "readout": "CNN_or_ViT; do_not_flatten_into_tabular_MLP",
+      "filtration": "AlphaComplex (same PI400 benchmark convention)",
+      "homology_dimensions": [
+        0,
+        1
+      ],
+      "birth_range": [
+        0.0,
+        2.5
+      ],
+      "death_range": [
+        0.0,
+        2.5
+      ],
+      "spread": 0.08,
+      "included_geometries": 953
+    },
+    "vietoris_rips": {
+      "role": "simplicial_model_input",
+      "priority": 4,
+      "path": "data/processed/feature_blocks/vietoris_rips_inputs.npz",
+      "max_edge_length_angstrom": 4.0,
+      "max_simplex_dimension": 2,
+      "geometries": 956,
+      "nodes": 219583,
+      "edges": 2301232,
+      "triangles": 9310134
+    },
+    "ligand_persistence_image_control": {
+      "role": "control_only_not_model_feature",
+      "priority": 5,
+      "path": "data/processed/feature_blocks/ligand_pi_control_images.npz",
+      "shape": [
+        190,
+        1,
+        20,
+        20
+      ],
+      "source": "RDKit ETKDGv3 ligand conformer",
+      "failures": 0
+    }
+  },
+  "row_asset_index": "data/processed/feature_blocks/row_asset_index.parquet",
+  "safe_exp_id_feature_table": "data/processed/feature_blocks/features_by_safe_exp_id.parquet",
+  "status_table": "data/processed/feature_blocks/geometry_feature_status.csv",
+  "failure_table": null,
+  "scientific_guarantees": [
+    "only qc_class=OK geometries enter complex-derived blocks",
+    "complex PI is image-native and is not flattened into the tabular dataset",
+    "ligand PI is stored as a control asset and is not joined as a model feature",
+    "binding/strain/frontier-orbital values remain null until reference xTB jobs run"
+  ]
+}

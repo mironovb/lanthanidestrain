@@ -1,0 +1,9 @@
+{
+  "specs_screened": 1256,
+  "heavy_ligand_threshold_heavy_atoms": 60,
+  "heavy_ligand_specs": 80,
+  "heavy_ligand_rows_covered": 315,
+  "max_heavy_atoms": 108,
+  "max_rotatable_bonds": 69,
+  "recommended_hard_ligand_command": "python scripts/build_unique_geometries.py --hard-ligand-mode --retry-status failed_ligtype --retry-status failed_no_structures"
+}

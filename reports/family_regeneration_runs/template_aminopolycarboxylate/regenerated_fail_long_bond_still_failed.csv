@@ -1,0 +1,14 @@
+queue_index,build_id,metal_symbol,Atomic Number_metal,metal_ox,smiles_for_architector_used,COORDLIST,DENTATE,coreCN,n_ligs,inner_sphere_anion,geometry_key,attempts_run,best_qc_class,best_coreCN_max_dist,best_gap_after_coreCN,best_xyz_path,best_failed_xyz_path,failure_note,accepted_for_clean_3d_features,ligtype_override
+1,7f67dd10b8c9,Ce,58,3,O=C(O)CN(CCO)CCN(CC(=O)O)CC(=O)O,"[0, 4, 7, 10, 13, 17]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+2,1dffbb101d5b,Ce,58,3,O=C(O)CN(CC(=O)O)C1CCCCC1N(CC(=O)O)CC(=O)O,"[0, 4, 7, 15, 18, 22]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+4,c83f2b866c76,Eu,63,3,O=C(O)CN(CCO)CCN(CC(=O)O)CC(=O)O,"[0, 4, 7, 10, 13, 17]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+5,644790613fc3,Eu,63,3,O=C(O)CN(CC(=O)O)C1CCCCC1N(CC(=O)O)CC(=O)O,"[0, 4, 7, 15, 18, 22]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+6,16266565b918,Gd,64,3,O=C(O)CN(CCO)CCN(CC(=O)O)CC(=O)O,"[0, 4, 7, 10, 13, 17]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+7,a393be50ce40,Gd,64,3,O=C(O)CN(CC(=O)O)C1CCCCC1N(CC(=O)O)CC(=O)O,"[0, 4, 7, 15, 18, 22]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+8,7a5f301c3304,La,57,3,O=C(O)CN(CC(=O)O)C1CCCCC1N(CC(=O)O)CC(=O)O,"[0, 4, 7, 15, 18, 22]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+9,6a3dfa68892d,La,57,3,O=C(O)CN(CCO)CCN(CC(=O)O)CC(=O)O,"[0, 4, 7, 10, 13, 17]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+10,f89953d575cc,Nd,60,3,O=C(O)CN(CCO)CCN(CC(=O)O)CC(=O)O,"[0, 4, 7, 10, 13, 17]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+11,18ebc2904075,Nd,60,3,O=C(O)CN(CC(=O)O)C1CCCCC1N(CC(=O)O)CC(=O)O,"[0, 4, 7, 15, 18, 22]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+12,e776bfd65d62,Pr,59,3,O=C(O)CN(CC(=O)O)C1CCCCC1N(CC(=O)O)CC(=O)O,"[0, 4, 7, 15, 18, 22]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+13,08e984832865,Pr,59,3,O=C(O)CN(CCO)CCN(CC(=O)O)CC(=O)O,"[0, 4, 7, 10, 13, 17]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral
+14,06b1333ad6ba,Sm,62,3,O=C(O)CN(CC(=O)O)C1CCCCC1N(CC(=O)O)CC(=O)O,"[0, 4, 7, 15, 18, 22]",6,9,1,nitrate,,2,,,,,,no_structures_returned,False,hexa_octahedral

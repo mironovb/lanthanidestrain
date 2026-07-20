@@ -1,0 +1,20 @@
+Nearest-coreCN geometry QC summary
+
+Input merged index: /nfs/home/nshank3/lanthanide_dataset_builder/data/processed/geometry_index_merged.csv
+Rows checked: 1234
+QC class distribution:
+{
+  "BORDERLINE_AMBIGUOUS_SHELL": 127,
+  "BORDERLINE_LONGISH": 88,
+  "FAIL_LONG_BOND": 258,
+  "OK": 761
+}
+
+OK for 3D features: 761 -> /nfs/home/nshank3/lanthanide_dataset_builder/reports/geometry_ok_for_features.csv
+Regenerate FAIL_LONG_BOND: 258 -> /nfs/home/nshank3/lanthanide_dataset_builder/reports/geometry_regenerate_fail_long_bond.csv
+Borderline review: 215 -> /nfs/home/nshank3/lanthanide_dataset_builder/reports/geometry_borderline_review.csv
+
+Thresholds:
+  FAIL_LONG_BOND if coreCN_max_dist > 3.10 A
+  BORDERLINE_AMBIGUOUS_SHELL if gap_after_coreCN < 0.10 A
+  BORDERLINE_LONGISH if coreCN_max_dist > 2.95 A

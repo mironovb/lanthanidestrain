@@ -1,0 +1,12 @@
+run_group,planned,accepted,still_failed,pending,state,reports_dir
+template_pincer,66,39,27,0,complete,reports/family_regeneration_runs/template_pincer
+template_aminopolycarboxylate,14,1,13,0,complete,reports/family_regeneration_runs/template_aminopolycarboxylate
+template_amide_core,8,4,4,0,complete,reports/family_regeneration_runs/template_amide_core
+template_large_rigid,29,21,8,0,complete,reports/family_regeneration_runs/template_large_rigid
+template_flavonol,1,0,1,0,complete,reports/family_regeneration_runs/template_flavonol
+template_other,10,5,5,0,complete,reports/family_regeneration_runs/template_other
+conformer_borderline,13,5,8,0,complete,reports/family_regeneration_runs/conformer_borderline
+conformer_sibling,2,1,1,0,complete,reports/family_regeneration_runs/conformer_sibling
+conformer_deep,4,0,0,4,pending,reports/family_regeneration_runs/conformer_deep
+no_xyz_uff,4,0,0,4,pending,reports/family_regeneration_runs/no_xyz_uff
+no_xyz_ligtype,1,0,0,1,pending,reports/family_regeneration_runs/no_xyz_ligtype

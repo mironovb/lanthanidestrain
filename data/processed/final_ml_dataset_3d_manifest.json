@@ -1,0 +1,532 @@
+{
+  "description": "Optional 3D-enriched ML dataset. Baseline no-3D dataset is unchanged; this file adds clean geometry-derived feature blocks.",
+  "input_tables": {
+    "baseline_dataset": "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/data/processed/final_ml_dataset_no3d.parquet",
+    "geometry_qc_tables_used": [
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/family_regeneration_runs/adaptive_cn_fill/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/family_regeneration_runs/conformer_borderline/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/family_regeneration_runs/conformer_sibling/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/family_regeneration_runs/no_xyz_ligtype/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/family_regeneration_runs/no_xyz_uff/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/family_regeneration_runs/template_amide_core/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/family_regeneration_runs/template_aminopolycarboxylate/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/family_regeneration_runs/template_flavonol/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/family_regeneration_runs/template_large_rigid/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/family_regeneration_runs/template_other/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/family_regeneration_runs/template_pincer/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/missing_geometry_rescue/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/regenerated_fail_long_bond_accepted.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/geometry_ok_for_features.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/geometry_regenerate_fail_long_bond.csv",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/reports/geometry_borderline_review.csv"
+    ],
+    "geometry_qc_schema_fallbacks": {
+      "reports/family_regeneration_runs/adaptive_cn_fill/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path",
+        "derived geometry_key for 17 rows"
+      ],
+      "reports/family_regeneration_runs/conformer_borderline/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path"
+      ],
+      "reports/family_regeneration_runs/conformer_deep/regenerated_fail_long_bond_accepted.csv": [
+        "skipped empty CSV"
+      ],
+      "reports/family_regeneration_runs/conformer_sibling/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path"
+      ],
+      "reports/family_regeneration_runs/no_xyz_ligtype/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path"
+      ],
+      "reports/family_regeneration_runs/no_xyz_uff/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path"
+      ],
+      "reports/family_regeneration_runs/template_amide_core/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path",
+        "derived geometry_key for 4 rows"
+      ],
+      "reports/family_regeneration_runs/template_aminopolycarboxylate/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path",
+        "derived geometry_key for 1 rows"
+      ],
+      "reports/family_regeneration_runs/template_flavonol/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path"
+      ],
+      "reports/family_regeneration_runs/template_large_rigid/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path",
+        "derived geometry_key for 21 rows"
+      ],
+      "reports/family_regeneration_runs/template_other/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path",
+        "derived geometry_key for 5 rows"
+      ],
+      "reports/family_regeneration_runs/template_pincer/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path",
+        "derived geometry_key for 33 rows"
+      ],
+      "reports/missing_geometry_rescue/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path"
+      ],
+      "reports/regenerated_fail_long_bond_accepted.csv": [
+        "renamed accepted_xyz_path->xyz_path",
+        "renamed accepted_mol2_path->mol2_path",
+        "derived xyz_exists from xyz_path"
+      ],
+      "reports/geometry_ok_for_features.csv": [
+        "derived geometry_key for 761 rows"
+      ],
+      "reports/geometry_regenerate_fail_long_bond.csv": [
+        "derived geometry_key for 258 rows"
+      ],
+      "reports/geometry_borderline_review.csv": [
+        "derived geometry_key for 215 rows"
+      ]
+    },
+    "geometry_dedup_mapping": "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/data/processed/geometry_dedup_mapping.csv",
+    "external_feature_blocks": [
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/data/processed/feature_blocks/complex_physical_scalars.parquet",
+      "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/data/processed/feature_blocks/coordination_polyhedron.parquet"
+    ],
+    "generated_feature_manifest": "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/data/processed/feature_blocks/feature_blocks_manifest.json"
+  },
+  "join_keys": {
+    "geometry_level": [
+      "build_id",
+      "geometry_key"
+    ],
+    "row_level": "safe_exp_id"
+  },
+  "qc_filter": {
+    "clean_qc_classes": [
+      "OK"
+    ],
+    "requires_xyz_exists": true
+  },
+  "feature_blocks": {
+    "builtin": {
+      "name": "polyhedron_scalars",
+      "priority": 1,
+      "columns": [
+        "feat3d__polyhedron_scalars__coreCN_max_donor_dist",
+        "feat3d__polyhedron_scalars__next_donor_dist",
+        "feat3d__polyhedron_scalars__coreCN_donor_gap"
+      ],
+      "source": "nearest-coreCN QC scalars off the accepted geometry"
+    },
+    "external": [
+      {
+        "name": "complex_physical",
+        "source": "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/data/processed/feature_blocks/complex_physical_scalars.parquet",
+        "join_key": "geometry_key",
+        "gated": true,
+        "present": true,
+        "matched_rows": 4746,
+        "columns": [
+          "feat3d__complex_physical__coordination_number",
+          "feat3d__complex_physical__observed_donors_within_3p10A",
+          "feat3d__complex_physical__complex_total_energy_eV",
+          "feat3d__complex_physical__complex_free_energy_eV",
+          "feat3d__complex_physical__dipole_x",
+          "feat3d__complex_physical__dipole_y",
+          "feat3d__complex_physical__dipole_z",
+          "feat3d__complex_physical__dipole_magnitude",
+          "feat3d__complex_physical__metal_partial_charge",
+          "feat3d__complex_physical__ln_donor_distance_mean",
+          "feat3d__complex_physical__ln_donor_distance_std",
+          "feat3d__complex_physical__ln_donor_distance_min",
+          "feat3d__complex_physical__ln_donor_distance_max",
+          "feat3d__complex_physical__donor_partial_charge_mean",
+          "feat3d__complex_physical__donor_partial_charge_std",
+          "feat3d__complex_physical__donor_partial_charge_min",
+          "feat3d__complex_physical__donor_partial_charge_max",
+          "feat3d__complex_physical__binding_energy_eV",
+          "feat3d__complex_physical__strain_energy_eV",
+          "feat3d__complex_physical__homo_eV",
+          "feat3d__complex_physical__lumo_eV",
+          "feat3d__complex_physical__homo_lumo_gap_eV",
+          "feat3d__complex_physical__donor_partial_charge_01",
+          "feat3d__complex_physical__donor_partial_charge_02",
+          "feat3d__complex_physical__donor_partial_charge_03",
+          "feat3d__complex_physical__donor_partial_charge_04",
+          "feat3d__complex_physical__donor_partial_charge_05",
+          "feat3d__complex_physical__donor_partial_charge_06",
+          "feat3d__complex_physical__donor_partial_charge_07",
+          "feat3d__complex_physical__donor_partial_charge_08",
+          "feat3d__complex_physical__donor_partial_charge_09"
+        ],
+        "status": "joined"
+      },
+      {
+        "name": "polyhedron",
+        "source": "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/data/processed/feature_blocks/coordination_polyhedron.parquet",
+        "join_key": "geometry_key",
+        "gated": true,
+        "present": true,
+        "matched_rows": 4746,
+        "columns": [
+          "feat3d__polyhedron__coordination_number",
+          "feat3d__polyhedron__ln_donor_distance_01",
+          "feat3d__polyhedron__donor_atomic_number_01",
+          "feat3d__polyhedron__ln_donor_distance_02",
+          "feat3d__polyhedron__donor_atomic_number_02",
+          "feat3d__polyhedron__ln_donor_distance_03",
+          "feat3d__polyhedron__donor_atomic_number_03",
+          "feat3d__polyhedron__ln_donor_distance_04",
+          "feat3d__polyhedron__donor_atomic_number_04",
+          "feat3d__polyhedron__ln_donor_distance_05",
+          "feat3d__polyhedron__donor_atomic_number_05",
+          "feat3d__polyhedron__ln_donor_distance_06",
+          "feat3d__polyhedron__donor_atomic_number_06",
+          "feat3d__polyhedron__ln_donor_distance_07",
+          "feat3d__polyhedron__donor_atomic_number_07",
+          "feat3d__polyhedron__ln_donor_distance_08",
+          "feat3d__polyhedron__donor_atomic_number_08",
+          "feat3d__polyhedron__ln_donor_distance_09",
+          "feat3d__polyhedron__donor_atomic_number_09",
+          "feat3d__polyhedron__donor_angle_01_02_deg",
+          "feat3d__polyhedron__donor_angle_01_03_deg",
+          "feat3d__polyhedron__donor_angle_01_04_deg",
+          "feat3d__polyhedron__donor_angle_01_05_deg",
+          "feat3d__polyhedron__donor_angle_01_06_deg",
+          "feat3d__polyhedron__donor_angle_01_07_deg",
+          "feat3d__polyhedron__donor_angle_01_08_deg",
+          "feat3d__polyhedron__donor_angle_01_09_deg",
+          "feat3d__polyhedron__donor_angle_02_03_deg",
+          "feat3d__polyhedron__donor_angle_02_04_deg",
+          "feat3d__polyhedron__donor_angle_02_05_deg",
+          "feat3d__polyhedron__donor_angle_02_06_deg",
+          "feat3d__polyhedron__donor_angle_02_07_deg",
+          "feat3d__polyhedron__donor_angle_02_08_deg",
+          "feat3d__polyhedron__donor_angle_02_09_deg",
+          "feat3d__polyhedron__donor_angle_03_04_deg",
+          "feat3d__polyhedron__donor_angle_03_05_deg",
+          "feat3d__polyhedron__donor_angle_03_06_deg",
+          "feat3d__polyhedron__donor_angle_03_07_deg",
+          "feat3d__polyhedron__donor_angle_03_08_deg",
+          "feat3d__polyhedron__donor_angle_03_09_deg",
+          "feat3d__polyhedron__donor_angle_04_05_deg",
+          "feat3d__polyhedron__donor_angle_04_06_deg",
+          "feat3d__polyhedron__donor_angle_04_07_deg",
+          "feat3d__polyhedron__donor_angle_04_08_deg",
+          "feat3d__polyhedron__donor_angle_04_09_deg",
+          "feat3d__polyhedron__donor_angle_05_06_deg",
+          "feat3d__polyhedron__donor_angle_05_07_deg",
+          "feat3d__polyhedron__donor_angle_05_08_deg",
+          "feat3d__polyhedron__donor_angle_05_09_deg",
+          "feat3d__polyhedron__donor_angle_06_07_deg",
+          "feat3d__polyhedron__donor_angle_06_08_deg",
+          "feat3d__polyhedron__donor_angle_06_09_deg",
+          "feat3d__polyhedron__donor_angle_07_08_deg",
+          "feat3d__polyhedron__donor_angle_07_09_deg",
+          "feat3d__polyhedron__donor_angle_08_09_deg"
+        ],
+        "status": "joined"
+      }
+    ],
+    "structured_assets": {
+      "complex_physical_scalars": {
+        "role": "model_feature",
+        "priority": 1,
+        "path": "data/processed/feature_blocks/complex_physical_scalars.parquet",
+        "computed_columns": [
+          "coordination_number",
+          "observed_donors_within_3p10A",
+          "complex_total_energy_eV",
+          "complex_free_energy_eV",
+          "dipole_x",
+          "dipole_y",
+          "dipole_z",
+          "dipole_magnitude",
+          "metal_partial_charge",
+          "ln_donor_distance_mean",
+          "ln_donor_distance_std",
+          "ln_donor_distance_min",
+          "ln_donor_distance_max",
+          "donor_partial_charge_mean",
+          "donor_partial_charge_std",
+          "donor_partial_charge_min",
+          "donor_partial_charge_max",
+          "donor_partial_charge_01",
+          "donor_partial_charge_02",
+          "donor_partial_charge_03",
+          "donor_partial_charge_04",
+          "donor_partial_charge_05",
+          "donor_partial_charge_06",
+          "donor_partial_charge_07",
+          "donor_partial_charge_08",
+          "donor_partial_charge_09"
+        ],
+        "uncomputed_null_columns": [
+          "binding_energy_eV",
+          "strain_energy_eV",
+          "homo_eV",
+          "lumo_eV",
+          "homo_lumo_gap_eV"
+        ],
+        "uncomputed_reason": "existing extxyz lacks free-ion/free-ligand reference energies and individual frontier orbital energies",
+        "reference_queue": "data/processed/feature_blocks/xtb_reference_calculation_queue.csv"
+      },
+      "coordination_polyhedron": {
+        "role": "model_feature",
+        "priority": 2,
+        "path": "data/processed/feature_blocks/coordination_polyhedron.parquet",
+        "donor_order": "nearest-to-metal radial rank",
+        "max_coordination_number": 9,
+        "representation": "raw distances and donor-M-donor angles; no averaging"
+      },
+      "complex_gfn2xtb_persistence_image": {
+        "role": "model_feature_image_native",
+        "priority": 3,
+        "path": "data/processed/feature_blocks/complex_gfn2xtb_pi_images.npz",
+        "shape": [
+          953,
+          1,
+          20,
+          20
+        ],
+        "per_sample_shape": [
+          1,
+          20,
+          20
+        ],
+        "readout": "CNN_or_ViT; do_not_flatten_into_tabular_MLP",
+        "filtration": "AlphaComplex (same PI400 benchmark convention)",
+        "homology_dimensions": [
+          0,
+          1
+        ],
+        "birth_range": [
+          0.0,
+          2.5
+        ],
+        "death_range": [
+          0.0,
+          2.5
+        ],
+        "spread": 0.08,
+        "included_geometries": 953
+      },
+      "vietoris_rips": {
+        "role": "simplicial_model_input",
+        "priority": 4,
+        "path": "data/processed/feature_blocks/vietoris_rips_inputs.npz",
+        "max_edge_length_angstrom": 4.0,
+        "max_simplex_dimension": 2,
+        "geometries": 956,
+        "nodes": 219583,
+        "edges": 2301232,
+        "triangles": 9310134
+      },
+      "ligand_persistence_image_control": {
+        "role": "control_only_not_model_feature",
+        "priority": 5,
+        "path": "data/processed/feature_blocks/ligand_pi_control_images.npz",
+        "shape": [
+          190,
+          1,
+          20,
+          20
+        ],
+        "source": "RDKit ETKDGv3 ligand conformer",
+        "failures": 0
+      }
+    },
+    "planned_priority_order": [
+      "1: complex scalar geometry/electronic (bond lengths, angles, CN, binding/strain energy, xTB charges, HOMO/LUMO/gap, dipole)",
+      "2: explicit coordination-polyhedron distances/angles",
+      "3: complex GFN2-xTB persistence image (image-native readout)",
+      "4: simplicial / Vietoris-Rips inputs (LnSepNet)",
+      "5: ligand-only persistence image (control block only)"
+    ]
+  },
+  "feature_3d_columns": [
+    "feat3d__complex_physical__binding_energy_eV",
+    "feat3d__complex_physical__complex_free_energy_eV",
+    "feat3d__complex_physical__complex_total_energy_eV",
+    "feat3d__complex_physical__coordination_number",
+    "feat3d__complex_physical__dipole_magnitude",
+    "feat3d__complex_physical__dipole_x",
+    "feat3d__complex_physical__dipole_y",
+    "feat3d__complex_physical__dipole_z",
+    "feat3d__complex_physical__donor_partial_charge_01",
+    "feat3d__complex_physical__donor_partial_charge_02",
+    "feat3d__complex_physical__donor_partial_charge_03",
+    "feat3d__complex_physical__donor_partial_charge_04",
+    "feat3d__complex_physical__donor_partial_charge_05",
+    "feat3d__complex_physical__donor_partial_charge_06",
+    "feat3d__complex_physical__donor_partial_charge_07",
+    "feat3d__complex_physical__donor_partial_charge_08",
+    "feat3d__complex_physical__donor_partial_charge_09",
+    "feat3d__complex_physical__donor_partial_charge_max",
+    "feat3d__complex_physical__donor_partial_charge_mean",
+    "feat3d__complex_physical__donor_partial_charge_min",
+    "feat3d__complex_physical__donor_partial_charge_std",
+    "feat3d__complex_physical__homo_eV",
+    "feat3d__complex_physical__homo_lumo_gap_eV",
+    "feat3d__complex_physical__ln_donor_distance_max",
+    "feat3d__complex_physical__ln_donor_distance_mean",
+    "feat3d__complex_physical__ln_donor_distance_min",
+    "feat3d__complex_physical__ln_donor_distance_std",
+    "feat3d__complex_physical__lumo_eV",
+    "feat3d__complex_physical__metal_partial_charge",
+    "feat3d__complex_physical__observed_donors_within_3p10A",
+    "feat3d__complex_physical__strain_energy_eV",
+    "feat3d__polyhedron__coordination_number",
+    "feat3d__polyhedron__donor_angle_01_02_deg",
+    "feat3d__polyhedron__donor_angle_01_03_deg",
+    "feat3d__polyhedron__donor_angle_01_04_deg",
+    "feat3d__polyhedron__donor_angle_01_05_deg",
+    "feat3d__polyhedron__donor_angle_01_06_deg",
+    "feat3d__polyhedron__donor_angle_01_07_deg",
+    "feat3d__polyhedron__donor_angle_01_08_deg",
+    "feat3d__polyhedron__donor_angle_01_09_deg",
+    "feat3d__polyhedron__donor_angle_02_03_deg",
+    "feat3d__polyhedron__donor_angle_02_04_deg",
+    "feat3d__polyhedron__donor_angle_02_05_deg",
+    "feat3d__polyhedron__donor_angle_02_06_deg",
+    "feat3d__polyhedron__donor_angle_02_07_deg",
+    "feat3d__polyhedron__donor_angle_02_08_deg",
+    "feat3d__polyhedron__donor_angle_02_09_deg",
+    "feat3d__polyhedron__donor_angle_03_04_deg",
+    "feat3d__polyhedron__donor_angle_03_05_deg",
+    "feat3d__polyhedron__donor_angle_03_06_deg",
+    "feat3d__polyhedron__donor_angle_03_07_deg",
+    "feat3d__polyhedron__donor_angle_03_08_deg",
+    "feat3d__polyhedron__donor_angle_03_09_deg",
+    "feat3d__polyhedron__donor_angle_04_05_deg",
+    "feat3d__polyhedron__donor_angle_04_06_deg",
+    "feat3d__polyhedron__donor_angle_04_07_deg",
+    "feat3d__polyhedron__donor_angle_04_08_deg",
+    "feat3d__polyhedron__donor_angle_04_09_deg",
+    "feat3d__polyhedron__donor_angle_05_06_deg",
+    "feat3d__polyhedron__donor_angle_05_07_deg",
+    "feat3d__polyhedron__donor_angle_05_08_deg",
+    "feat3d__polyhedron__donor_angle_05_09_deg",
+    "feat3d__polyhedron__donor_angle_06_07_deg",
+    "feat3d__polyhedron__donor_angle_06_08_deg",
+    "feat3d__polyhedron__donor_angle_06_09_deg",
+    "feat3d__polyhedron__donor_angle_07_08_deg",
+    "feat3d__polyhedron__donor_angle_07_09_deg",
+    "feat3d__polyhedron__donor_angle_08_09_deg",
+    "feat3d__polyhedron__donor_atomic_number_01",
+    "feat3d__polyhedron__donor_atomic_number_02",
+    "feat3d__polyhedron__donor_atomic_number_03",
+    "feat3d__polyhedron__donor_atomic_number_04",
+    "feat3d__polyhedron__donor_atomic_number_05",
+    "feat3d__polyhedron__donor_atomic_number_06",
+    "feat3d__polyhedron__donor_atomic_number_07",
+    "feat3d__polyhedron__donor_atomic_number_08",
+    "feat3d__polyhedron__donor_atomic_number_09",
+    "feat3d__polyhedron__ln_donor_distance_01",
+    "feat3d__polyhedron__ln_donor_distance_02",
+    "feat3d__polyhedron__ln_donor_distance_03",
+    "feat3d__polyhedron__ln_donor_distance_04",
+    "feat3d__polyhedron__ln_donor_distance_05",
+    "feat3d__polyhedron__ln_donor_distance_06",
+    "feat3d__polyhedron__ln_donor_distance_07",
+    "feat3d__polyhedron__ln_donor_distance_08",
+    "feat3d__polyhedron__ln_donor_distance_09",
+    "feat3d__polyhedron_scalars__coreCN_donor_gap",
+    "feat3d__polyhedron_scalars__coreCN_max_donor_dist",
+    "feat3d__polyhedron_scalars__next_donor_dist"
+  ],
+  "status_columns": [
+    "safe_exp_id",
+    "geometry_ok",
+    "geometry_qc_class",
+    "geometry_source",
+    "geometry_feature_build_id",
+    "xyz_path",
+    "mol2_path",
+    "geometry_xtb_energy_eV",
+    "feature_block_manifest",
+    "complex_pi_image_index",
+    "vr_graph_index",
+    "ligand_pi_control_image_index"
+  ],
+  "weight_columns": [
+    "sample_weight_inv_metal_freq"
+  ],
+  "weights": {
+    "column": "sample_weight_inv_metal_freq",
+    "scheme": "inverse_metal_frequency",
+    "normalisation": "mean=1",
+    "computed_over": "full_table (recompute per-fold after frozen split)",
+    "metal_frequencies": {
+      "Eu": 1566,
+      "Nd": 635,
+      "La": 418,
+      "Dy": 409,
+      "Gd": 397,
+      "Pr": 355,
+      "Sm": 347,
+      "Er": 322,
+      "Ce": 305,
+      "Ho": 281,
+      "Tb": 259,
+      "Lu": 255,
+      "Yb": 241,
+      "Tm": 202
+    },
+    "not_implemented": {
+      "sample_weight_inv_adjacent_pair_freq": "needs matched-condition metal pairs + log_SF target (selectivity builder)"
+    }
+  },
+  "geometry_status": {
+    "clean_geometry_rows": 4746,
+    "rows_without_clean_geometry": 1246,
+    "qc_class_distribution": {
+      "OK": 4746,
+      "BORDERLINE_AMBIGUOUS_SHELL": 676,
+      "BORDERLINE_LONGISH": 335,
+      "FAIL_LONG_BOND": 189
+    },
+    "builtin_scalar_features": [
+      "feat3d__polyhedron_scalars__coreCN_max_donor_dist",
+      "feat3d__polyhedron_scalars__next_donor_dist",
+      "feat3d__polyhedron_scalars__coreCN_donor_gap"
+    ],
+    "rows_matched_by_planned_build_id": 5602,
+    "rows_matched_by_geometry_key": 344
+  },
+  "row_counts": {
+    "total_rows": 5992,
+    "clean_geometry_rows": 4746,
+    "rows_without_clean_geometry": 1246
+  },
+  "guarantees": [
+    "safe_exp_id kept as metadata/join key, excluded from is_feature_col()",
+    "weight columns excluded from is_feature_col()",
+    "rows with geometry_ok=False carry no 3D feature values (NaN)"
+  ],
+  "outputs": {
+    "final_dataset_3d_parquet": "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/data/processed/final_ml_dataset_3d.parquet",
+    "final_dataset_3d_preview_csv": "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/data/processed/final_ml_dataset_3d_preview.csv",
+    "sample_weights_csv": "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/data/processed/sample_weights_3d.csv",
+    "manifest_json": "/Users/lilshadix/PycharmProjects/lanthanide_dataset_builder/data/processed/final_ml_dataset_3d_manifest.json"
+  },
+  "unique_geometry_specs": 1256
+}

@@ -1,0 +1,2 @@
+build_id,metal_symbol,coreCN,DENTATE,n_ligs,inner_sphere_anion,fill_ligand,n_fill,rows_covered,heavy_atoms,mol_weight,n_rotatable_bonds,estimated_complex_heavy_atoms,heavy_ligand,recommended_profile_sequence,SMILES_FOR_ARCHITECTOR
+7dc84a0bd047,Tm,8,4,2,nitrate,nitrate,0,1,61,861.48,48,122,1,"standard,large_ligand_deep,large_ligand_fast",CCCCCCCCN(CCCCCCCC)C(=O)CN(CC(=O)N(CCCCCCCC)CCCCCCCC)CC(=O)N(CCCCCCCC)CCCCCCCC

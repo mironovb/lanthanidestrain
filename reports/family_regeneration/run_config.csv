@@ -1,0 +1,12 @@
+run_group,queue,rows,profile_sequence,max_attempts,timeout_per_complex,num_shards,max_concurrent_tasks,memory
+template_pincer,reports/family_regeneration/template_pincer.csv,66,standard:large_ligand_fast,2,3600,16,4,3G
+template_aminopolycarboxylate,reports/family_regeneration/template_aminopolycarboxylate.csv,14,standard:large_ligand_deep,2,3600,8,3,3G
+template_amide_core,reports/family_regeneration/template_amide_core.csv,8,standard:large_ligand_fast,2,3000,6,3,3G
+template_large_rigid,reports/family_regeneration/template_large_rigid.csv,29,large_ligand_fast:large_ligand_deep,2,5400,12,3,5G
+template_flavonol,reports/family_regeneration/template_flavonol.csv,1,large_ligand_fast:standard,2,3600,1,1,3G
+template_other,reports/family_regeneration/template_other.csv,10,standard:large_ligand_fast,2,3600,6,3,3G
+conformer_borderline,reports/family_regeneration/conformer_borderline.csv,13,large_ligand_fast:standard,2,2400,8,4,3G
+conformer_sibling,reports/family_regeneration/conformer_sibling.csv,2,standard:large_ligand_fast,2,3000,2,2,3G
+conformer_deep,reports/family_regeneration/conformer_deep.csv,4,large_ligand_deep:standard,2,5400,4,2,5G
+no_xyz_uff,reports/family_regeneration/no_xyz_uff.csv,4,uff_xtb_no_preopt:uff_unrelaxed,2,7200,4,3,5G
+no_xyz_ligtype,reports/family_regeneration/no_xyz_ligtype.csv,1,large_ligand_fast:standard,2,3600,1,1,4G

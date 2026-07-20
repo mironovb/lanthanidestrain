@@ -1,0 +1,33 @@
+Regenerated FAIL_LONG_BOND geometry summary
+
+Input file: reports/geometry_regenerate_missing_geometry_rescue.csv
+Rows in input: 23
+Rows queued for FAIL_LONG_BOND regeneration: 2
+Rows started: 2
+Rows completed: 2
+Rows incomplete: 0
+Missing shard reports: 0
+Attempts recorded: 5
+Accepted clean regenerated geometries: 1
+Still not accepted for clean 3D features: 1
+
+Nearest-coreCN QC thresholds:
+  FAIL_LONG_BOND if coreCN_max_dist > 3.10 A
+  BORDERLINE_AMBIGUOUS_SHELL if gap_after_coreCN < 0.10 A
+  BORDERLINE_LONGISH if coreCN_max_dist > 2.95 A
+
+Attempt QC class counts:
+{
+  "BORDERLINE_LONGISH": 1,
+  "BUILD_FAILED": 2,
+  "FAIL_LONG_BOND": 1,
+  "OK": 1
+}
+
+Regenerated geometry root: data/processed/geometries_regenerated_fail_long_bond
+Accepted candidates: accepted/
+Rejected candidates: rejected/
+Best non-OK candidates: best_failed/
+
+Original data/geometries files were not overwritten.
+Only qc_class == OK rows in regenerated_fail_long_bond_accepted.csv are clean feature candidates.

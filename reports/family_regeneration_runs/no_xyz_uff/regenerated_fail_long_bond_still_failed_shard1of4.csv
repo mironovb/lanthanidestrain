@@ -1,0 +1,2 @@
+queue_index,build_id,metal_symbol,Atomic Number_metal,metal_ox,smiles_for_architector_used,COORDLIST,DENTATE,coreCN,n_ligs,inner_sphere_anion,geometry_key,attempts_run,best_qc_class,best_coreCN_max_dist,best_gap_after_coreCN,best_xyz_path,best_failed_xyz_path,failure_note,accepted_for_clean_3d_features,ligtype_override
+2,cafe7bff72b2,Eu,63,3,CC(C)(C)c1ccc(NC(=O)c2cnccn2)cc1,"[10, 13, 16]",3,9,3,nitrate,63|CC(C)(C)c1ccc(NC(=O)c2cnccn2)cc1|nitrate,2,,,,,,no_structures_returned,False,

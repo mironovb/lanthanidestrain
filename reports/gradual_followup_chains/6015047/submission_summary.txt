@@ -1,0 +1,11 @@
+submitted_at=2026-07-17T16:44:56-04:00
+coordinator_job=6015047
+missing_queue=reports/gradual_followup_chains/6015047/missing12.csv
+family_plan=reports/gradual_followup_chains/6015047/family_plan
+missing_build_job=6015064
+missing_post_qc_job=6015065
+final_family_merge_job=6015087
+submitted_jobs=6015064 6015065 6015067 6015068 6015069 6015070 6015071 6015072 6015073 6015074 6015075 6015076 6015077 6015078 6015079 6015080 6015081 6015082 6015084 6015085 6015086 6015087
+deferred_pincer=7
+deferred_adaptive_failed=3
+deferred_failed_qc=10

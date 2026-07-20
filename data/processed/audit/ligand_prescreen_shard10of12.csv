@@ -1,0 +1,2 @@
+build_id,metal_symbol,coreCN,DENTATE,n_ligs,inner_sphere_anion,fill_ligand,n_fill,rows_covered,heavy_atoms,mol_weight,n_rotatable_bonds,estimated_complex_heavy_atoms,heavy_ligand,recommended_profile_sequence,SMILES_FOR_ARCHITECTOR
+9caebdec8648,Eu,9,3,3,water,water,0,1,93,1310.04,66,279,1,"standard,large_ligand_deep,large_ligand_fast",CCCCCCCCN(CCCCCCCC)C(=O)COCC(=O)NCCc1c(CC)c(CCNC(=O)COCC(=O)N(CCCCCCCC)CCCCCCCC)c(CC)c(CCNC(=O)COCC(=O)N(CCCCCCCC)CCCCCCCC)c1CC

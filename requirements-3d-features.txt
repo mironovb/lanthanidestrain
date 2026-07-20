@@ -1,0 +1,3 @@
+# Optional stage-3 topology dependency used by --compute-geometry-features.
+# The core no-3D and stage-2 geometry workflows do not require it.
+gudhi==3.13.0

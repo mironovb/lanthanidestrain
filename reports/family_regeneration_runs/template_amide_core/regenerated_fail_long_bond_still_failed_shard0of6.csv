@@ -1,0 +1,2 @@
+queue_index,build_id,metal_symbol,Atomic Number_metal,metal_ox,smiles_for_architector_used,COORDLIST,DENTATE,coreCN,n_ligs,inner_sphere_anion,geometry_key,attempts_run,best_qc_class,best_coreCN_max_dist,best_gap_after_coreCN,best_xyz_path,best_failed_xyz_path,failure_note,accepted_for_clean_3d_features,ligtype_override
+1,3b2820db6fc4,Ce,58,3,CCCCCCCCN(CCCCCCCC)C(=O)CN(CC(=O)N(CCCCCCCC)CCCCCCCC)CC(=O)N(CCCCCCCC)CCCCCCCC,"[18, 20, 23, 43]",4,9,1,nitrate,,2,,,,,,no_structures_returned,False,tetra_trigonal_pyramidal
