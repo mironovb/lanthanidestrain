@@ -1,0 +1,9 @@
+# Generated AutoML artefacts: reproducible from the code in this directory, and
+# large enough (~84 MB) that they do not belong in the repository.
+# The rendered reports and figures are small and ARE tracked -- they are the
+# deliverable.
+artifacts/
+logs/
+__pycache__/
+*.pyc
+reports/all_results.csv

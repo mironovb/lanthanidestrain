@@ -1,0 +1,9 @@
+{
+  "total_squared_error": 7789.0620163565945,
+  "from_per_extractant_offset": 1989.2445053340493,
+  "offset_share": 0.25538948093579783,
+  "from_within_extractant_scatter": 5799.817511022546,
+  "scatter_share": 0.7446105190642022,
+  "n_extractants": 187,
+  "source_oof": "oof_2_baseline_2D,_CatBoost_+_group_wts.parquet"
+}

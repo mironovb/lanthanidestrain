@@ -1,0 +1,29 @@
+stacking 40 base models over 3980 rows
+   combiner  r2_overall  r2_between  r2_within  r2_within_composition   rmse    mae  sel_spearman_mean  sel_logSF_r2  sel_sign_accuracy
+best_single      0.5163      0.7372     0.3023                 0.3092 1.1670 0.8615             0.6175        0.4275             0.7605
+       mean      0.5108      0.7049     0.3228                 0.3231 1.1736 0.8839             0.5863        0.3875             0.7534
+       nnls      0.5099      0.7106     0.3156                 0.3207 1.1746 0.8791             0.5957        0.3961             0.7575
+     uncert      0.5107      0.7058     0.3218                 0.3222 1.1737 0.8835             0.5860        0.3881             0.7530
+
+top stacking weights:
+   0.313  baseline_2d_qc|catboost|group_inv|cn9_light|k5r3s42|qcctl
+   0.182  cnfree_ligand|pairwise:lgbm|none|has3d|k5r3s42|combo
+   0.108  baseline_2d|catboost|group_inv|cn9_light|k5r3s42|qcctl
+   0.103  selectivity|anchored:lgbm|none|has3d|k5r2s42|arch:level=extractant,shape_weight=1.0
+   0.096  g5_ligand|catboost|group_inv|has3d|k5r3s42|ablation
+   0.048  baseline_2d|catboost|group_inv|has3d|k5r3s42|ablation
+   0.040  inner_sphere|catboost|group_inv|has3d|k5r3s42|ablation
+   0.022  cnfree_ligand|catboost|group_inv|has3d|k5r3s42|ablation
+   0.018  core_ligand_cnfree|pairwise:lgbm|none|has3d|k5r3s42|combo
+   0.018  denoised|catboost|group_inv|has3d|k5r3s42|ablation
+   0.016  plus_g10|anchored:lgbm|none|has3d|k5r2s42|arch:level=extractant,shape_weight=1.0
+   0.012  plus_g1|catboost|group_inv|has3d|k5r3s42|ablation
+
+uncertainty calibration (base-model spread vs realised |error|):
+             mae  spread
+quintile                
+0         0.7902  0.1367
+1         0.8099  0.1806
+2         0.8422  0.2234
+3         0.8888  0.2831
+4         1.0645  0.4097

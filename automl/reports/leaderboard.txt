@@ -1,0 +1,64 @@
+457 experiments -> /home/gridsan/bmironov/lanthanidestrain/automl/reports/automl_results.md
+            sweep         preset    model weight_scheme row_filter  n_features  r2_overall  r2_between  r2_within  r2_within_composition  sel_logSF_r2
+         singlecn        plus_g1 catboost     group_inv      has3d       771.0    0.532026    0.758396   0.317481               0.350062      0.416906
+ablation_catboost        plus_g1 catboost     group_inv      has3d       771.0    0.532026    0.758396   0.317481               0.350062      0.416906
+ablation_catboost   inner_sphere catboost     group_inv      has3d       826.0    0.525634    0.752144   0.310956               0.334528      0.375226
+         singlecn   inner_sphere catboost     group_inv      has3d       826.0    0.525634    0.752144   0.310956               0.334528      0.375226
+            qcctl baseline_2d_qc catboost     group_inv  cn9_light       752.0    0.522981    0.744092   0.308892               0.310146      0.433355
+            qcctl    baseline_2d catboost     group_inv  cn9_light       746.0    0.522163    0.753985   0.297704               0.305931      0.433968
+         singlecn    baseline_2d catboost     group_inv  cn9_light       746.0    0.522163    0.753985   0.297704               0.305931      0.433968
+         singlecn    baseline_2d catboost     group_inv      has3d       746.0    0.521442    0.743103   0.311361               0.367448      0.435806
+ablation_catboost    baseline_2d catboost     group_inv      has3d       746.0    0.521442    0.743103   0.311361               0.367448      0.435806
+         singlecn      core3d_qc catboost     group_inv      has3d       774.0    0.521402    0.763478   0.291971               0.332152      0.400241
+ablation_catboost      core3d_qc catboost     group_inv      has3d       774.0    0.521402    0.763478   0.291971               0.332152      0.400241
+         singlecn        plus_g5 catboost     group_inv      has3d       775.0    0.519450    0.756176   0.295090               0.332876      0.384642
+ablation_catboost        plus_g5 catboost     group_inv      has3d       775.0    0.519450    0.756176   0.295090               0.332876      0.384642
+           models    baseline_2d catboost     group_inv      has3d       746.0    0.517594    0.742220   0.304702               0.353089      0.408598
+ablation_catboost      plus_g15c catboost     group_inv      has3d       896.0    0.516294    0.747997   0.296694               0.328010      0.371316
+ablation_catboost  cnfree_ligand catboost     group_inv      has3d      1035.0    0.513485    0.705271   0.331717               0.323337      0.350561
+           models    baseline_2d catboost          none      has3d       746.0    0.512865    0.733394   0.303855               0.345186      0.400412
+ablation_catboost      g5_ligand catboost     group_inv      has3d       914.0    0.511922    0.707275   0.326774               0.329723      0.351385
+           models    baseline_2d catboost         combo      has3d       746.0    0.510777    0.743938   0.289795               0.334969      0.413846
+         singlecn        plus_g1 catboost     group_inv  cn9_light       771.0    0.509230    0.725356   0.299968               0.298265      0.366623
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/figures/fig1_baseline_decomposition.png
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/figures/fig2_block_ablation.png
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/figures/fig4_architectures.png
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/figures/fig8_metal_free_3d.png
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/figures/fig3_conformer_noise.png
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/figures/fig6_uncertainty_calibration.png
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/figures/fig9_split_variability.png
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/figures/fig10_split_series.png
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/figures/fig7_per_metal.png
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/figures/fig5a_parity_baseline.png
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/figures/fig5b_parity_best.png
+total squared error                  7789.1
+  per-extractant level offset        1989.2  (25.5 %)
+  within-extractant scatter          5799.8  (74.5 %)
+
+extractants contributing most error through a wrong level:
+                                      extractant_name   n   bias   mae  sd_logD  error_share_from_offset
+                                               C5BTBP 250  1.188 1.297    1.181                    0.045
+2-6-bis(dioctylphosphorylmethyl)-1-oxidopyridin-1-ium  28 -2.905 2.905    0.373                    0.030
+                                       DMDO-HPyranDGA  72 -1.366 1.455    1.105                    0.017
+                                              DHD2DGA 215 -0.707 0.785    0.796                    0.014
+                                               TWE-24   6 -4.093 4.093    0.750                    0.013
+                                               mTDDGA  45 -1.476 1.476    0.719                    0.013
+                                            DBD1MHDGA 134 -0.658 0.742    0.850                    0.007
+              N-N-dimethyl-N-N-diphenylpropanediamide  14  1.977 1.977    0.340                    0.007
+{
+  "source_oof": "oof_2_baseline_2D,_CatBoost_+_group_wts.parquet",
+  "pooled_repeated_cv_r2": 0.527583999588125,
+  "test_fraction_of_extractants": 0.2,
+  "n_draws": 2000,
+  "percentiles": {
+    "5": 0.2802814230932703,
+    "10": 0.32087290641176347,
+    "25": 0.3947516967793633,
+    "50": 0.5108823562282365,
+    "75": 0.6028182362026429,
+    "90": 0.6648020528322927,
+    "95": 0.6942043297612281
+  },
+  "spread_5_to_95": 0.41392290666795784
+}
+wrote /home/gridsan/bmironov/lanthanidestrain/automl/reports/tables.md (76 lines)
