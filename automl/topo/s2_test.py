@@ -181,9 +181,16 @@ def main() -> int:
         rows.append({"kind": "secondary", "arm": "S2", "base": base_name,
                      **r2, "verdict": v})
 
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(rows).to_csv(OUT, index=False)
-    print(f"\n[s2] wrote {OUT}")
+    # A partial run writes to a different path.  s2_test.csv is read by
+    # figures_topo to draw the S2 bar and its headline, so a progress check
+    # landing there would render a 4-seed ensemble as though it were the
+    # 32-seed result -- which nearly happened.
+    dest = OUT if not missing else OUT.with_name("s2_test_PARTIAL.csv")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_csv(dest, index=False)
+    print(f"\n[s2] wrote {dest.name}"
+          + ("  (PARTIAL -- not the registered arm, not read by the figures)"
+             if missing else ""))
     return 0
 
 
