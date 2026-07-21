@@ -348,9 +348,214 @@ def fig_adjacent_parity() -> None:
     _save(fig, "topo_adjacent_parity")
 
 
+def fig_control_factorial() -> None:
+    """The attribution: how much of the gain is topology and how much is the objective.
+
+    An interaction plot is the right form and a bar chart is not.  The question
+    is whether the *effect of topology* differs between the two objectives --
+    that is a comparison of slopes, and slopes are what a reader can see
+    directly here.  Grouped bars would show the same four numbers while making
+    the one relationship that matters something you have to compute by eye.
+
+    Colour follows the roles fixed across every figure in this set (orange =
+    the no-topology reference, violet = PI-CNN, blue = SNN) and marker shape
+    repeats the distinction, so identity never rests on colour alone.
+    """
+    cells = _read("control_cells.csv")
+    tests = _read("control_factorial.csv")
+    if cells is None or tests is None:
+        print("skip control factorial: run automl.topo.control_factorial first")
+        return
+    val = dict(zip(cells["cell"], cells["adj_r2"]))
+    # Which of T0/T0w is *the* control was decided once, in
+    # control_factorial.py, under the pre-registered max rule.  Read it back
+    # rather than re-deriving it here -- a rule applied in two places is how
+    # the parity figure came to contradict the headline.
+    if "is_control" in cells.columns:
+        sel = cells[cells["is_control"].astype(bool)]
+        if len(sel):
+            val["T0"] = float(sel["adj_r2"].iloc[0])
+    need = ("T1", "T0", "P1", "P0", "S1", "S0")
+    if any(k not in val for k in need):
+        print(f"skip control factorial: missing cells "
+              f"{[k for k in need if k not in val]}")
+        return
+
+    series = [("no topology (tabular)", "T1", "T0", FCNN, "s"),
+              ("PI-CNN", "P1", "P0", CAT, "^"),
+              ("SNN", "S1", "S0", TOPO, "o")]
+    _style()
+    fig, (ax, ax2) = plt.subplots(
+        1, 2, figsize=(9.6, 4.0), gridspec_kw={"width_ratios": [1.15, 1.0]})
+
+    x = [0, 1]
+    for lbl, a, b, col, mk in series:
+        ax.plot(x, [val[a], val[b]], color=col, lw=2, marker=mk, ms=9,
+                mec="#fcfcfb", mew=1.8, zorder=3, label=lbl)
+        ax.annotate(f"{val[b]:+.3f}", (1, val[b]), xytext=(9, 0),
+                    textcoords="offset points", va="center", fontsize=8.5,
+                    color=col)
+    # The two published reference points, so the decomposition is read against
+    # what was claimed rather than in isolation.
+    for yv, name in ((0.00477, "FCNN"), (0.14217, "CatBoost")):
+        ax.axhline(yv, color=GRID, lw=1.1, ls="--", zorder=1)
+        ax.annotate(name, (1.34, yv), fontsize=8, color=INK2, va="center")
+    ax.set_xticks(x)
+    ax.set_xticklabels(["plain MSE\nobjective", "pairwise-contrast\nobjective"],
+                       fontsize=9)
+    ax.set_xlim(-0.18, 1.5)
+    ax.set_ylabel("adjacent-pair log SF R²  (16-seed ensemble)")
+    # Titles are computed from the numbers, never written ahead of them.  Two
+    # figures in this study previously carried a claim the data did not support
+    # (a parity plot that inverted the comparison, a seed plot that said "above
+    # every seed" when one seed beat the ensemble), and both survived because
+    # the title was prose rather than a function of the values it sat above.
+    obj_share = (val["T0"] - val["T1"]) / max(val["S0"] - val["T1"], 1e-9)
+    ax.set_title(f"The objective accounts for {obj_share:.0%} of the gain "
+                 f"over plain-objective tabular", loc="left", pad=10,
+                 fontsize=10.5)
+    ax.legend(loc="upper left", fontsize=8.5)
+    ax.grid(axis="x", visible=False)
+
+    # Right panel: the pre-registered contrasts, as effect sizes with intervals.
+    want = [("S0", "T0", "topology on top\nof the objective (SNN)", TOPO),
+            ("P0", "T0", "same, PI-CNN", CAT),
+            ("P1", "T1", "topology with NO\ncontrast objective", CAT),
+            ("S1", "T1", "same, SNN", TOPO),
+            ("T0", "T1", "the objective,\nwithout topology", FCNN)]
+    rows = []
+    for arm, base, lbl, col in want:
+        m = tests[(tests["arm"] == arm) & (tests["base"].isin([base, "T0w"]))]
+        if len(m):
+            r = m.iloc[0]
+            rows.append((lbl, float(r["delta"]), float(r["lo"]),
+                         float(r["hi"]), col))
+    if rows:
+        ys = np.arange(len(rows))[::-1]
+        for yi, (_, d, lo, hi, col) in zip(ys, rows):
+            ax2.plot([lo, hi], [yi, yi], color=col, lw=2,
+                     solid_capstyle="round", zorder=2)
+            ax2.plot([d], [yi], "o", ms=8, color=col, mec="#fcfcfb", mew=2,
+                     zorder=3)
+            ax2.annotate(f"{d:+.3f}", (hi, yi), xytext=(6, 0),
+                         textcoords="offset points", va="center", fontsize=8.5,
+                         color=INK2)
+        ax2.axvline(0, color=INK, lw=1.4, zorder=1)
+        ax2.set_yticks(ys)
+        ax2.set_yticklabels([r[0] for r in rows], fontsize=8.5)
+        ax2.set_xlabel("Δ adjacent-pair R² (90 % interval)")
+        # Same rule: the verdict is counted, not asserted.
+        clear = sum(1 for _, d, lo, hi, _c in rows if lo > 0)
+        below = sum(1 for _, d, lo, hi, _c in rows if hi < 0)
+        ax2.set_title(f"{clear} of {len(rows)} intervals exclude zero above it"
+                      + (f", {below} below" if below else ""),
+                      loc="left", pad=10, fontsize=10.5)
+        ax2.grid(axis="y", visible=False)
+
+    fig.text(0.0, -0.06,
+             "4,746 rows · 162 extractants · 16 matched seeds per cell · "
+             "leave-extractants-out CV · paired cluster bootstrap over "
+             "extractants · pre-registered in CONTROL_PREREGISTRATION.md",
+             fontsize=7.5, color=INK2)
+    _save(fig, "topo_control_factorial")
+
+
+def fig_control_decomposition() -> None:
+    """Where the published headline actually came from, as a waterfall.
+
+    The study reports +0.2426 for the SNN ensemble over the FCNN.  That number
+    is correct, but it is a sum of three unrelated things, and a reader cannot
+    see which is which from the forest plot.  A waterfall is the only common
+    chart form that shows *additive attribution* directly -- each bar is a term,
+    the running total is the height, and the question "how much of this is
+    topology" is answered by the width of one bar rather than by arithmetic.
+
+    Every value is read from control_cells.csv so this cannot drift from the
+    table it illustrates.
+    """
+    cells = _read("control_cells.csv")
+    if cells is None:
+        print("skip decomposition: run automl.topo.control_factorial first")
+        return
+    val = dict(zip(cells["cell"], cells["adj_r2"]))
+    if "is_control" in cells.columns:
+        sel = cells[cells["is_control"].astype(bool)]
+        if len(sel):
+            val["T0"] = float(sel["adj_r2"].iloc[0])
+    need = ("mlp", "T1", "T0", "S0")
+    if any(k not in val for k in need):
+        print(f"skip decomposition: missing {[k for k in need if k not in val]}")
+        return
+
+    # Bars come from control_attribution.csv, not from a ladder recomputed here.
+    # A waterfall implies an order, and whichever factor is credited last gets
+    # only the leftover -- so the terms are the order-free Shapley values, which
+    # still sum to the total exactly.  Reading them from the table is also what
+    # keeps the bar heights and the title from disagreeing: a figure that
+    # recomputed its own values once inverted a result in this study.
+    attr = _read("control_attribution.csv")
+    if attr is None:
+        print("skip decomposition: control_attribution.csv missing")
+        return
+    term = {r["term"]: r for _, r in attr.iterrows()}
+    steps = [
+        ("FCNN baseline\n(as published)", val["mlp"], INK2),
+        # Named for everything it contains.  The published FCNN is one sklearn
+        # model at default settings; T1 is the same feature set in this harness
+        # AND a 16-seed ensemble.  Ensembling is held constant across the rest
+        # of the factorial, so it only enters here -- but it is part of this
+        # term and the label has to say so.
+        ("same features,\nthis harness,\n16-seed ensemble",
+         float(term["harness"]["value"]), FCNN),
+        ("pairwise-contrast\nobjective", float(term["objective"]["value"]), CAT),
+        ("3D topology\n(simplicial network)", float(term["topology"]["value"]), TOPO),
+    ]
+    _style()
+    fig, ax = plt.subplots(figsize=(7.6, 4.0))
+    run = 0.0
+    for i, (lbl, d, col) in enumerate(steps):
+        bottom = 0.0 if i == 0 else run
+        ax.bar(i, d, bottom=bottom, width=0.62, color=col, zorder=3,
+               edgecolor="#fcfcfb", linewidth=1.2)
+        run = bottom + d
+        ax.annotate(f"{d:+.3f}" if i else f"{d:.3f}",
+                    (i, bottom + d / 2), ha="center", va="center",
+                    fontsize=9, color="#fcfcfb", fontweight="bold")
+        if i:
+            ax.plot([i - 0.69, i - 0.31], [bottom, bottom], color=GRID, lw=1.1,
+                    ls=(0, (3, 3)), zorder=2)
+    ax.bar(len(steps), run, width=0.62, color=INK, zorder=3,
+           edgecolor="#fcfcfb", linewidth=1.2)
+    ax.annotate(f"{run:.3f}", (len(steps), run / 2), ha="center", va="center",
+                fontsize=9, color="#fcfcfb", fontweight="bold")
+    ax.axhline(0.14217, color=GRID, lw=1.1, ls="--", zorder=1)
+    ax.annotate("CatBoost (published)", (len(steps) + 0.42, 0.14217),
+                fontsize=8, color=INK2, va="center", ha="right")
+    ax.set_xticks(range(len(steps) + 1))
+    ax.set_xticklabels([s[0] for s in steps] + ["SNN ensemble\n(as published)"],
+                       fontsize=8.5)
+    ax.set_ylabel("adjacent-pair log SF R²")
+    total = val["S0"] - val["mlp"]
+    tp = term["topology"]
+    ax.set_title(f"Topology accounts for {float(tp['share']):.0%} of the "
+                 f"published +{total:.3f}", loc="left", pad=10, fontsize=11)
+    order_note = (f" Bars are Shapley values, so they do not depend on the "
+                  f"order shown; crediting topology first rather than last "
+                  f"moves it between {float(tp['lo_order']):+.3f} and "
+                  f"{float(tp['hi_order']):+.3f}.")
+    ax.grid(axis="x", visible=False)
+    fig.text(0.0, -0.11,
+             "Same 4,746 rows, same leave-extractants-out folds, 16 matched "
+             "seeds per step. Steps sum to the total by construction; each "
+             "increment's interval is in topo_control_factorial." + order_note,
+             fontsize=7.5, color=INK2, wrap=True)
+    _save(fig, "topo_control_decomposition")
+
+
 FIGS = {"forest": fig_forest, "blend": fig_blend_curve, "tradeoff": fig_tradeoff,
         "seeds": fig_seed_spread, "stage2": fig_stage2,
-        "parity": fig_adjacent_parity}
+        "parity": fig_adjacent_parity, "control": fig_control_factorial,
+        "decomposition": fig_control_decomposition}
 
 
 def main() -> int:

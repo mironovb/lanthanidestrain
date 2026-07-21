@@ -135,6 +135,12 @@ SUBSETS = {
     "tradeoff scatter (3 hues + shape)": [C["blue"], C["orange"], C["violet"]],
     "seed spread (2 architectures)": [C["blue"], C["violet"]],
     "parity (model vs baseline)": [C["blue"], C["orange"]],
+    # Control factorial: three series (no-topology / PI-CNN / SNN) shown as
+    # crossing lines, so every pair is adjacent on the panel and all_pairs is
+    # the right check.  Marker shape repeats the distinction (square / triangle
+    # / circle) because two of these lines converge at the right-hand tick,
+    # where colour alone would be doing all the work.
+    "control factorial (3 series + shape)": [C["blue"], C["orange"], C["violet"]],
 }
 
 
