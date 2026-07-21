@@ -141,7 +141,8 @@ class SimplicialNet(nn.Module):
     def __init__(self, dim: int = 96, layers: int = 3, dropout: float = 0.1,
                  tabular_dim: int = 0, head_hidden: int = 256,
                  n_z: int = 32, node_feat_dim: int = 5,
-                 radial_bins: int = 32, radial_max: float = 8.0):
+                 radial_bins: int = 32, radial_max: float = 8.0,
+                 head_embed_mult: int = 1):
         super().__init__()
         self.dim = dim
         self.z_emb = nn.Embedding(n_z, dim)
@@ -177,7 +178,13 @@ class SimplicialNet(nn.Module):
         # edge mean (1) + radial shell (1) = 9 blocks of `dim`
         self.embed_dim = 9 * dim
         self.tabular_dim = tabular_dim
-        head_in = self.embed_dim + tabular_dim
+        # ``head_embed_mult`` widens only the *head*, not ``encode``.  The
+        # block-centred arm concatenates each embedding with its deviation from
+        # the composition-block mean, which happens in the training loop where
+        # block membership is known; the encoder itself is unchanged, so a model
+        # built with mult=1 stays byte-compatible with every existing run.
+        self.head_embed_mult = int(head_embed_mult)
+        head_in = self.head_embed_mult * self.embed_dim + tabular_dim
         self.head = nn.Sequential(
             nn.LayerNorm(head_in),
             nn.Linear(head_in, head_hidden), nn.SiLU(), nn.Dropout(dropout),

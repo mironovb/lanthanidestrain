@@ -35,7 +35,8 @@ import torch.nn as nn
 from automl import evaluation as ev
 from automl.matrix_cache import load_cache
 from automl.dataset import BLOCK_PRESETS, GROUP_COL, TARGET
-from automl.topo.simplicial_data import SimplicialComplexes, collate
+from automl.topo.simplicial_data import (ConformerComplexes,
+                                         SimplicialComplexes, collate)
 from automl.topo.snn import SimplicialNet, MaskedChargeHead, count_parameters
 from automl.topo.pi_cnn import PersistenceImages, PersistenceCNN
 from automl.topo.tabular_net import TabularNet, NullCache
@@ -108,16 +109,26 @@ class ComplexCache:
                  device):
         self.S, self.device = S, device
         self.filtration_max, self.heavy_only = filtration_max, heavy_only
-        self._c: dict[int, Any] = {}
+        self._c: dict[Any, Any] = {}
 
-    def get(self, k: int):
-        if k not in self._c:
-            self._c[k] = self.S.get(k, filtration_max=self.filtration_max,
-                                    heavy_only=self.heavy_only)
-        return self._c[k]
+    def get(self, k: int, conformer: int = 0):
+        key = (k, conformer)
+        if key not in self._c:
+            if conformer and hasattr(self.S, "n_conformers"):
+                self._c[key] = self.S.get(k, conformer=conformer,
+                                          filtration_max=self.filtration_max,
+                                          heavy_only=self.heavy_only)
+            else:
+                self._c[key] = self.S.get(k, filtration_max=self.filtration_max,
+                                          heavy_only=self.heavy_only)
+        return self._c[key]
 
-    def batch(self, ids: list[int]):
-        b = collate([self.get(i) for i in ids])
+    def n_conformers(self, k: int) -> int:
+        return self.S.n_conformers(k) if hasattr(self.S, "n_conformers") else 1
+
+    def batch(self, ids: list[int], conformers: list[int] | None = None):
+        cs = conformers if conformers is not None else [0] * len(ids)
+        b = collate([self.get(i, c) for i, c in zip(ids, cs)])
         return {k: (v.to(self.device) if torch.is_tensor(v) else v)
                 for k, v in b.items()}
 
@@ -145,7 +156,11 @@ def pretrain(model: SimplicialNet, cache: ComplexCache, complex_ids: list[int],
         tot, nb = 0.0, 0
         for s in range(0, len(order), batch_size):
             ids = [int(i) for i in order[s:s + batch_size]]
-            b = cache.batch(ids)
+            # Pretraining benefits most from the conformers: its targets are
+            # free and defined on every structure, so the extra geometries are
+            # ~2,800 training examples rather than ~950, with no log D involved.
+            confs = [int(rng.integers(0, cache.n_conformers(i))) for i in ids]
+            b = cache.batch(ids, confs)
             q_true = b["node_feat"][:, 0].clone()
             f_true = b["edge_filt"].squeeze(-1).clone()
             # Never score reconstruction on an imputed charge: the target is a
@@ -212,7 +227,9 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
     else:
         model = SimplicialNet(dim=cfg["dim"], layers=cfg["layers"],
                               dropout=cfg["dropout"], tabular_dim=X.shape[1],
-                              head_hidden=cfg["head_hidden"]).to(device)
+                              head_hidden=cfg["head_hidden"],
+                              head_embed_mult=2 if cfg.get("block_centre") else 1
+                              ).to(device)
     if pretrained_state is not None:
         # Encoder weights only.  Pretraining has no tabular block, so its head
         # is sized for embed_dim alone (768) while the fold model's head takes
@@ -254,22 +271,89 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
             by_block.setdefault(comp_all[r], []).append(int(r))
         fit_blocks = [np.array(v) for v in by_block.values() if len(v) >= 2]
 
+    # --- conformer ensembling and block-centred embeddings -------------------
+    n_conf = int(cfg.get("n_conformers", 1))
+    block_centre = bool(cfg.get("block_centre", False))
+
+    def _encode(ids: list[int], conformers: list[int] | None = None):
+        """Complex embeddings, averaged over conformers when asked.
+
+        At inference every available conformer is encoded and mean-pooled: the
+        re-optimised geometries differ from the shipped one by ~0.3 A in mean
+        M-L distance while the adjacent-lanthanide signal is ~0.013 A, so a
+        single conformer is a high-variance estimate of the quantity the model
+        needs.  Averaging is the cheapest available variance reduction and it is
+        what makes the extra structures worth having.
+        """
+        if conformers is not None:
+            return model.encode(cache.batch(ids, conformers))
+        if n_conf <= 1:
+            return model.encode(cache.batch(ids))
+        acc, cnt = None, 0
+        for c in range(n_conf):
+            # Complexes with fewer conformers wrap back to the shipped geometry
+            # rather than being skipped, so every complex keeps equal weight.
+            e = model.encode(cache.batch(ids, [c] * len(ids)))
+            acc = e if acc is None else acc + e
+            cnt += 1
+        return acc / max(cnt, 1)
+
+    def _centre(emb_rows: torch.Tensor, blocks: np.ndarray) -> torch.Tensor:
+        """Concatenate each row's embedding with its deviation from its block.
+
+        The metric scores *differences* between two lanthanides sharing an
+        extractant and conditions, so the ligand and much of the conformer noise
+        is common-mode within a composition block and cancels in the deviation.
+        Concatenated rather than substituted because 347 of 552 blocks hold a
+        single metal, where the deviation is identically zero -- replacing would
+        throw their absolute embedding away.
+
+        Legal under the split: composition keys nest strictly inside extractants
+        (552 blocks, none spanning two), so a block never straddles a fold and
+        the mean is always taken over rows from the same fold.
+        """
+        if not block_centre:
+            return emb_rows
+        codes, _ = pd.factorize(blocks)
+        idx = torch.as_tensor(codes, device=emb_rows.device, dtype=torch.long)
+        n = int(codes.max()) + 1 if len(codes) else 0
+        sums = torch.zeros((n, emb_rows.shape[1]), device=emb_rows.device,
+                           dtype=emb_rows.dtype).index_add_(0, idx, emb_rows)
+        counts = torch.zeros(n, device=emb_rows.device, dtype=emb_rows.dtype
+                             ).index_add_(0, idx, torch.ones_like(idx,
+                                                                 dtype=emb_rows.dtype))
+        means = sums / counts.clamp(min=1.0).unsqueeze(-1)
+        return torch.cat([emb_rows, emb_rows - means[idx]], dim=-1)
+
     def _predict(idx, Xs):
         model.eval()
-        outs = []
+        outs = np.empty(len(idx), dtype=np.float64)
+        # Batch by composition block, not by fixed-size slices.  With
+        # --block-centre the block mean must be taken over the same rows at test
+        # time as in training; a slice boundary cutting through a block would
+        # make the feature depend on batching, which is not a property of the
+        # data.  Grouping also keeps predictions reproducible run to run.
+        order = pd.Series(comp_all[idx]).groupby(
+            comp_all[idx], sort=False).groups
         with torch.no_grad():
-            for s in range(0, len(idx), cfg["eval_batch"]):
-                sl = slice(s, s + cfg["eval_batch"])
-                ids = sorted(set(cplx[idx[sl]].tolist()))
-                remap = {c: i for i, c in enumerate(ids)}
-                b = cache.batch(ids)
-                emb = model.encode(b)
-                gather = torch.as_tensor([remap[c] for c in cplx[idx[sl]]],
-                                         device=device)
-                tab = torch.as_tensor(Xs[sl], device=device)
-                outs.append(model.head(torch.cat([emb[gather], tab], -1))
-                            .squeeze(-1).cpu().numpy())
-        return np.concatenate(outs) * ysd + ymu
+            for _key, positions in order.items():
+                pos = np.asarray(positions, dtype=int)
+                for s in range(0, len(pos), max(cfg["eval_batch"], 1)):
+                    take = pos[s:s + max(cfg["eval_batch"], 1)] if not block_centre \
+                        else pos                       # whole block when centring
+                    rows = idx[take]
+                    ids = sorted(set(cplx[rows].tolist()))
+                    remap = {c: i for i, c in enumerate(ids)}
+                    emb = _encode(ids)
+                    gather = torch.as_tensor([remap[c] for c in cplx[rows]],
+                                             device=device)
+                    e = _centre(emb[gather], comp_all[rows])
+                    tab = torch.as_tensor(Xs[take], device=device)
+                    outs[take] = (model.head(torch.cat([e, tab], -1))
+                                  .squeeze(-1).cpu().numpy())
+                    if block_centre:
+                        break
+        return outs * ysd + ymu
 
     # Row index -> position in the standardised training matrix.
     fit_pos = {int(r): i for i, r in enumerate(fit_idx)}
@@ -296,12 +380,22 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
         for rows in _batches(rng):
             ids = sorted(set(cplx[rows].tolist()))
             remap = {c: i for i, c in enumerate(ids)}
-            b = cache.batch(ids)
+            # One conformer per complex per epoch, drawn from the epoch RNG.
+            # This is data augmentation, not an ensemble: the model sees a
+            # different geometry of the same complex each pass, which is what
+            # turns 956 structures into ~2,800 and attacks the variance that
+            # makes this the noisiest arm in the factorial.  The draw depends
+            # only on the complex id and the epoch RNG -- never on the target or
+            # on which fold a row belongs to.
+            confs = ([int(rng.integers(0, cache.n_conformers(i))) for i in ids]
+                     if n_conf > 1 else None)
+            b = cache.batch(ids, confs)
             emb = model.encode(b)                      # encode each complex once
             gather = torch.as_tensor([remap[c] for c in cplx[rows]], device=device)
             xpos = np.array([fit_pos[int(r)] for r in rows])
             tab = torch.as_tensor(Xtr[xpos], device=device)
-            pred = model.head(torch.cat([emb[gather], tab], -1)).squeeze(-1)
+            e = _centre(emb[gather], comp_all[rows])
+            pred = model.head(torch.cat([e, tab], -1)).squeeze(-1)
             tgt = torch.as_tensor((y[rows] - ymu) / ysd, device=device)
             loss = nn.functional.huber_loss(pred, tgt, delta=1.0)
 
@@ -392,6 +486,14 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--select-on", choices=("mse", "adjacent"), default="mse",
                     help="inner-validation criterion for early stopping")
+    ap.add_argument("--conformers", type=int, default=1,
+                    help="number of geometries per complex to use; >1 samples "
+                         "one at random per epoch and mean-pools all of them at "
+                         "inference (requires automl/artifacts/vr_conformers)")
+    ap.add_argument("--block-centre", action="store_true",
+                    help="concatenate each embedding with its deviation from "
+                         "the composition-block mean, cancelling common-mode "
+                         "ligand and conformer noise")
     ap.add_argument("--pair-loss-weight", type=float, default=0.0,
                     help="weight on the within-composition pairwise-difference "
                          "loss; 0 reproduces the plain regression objective")
@@ -433,15 +535,25 @@ def main() -> int:
         cache = ImageCache(P, device)
         n_assets = len(P)
     else:
-        S = SimplicialComplexes(verbose=False)
+        # ConformerComplexes is a superset wrapper: conformer 0 is the shipped
+        # geometry and index_of/__len__ match SimplicialComplexes exactly, so
+        # the row set is identical whichever is loaded.
+        S = (ConformerComplexes(verbose=False) if args.conformers > 1
+             else SimplicialComplexes(verbose=False))
         cache = ComplexCache(S, args.filtration_max, args.heavy_only, device)
         n_assets = len(S)
+        if args.conformers > 1:
+            tot = sum(S.n_conformers(k) for k in range(len(S)))
+            print(f"[topo] conformers: {tot} structures over {len(S)} complexes "
+                  f"({tot/max(len(S),1):.2f} per complex)", flush=True)
     cfg = {k: getattr(args, k) for k in
            ("dim", "layers", "dropout", "head_hidden", "lr", "weight_decay",
             "epochs", "batch_rows", "eval_batch", "val_every", "patience")}
     cfg["arch"] = args.arch
     cfg["pair_loss_weight"] = args.pair_loss_weight
     cfg["select_on"] = args.select_on
+    cfg["n_conformers"] = args.conformers
+    cfg["block_centre"] = args.block_centre
 
     if args.smoke:
         # Capacity check, not a generalisation check: regularisation OFF.

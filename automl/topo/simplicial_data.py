@@ -158,10 +158,16 @@ class Complex:
 class SimplicialComplexes:
     """Random access to the 956 complexes, with optional sparsification."""
 
-    def __init__(self, vr_path: Path = VR_PATH, verbose: bool = True):
+    def __init__(self, vr_path: Path = VR_PATH, verbose: bool = True,
+                 cache: Path | None = None):
         self.z = np.load(vr_path)
         self.build_ids = [str(b) for b in self.z["build_ids"]]
-        self.triangle_edges = load_triangle_edges(self.z, verbose=verbose)
+        # The boundary-map cache is keyed only by triangle count, so a second
+        # asset loaded through this class would overwrite the shipped map -- and
+        # if two assets ever happened to share a triangle count, it would return
+        # the wrong one silently.  Conformer assets therefore pass their own path.
+        self.triangle_edges = load_triangle_edges(
+            self.z, cache=cache or CACHE_PATH, verbose=verbose)
         self.node_ptr = self.z["node_ptr"]
         self.edge_ptr = self.z["edge_ptr"]
         self.tri_ptr = self.z["triangle_ptr"]
@@ -345,6 +351,83 @@ def selftest(verbose: bool = True) -> int:
     print()
     print("SELFTEST PASSED" if fails == 0 else f"SELFTEST FAILED ({fails})")
     return 1 if fails else 0
+
+
+# ---------------------------------------------------------------------------
+CONFORMER_ROOT = _REPO_ROOT / "automl/artifacts/vr_conformers"
+
+
+class ConformerComplexes:
+    """The shipped complexes plus their re-optimised conformers.
+
+    Why this is a wrapper and not a change to ``SimplicialComplexes``: every run
+    in the control factorial and everything published before it loads that class
+    directly, and those runs have to stay reproducible bit for bit.  Nothing here
+    modifies it.
+
+    Conformer 0 is always the shipped geometry, so ``index_of`` and ``__len__``
+    return exactly what ``SimplicialComplexes`` would.  That matters because
+    ``build_row_table`` keys the row set off ``index_of``: if it changed, the
+    conformer arm would be scored on a different set of rows than the arm it is
+    being compared against, and the paired bootstrap would silently be comparing
+    two datasets.
+
+    Complexes differ in how many conformers survived -- a re-optimisation that
+    failed, or that changed coordination number, is not available -- so
+    ``n_conformers`` is per complex and callers must not assume a fixed count.
+    """
+
+    def __init__(self, vr_path: Path = VR_PATH, verbose: bool = False,
+                 solvents: tuple[str, ...] = ("water", "octanol")):
+        self.base = SimplicialComplexes(vr_path, verbose=verbose)
+        self.build_ids = self.base.build_ids
+        self._index = {b: i for i, b in enumerate(self.build_ids)}
+        # conformer index k -> list of (asset, local index); slot 0 is the shipped
+        self._alt: list[list[tuple[Any, int]]] = [[] for _ in self.build_ids]
+        self.assets: list[Any] = []
+        for solv in solvents:
+            p = CONFORMER_ROOT / solv / "vietoris_rips_inputs.npz"
+            if not p.exists():
+                continue
+            asset = SimplicialComplexes(
+                p, verbose=verbose,
+                cache=CONFORMER_ROOT / solv / "triangle_edges.npz")
+            self.assets.append(asset)
+            for j, bid in enumerate(asset.build_ids):
+                k = self._index.get(str(bid))
+                if k is not None:
+                    self._alt[k].append((asset, j))
+
+    def __len__(self) -> int:
+        return len(self.build_ids)
+
+    def index_of(self, build_id: str) -> int | None:
+        return self._index.get(str(build_id))
+
+    def n_conformers(self, k: int) -> int:
+        return 1 + len(self._alt[k])
+
+    def get(self, k: int, conformer: int = 0, filtration_max: float | None = None,
+            heavy_only: bool = False) -> Complex:
+        """``conformer`` 0 is the shipped geometry; 1.. are re-optimisations.
+
+        Out-of-range indices wrap rather than raise: a caller sampling a random
+        conformer per epoch should not have to special-case complexes with fewer
+        of them, and wrapping degrades to "use the shipped geometry" instead of
+        crashing a fold near the end of a long run.
+        """
+        if conformer <= 0 or not self._alt[k]:
+            return self.base.get(k, filtration_max=filtration_max,
+                                 heavy_only=heavy_only)
+        asset, j = self._alt[k][(conformer - 1) % len(self._alt[k])]
+        return asset.get(j, filtration_max=filtration_max, heavy_only=heavy_only)
+
+    def coverage(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for k in range(len(self)):
+            counts[str(self.n_conformers(k))] = counts.get(
+                str(self.n_conformers(k)), 0) + 1
+        return counts
 
 
 def main() -> int:
