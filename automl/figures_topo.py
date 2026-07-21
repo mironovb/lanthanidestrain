@@ -539,7 +539,9 @@ def fig_control_decomposition() -> None:
                     color=INK2)
     ax.set_yticks(ys)
     ax.set_yticklabels([b[0] for b in bars], fontsize=8.5)
-    ax.set_xlabel("adjacent-pair log SF R²  (out-of-fold, 16-seed ensembles)")
+    # "16-seed" was wrong once S2 (32 seeds) joined; the counts differ by arm,
+    # so the axis states the protocol and the per-bar labels carry the rest.
+    ax.set_xlabel("adjacent-pair log SF R²  (out-of-fold, seed-ensembled)")
     ax.set_xlim(0, max(b[1] for b in bars) * 1.22)
     # Hatching, not colour alone, separates the two families -- the palette
     # validator allows three hues here but identity should not rest on hue.
