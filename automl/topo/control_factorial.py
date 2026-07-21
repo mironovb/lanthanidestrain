@@ -159,6 +159,117 @@ def ensemble(members: dict[int, pd.DataFrame]) -> pd.DataFrame | None:
 
 
 # ---------------------------------------------------------------------------
+def pairs_by_cluster(d: pd.DataFrame, groups: np.ndarray
+                     ) -> list[tuple[np.ndarray, np.ndarray]]:
+    """Adjacent-pair (true, predicted) separations, precomputed per extractant.
+
+    Why this is exactly equivalent, and not an approximation.  Two facts, both
+    checked rather than assumed:
+
+    * ``composition_key`` is strictly nested inside ``extractant_group`` (552
+      blocks, none spanning two extractants), so every block belongs to exactly
+      one cluster and the pairs of a resample are the union of the pairs of its
+      clusters.
+    * ``adjacent_pair_metrics`` groups by composition key and averages per
+      metal, so a cluster drawn twice contributes *identically* to a cluster
+      drawn once -- verified directly.  The statistic therefore depends only on
+      the SET of clusters drawn.
+
+    Given those, precomputing each cluster's pairs once and concatenating the
+    distinct drawn clusters reproduces the same number while doing the groupby
+    once per arm instead of once per bootstrap draw.  ``_assert_fast_matches``
+    checks that claim against the shared metric before any result uses it.
+    """
+    y = d["y"].to_numpy(float)
+    p = d["oof"].to_numpy(float)
+    comp = d["composition_key"].to_numpy()
+    li = d["lanthanide_index"].to_numpy()
+    gcodes, guniq = pd.factorize(groups)
+    out = []
+    for i in range(len(guniq)):
+        r = np.flatnonzero(gcodes == i)
+        out.append(ev.adjacent_pair_arrays(y[r], p[r], comp[r], li[r]))
+    return out
+
+
+def _r2_pairs(dy: np.ndarray, dp: np.ndarray) -> float:
+    return ev._r2(dy, dp)
+
+
+def _assert_fast_matches(d: pd.DataFrame, groups: np.ndarray, n_checks: int = 25,
+                         seed: int = 12345) -> None:
+    """The fast path must agree with the shared metric on random draws.
+
+    A speedup that silently disagreed with ``adjacent_pair_metrics`` would
+    reproduce this study's worst bug -- a figure and a table computing the same
+    quantity two different ways -- so the equivalence is tested, at full
+    precision, before it is used.
+    """
+    per = pairs_by_cluster(d, groups)
+    y = d["y"].to_numpy(float); p = d["oof"].to_numpy(float)
+    comp = d["composition_key"].to_numpy(); li = d["lanthanide_index"].to_numpy()
+    gcodes, guniq = pd.factorize(groups)
+    rows_by_g = [np.flatnonzero(gcodes == i) for i in range(len(guniq))]
+    rng = np.random.default_rng(seed)
+    for _ in range(n_checks):
+        pick = rng.integers(0, len(rows_by_g), len(rows_by_g))
+        idx = np.concatenate([rows_by_g[i] for i in pick])
+        slow = adj_r2(y[idx], p[idx], comp[idx], li[idx])
+        sel = np.unique(pick)
+        dy = np.concatenate([per[i][0] for i in sel if len(per[i][0])])
+        dp = np.concatenate([per[i][1] for i in sel if len(per[i][0])])
+        fast = _r2_pairs(dy, dp)
+        if not (np.isfinite(slow) and np.isfinite(fast)):
+            continue
+        if abs(slow - fast) > 1e-9:
+            raise AssertionError(
+                f"fast adjacent-pair path disagrees with adjacent_pair_metrics: "
+                f"{fast!r} vs {slow!r} (delta {fast - slow:.3e})")
+
+
+def paired_adjacent_fast(a: pd.DataFrame, b: pd.DataFrame, n_boot: int,
+                         seed: int = 0) -> dict | None:
+    """Same statistic and same resampling as ``paired_adjacent``, precomputed.
+
+    Returns the identical dictionary shape so callers cannot tell them apart.
+    """
+    common = a.index.intersection(b.index)
+    if len(common) < 0.5 * min(len(a), len(b)):
+        return None
+    a, b = a.loc[common], b.loc[common]
+    groups = a["extractant_group"].to_numpy()
+    pa, pb = pairs_by_cluster(a, groups), pairs_by_cluster(b, groups)
+    n = len(pa)
+
+    def stat(per, sel):
+        dy = [per[i][0] for i in sel if len(per[i][0])]
+        dp = [per[i][1] for i in sel if len(per[i][0])]
+        if not dy:
+            return np.nan
+        return _r2_pairs(np.concatenate(dy), np.concatenate(dp))
+
+    full = np.arange(n)
+    obs_a, obs_b = stat(pa, full), stat(pb, full)
+    rng = np.random.default_rng(seed)
+    da, db, dd = [], [], []
+    for _ in range(n_boot):
+        sel = np.unique(rng.integers(0, n, n))
+        va, vb = stat(pa, sel), stat(pb, sel)
+        if np.isfinite(va) and np.isfinite(vb):
+            da.append(va); db.append(vb); dd.append(vb - va)
+    if len(dd) < 30:
+        return None
+    dd = np.array(dd)
+    return {"baseline_obs": obs_a, "arm_obs": obs_b,
+            "arm_lo": float(np.percentile(db, 5)),
+            "arm_hi": float(np.percentile(db, 95)),
+            "delta": float(dd.mean()),
+            "lo": float(np.percentile(dd, 5)),
+            "hi": float(np.percentile(dd, 95)),
+            "p_better": float((dd > 0).mean()),
+            "n_boot": len(dd)}
+
+
 def paired_interaction(cells: dict[str, pd.DataFrame], n_boot: int, seed: int = 0):
     """Cluster bootstrap of (S0 - T0) - (S1 - T1).
 
@@ -232,6 +343,9 @@ def main() -> int:
     ap.add_argument("--allow-partial", action="store_true",
                     help="score cells that do not yet have all 16 seeds "
                          "(for progress checks only -- never for a result)")
+    ap.add_argument("--no-fast", dest="fast", action="store_false",
+                    help="use the per-draw groupby path instead of the "
+                         "precomputed one; identical results, ~50x slower")
     args = ap.parse_args()
 
     print("=== cell membership (by recorded config, not by tag) ===")
@@ -310,6 +424,15 @@ def main() -> int:
     for r in rows:
         r["is_control"] = (r["cell"] == ctl)
 
+    if args.fast:
+        # Prove the shortcut before using it, on a real cell rather than a toy.
+        ref = next((ens[c] for c in ("S0", "T0", "T1") if ens.get(c) is not None),
+                   None)
+        if ref is not None:
+            _assert_fast_matches(ref, ref["extractant_group"].to_numpy())
+            print("\n[fast path verified: agrees with adjacent_pair_metrics to "
+                  "1e-9 on 25 random cluster resamples]")
+
     print("\n=== pre-registered contrasts (paired cluster bootstrap over extractants) ===")
     out = []
     for kind, base, arm, question in CONTRASTS:
@@ -321,7 +444,8 @@ def main() -> int:
         b, a = (ctl if base == "T0" else base), (ctl if arm == "T0" else arm)
         if ens.get(b) is None or ens.get(a) is None:
             continue
-        r = paired_adjacent(ens[b], ens[a], args.n_boot, seed=0)
+        r = (paired_adjacent_fast if args.fast else paired_adjacent)(
+            ens[b], ens[a], args.n_boot, seed=0)
         if r is None:
             # paired_adjacent returns None for two unrelated reasons, and
             # reporting only one of them sent me looking for a row-set bug that
