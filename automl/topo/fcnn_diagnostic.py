@@ -149,7 +149,7 @@ def _fit_predict(X, y, tr, te, *, seed, mode, groups):
 
 
 def run(mode: str, seeds: list[int], folds: int, repeats: int,
-        rep_seed: bool = False) -> dict:
+        rep_seed: bool = False, label: str | None = None) -> dict:
     """``rep_seed`` reproduces experiment.py:213, which passes ``spec.seed + rep``
     as the *model* seed so each repeat trains a slightly different network.  My
     first reproduction held the model seed fixed and landed at +0.068 against the
@@ -173,6 +173,17 @@ def run(mode: str, seeds: list[int], folds: int, repeats: int,
         acc += oof_sum / np.maximum(oof_cnt, 1)
     oof = acc / len(seeds)
     m = ev.adjacent_pair_metrics(y, oof, comp, li)
+    # Persist the out-of-fold vector, not just the summary.  Without it these
+    # variants can only be compared by point estimate, and a point estimate is
+    # exactly what this study has repeatedly shown to be unreadable on this
+    # metric -- the paired bootstrap needs the predictions themselves.
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({
+        "safe_exp_id": df["safe_exp_id"].to_numpy(), "y": y, "oof": oof,
+        "extractant_group": df[GROUP_COL].to_numpy(),
+        "composition_key": comp, "metal": df["metal"].to_numpy(),
+        "lanthanide_index": li,
+    }).to_parquet(OUT.with_name(f"oof_fcnn_{label or mode}.parquet"), index=False)
     return {"mode": mode, "n_seeds": len(seeds),
             "adj_r2": float(m.get("sel_adj_logSF_r2", np.nan)),
             "r2_overall": float(ev._r2(y, oof)),
@@ -201,10 +212,13 @@ def main() -> int:
         base = {"ensemble16": "published", "repseed": "published",
                 "std_scaler_repseed": "std_scaler",
                 "std_scaler_ens16": "std_scaler"}.get(mode, mode)
+        # `label` is the variant name, `base` is the pipeline it runs.  They
+        # differ for ens16/repseed variants, and using `base` for the filename
+        # would have had std_scaler_ens16 overwrite std_scaler's predictions.
         r = run(base, seeds16 if mode.endswith("ens16") or mode == "ensemble16"
                 else [42],
                 args.folds, args.repeats,
-                rep_seed=mode.endswith("repseed"))
+                rep_seed=mode.endswith("repseed"), label=mode)
         r["mode"] = mode
         r["seconds"] = time.time() - t0
         out.append(r)
