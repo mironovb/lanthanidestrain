@@ -154,10 +154,23 @@ Swapping it for `StandardScaler` and changing nothing else:
 
 | variant | adjacent-pair R² | overall R² |
 |---|---|---|
+| published pipeline, per-repeat seed | −0.0417 | 0.3808 |
 | published pipeline, 1 seed | +0.0684 | 0.3687 |
+| published pipeline, **16 seeds** | +0.1136 | 0.3538 |
 | StandardScaler, 1 seed | +0.1736 | 0.2736 |
 | StandardScaler, per-repeat seed | +0.2007 | 0.3109 |
 | **StandardScaler, 16 seeds** | **+0.2206** | 0.3218 |
+
+The two levers, isolated at 16 seeds against 16 seeds:
+
+| lever | Δ adjacent-pair R² |
+|---|---|
+| ensembling the published pipeline (1 → 16 seeds) | +0.0452 |
+| **the scaler, at fixed 16 seeds (+0.1136 → +0.2206)** | **+0.1070** |
+
+Both are large; the scaler is about 2.4× the ensembling. Neither was applied to
+the baseline in the published comparison, while both were applied to every arm
+it was compared against.
 
 The last row is the published FCNN with one line changed, ensembled exactly as
 every published arm was. It reaches **+0.2206** against the SNN's +0.2382 — and
