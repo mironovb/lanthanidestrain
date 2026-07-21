@@ -149,8 +149,16 @@ def main() -> int:
         return 1
     pd.DataFrame(rows).to_csv(OUT, index=False)
     print(f"\n[bootstrap-audit] wrote {OUT}")
-    print("A ratio above 1 means the published intervals are conservative: "
-          "correcting the resampling moves endpoints away from zero.")
+    # State the direction from the numbers, not from a prior.  The first version
+    # of this line asserted "a ratio above 1 means the intervals are
+    # conservative", which was my prediction and was wrong in every case.
+    ratios = [r["width_ratio_pub_over_fix"] for r in rows]
+    narrow = [r for r in rows if r["width_ratio_pub_over_fix"] < 1]
+    still = [r for r in rows if (r["fix_lo"] > 0) == (r["pub_lo"] > 0)]
+    print(f"published/corrected width: {min(ratios):.2f}x to {max(ratios):.2f}x "
+          f"({len(narrow)}/{len(rows)} too NARROW, i.e. overstating significance)")
+    print(f"{len(still)}/{len(rows)} intervals reach the same verdict on "
+          f"excluding zero after correction.")
     return 0
 
 
