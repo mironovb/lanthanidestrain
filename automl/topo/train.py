@@ -325,34 +325,51 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
         means = sums / counts.clamp(min=1.0).unsqueeze(-1)
         return torch.cat([emb_rows, emb_rows - means[idx]], dim=-1)
 
+    def _eval_chunks(idx) -> list[np.ndarray]:
+        """Positions in ``idx``, grouped so no composition block is ever split.
+
+        Blocks are *packed* into shared batches rather than sent one at a time.
+        Both are exact -- ``_centre`` factorises within the batch, so several
+        whole blocks coexist safely -- but one-block-at-a-time costs 270
+        ``encode`` calls per fold against 12 packed, and each call is tiny
+        enough that the GPU is idle between them.
+
+        Splitting a block across batches would not be exact: the block mean
+        would then depend on the batch size, which is not a property of the
+        data, and training (which always sees whole blocks) and inference would
+        compute different features from the same rows.
+        """
+        if not block_centre:
+            step = max(cfg["eval_batch"], 1)
+            return [np.arange(s, min(s + step, len(idx)))
+                    for s in range(0, len(idx), step)]
+        budget = max(cfg["eval_batch"], 1)
+        chunks, buf = [], []
+        for _key, positions in pd.Series(comp_all[idx]).groupby(
+                comp_all[idx], sort=False).groups.items():
+            pos = np.asarray(positions, dtype=int)
+            if buf and len(buf) + len(pos) > budget:
+                chunks.append(np.concatenate(buf)); buf = []
+            buf.append(pos)
+        if buf:
+            chunks.append(np.concatenate(buf))
+        return chunks
+
     def _predict(idx, Xs):
         model.eval()
         outs = np.empty(len(idx), dtype=np.float64)
-        # Batch by composition block, not by fixed-size slices.  With
-        # --block-centre the block mean must be taken over the same rows at test
-        # time as in training; a slice boundary cutting through a block would
-        # make the feature depend on batching, which is not a property of the
-        # data.  Grouping also keeps predictions reproducible run to run.
-        order = pd.Series(comp_all[idx]).groupby(
-            comp_all[idx], sort=False).groups
         with torch.no_grad():
-            for _key, positions in order.items():
-                pos = np.asarray(positions, dtype=int)
-                for s in range(0, len(pos), max(cfg["eval_batch"], 1)):
-                    take = pos[s:s + max(cfg["eval_batch"], 1)] if not block_centre \
-                        else pos                       # whole block when centring
-                    rows = idx[take]
-                    ids = sorted(set(cplx[rows].tolist()))
-                    remap = {c: i for i, c in enumerate(ids)}
-                    emb = _encode(ids)
-                    gather = torch.as_tensor([remap[c] for c in cplx[rows]],
-                                             device=device)
-                    e = _centre(emb[gather], comp_all[rows])
-                    tab = torch.as_tensor(Xs[take], device=device)
-                    outs[take] = (model.head(torch.cat([e, tab], -1))
-                                  .squeeze(-1).cpu().numpy())
-                    if block_centre:
-                        break
+            for take in _eval_chunks(idx):
+                rows = idx[take]
+                ids = sorted(set(cplx[rows].tolist()))
+                remap = {c: i for i, c in enumerate(ids)}
+                emb = _encode(ids)
+                gather = torch.as_tensor([remap[c] for c in cplx[rows]],
+                                         device=device)
+                e = _centre(emb[gather], comp_all[rows])
+                tab = torch.as_tensor(Xs[take], device=device)
+                outs[take] = (model.head(torch.cat([e, tab], -1))
+                              .squeeze(-1).cpu().numpy())
         return outs * ysd + ymu
 
     # Row index -> position in the standardised training matrix.

@@ -232,6 +232,48 @@ def test_block_centring_is_invariant_to_row_order():
     assert torch.allclose(a, b, atol=1e-6)
 
 
+def test_packed_block_batches_give_identical_centred_features():
+    """Packing several whole blocks into one batch must change nothing.
+
+    Inference packs blocks to fill the eval batch rather than sending them one
+    at a time (270 encode calls per fold vs 12).  That is only legitimate if the
+    result is bit-identical, because ``_centre`` factorises *within* the batch:
+    if packing altered any block's mean, the speedup would silently change the
+    predictions it was supposed to leave alone.
+    """
+    emb = torch.randn(12, 4)
+    blocks = np.array(["a"] * 3 + ["b"] * 4 + ["c"] * 2 + ["d"] * 3)
+
+    one_at_a_time = torch.zeros(12, 8)
+    for b in ("a", "b", "c", "d"):
+        m = blocks == b
+        one_at_a_time[torch.as_tensor(m)] = _centre(emb[torch.as_tensor(m)],
+                                                    blocks[m])
+    packed_all = _centre(emb, blocks)                       # all four together
+    assert torch.allclose(one_at_a_time, packed_all, atol=1e-6)
+
+    # and an arbitrary partition into two packed batches agrees too
+    first = torch.as_tensor(np.isin(blocks, ["a", "b"]))
+    split = torch.zeros(12, 8)
+    split[first] = _centre(emb[first], blocks[first.numpy()])
+    split[~first] = _centre(emb[~first], blocks[(~first).numpy()])
+    assert torch.allclose(split, packed_all, atol=1e-6)
+
+
+def test_a_block_split_across_batches_would_change_the_feature():
+    """The property the packing rule exists to protect.
+
+    Guards against someone 'simplifying' _eval_chunks back to fixed-size slices:
+    that is not a harmless refactor, it changes the feature.
+    """
+    emb = torch.randn(4, 3)
+    blocks = np.array(["a", "a", "a", "a"])
+    whole = _centre(emb, blocks)
+    halves = torch.cat([_centre(emb[:2], blocks[:2]),
+                        _centre(emb[2:], blocks[2:])], dim=0)
+    assert not torch.allclose(whole, halves, atol=1e-6)
+
+
 def test_head_width_matches_the_centred_embedding():
     """A mismatch here is a shape error at fold 0; a *silent* mismatch would be
     a head sized for the wrong stream, so it is asserted rather than trusted."""
