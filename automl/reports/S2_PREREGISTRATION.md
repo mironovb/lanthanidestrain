@@ -8,11 +8,19 @@ revised once the first `sbatch` lands.
 > **What changed:** the self-supervised encoder is pretrained **once and shared
 > across all 32 seeds**, instead of being recomputed inside every run.
 >
-> **Why:** measured after launch — one pretraining epoch takes ~3 minutes, so 20
-> epochs cost ~1 h *per run*, ~16 h across 32 seeds at 2 concurrent nodes, to
-> re-solve an identical optimisation problem each time. It is self-supervised
-> (masked charges and edge radii, no log D), so every seed was computing the
-> same thing.
+> **Why:** every seed was re-solving an identical self-supervised problem
+> (masked charges and edge radii, no log D). Pretraining once removes 31 of 32
+> repetitions of the same computation.
+>
+> **Correction to the figure first quoted here.** I originally justified this
+> with "~3 min per epoch → ~1 h per run → ~16 h across 32 seeds", extrapolated
+> from the *first* epoch. That was wrong by about 4×: the first epoch is slow
+> because it populates the complex cache, and later epochs hit it. Measured end
+> to end, all 20 epochs take **~10 min** and a fold takes **25 s**, so a full
+> pretraining run is ~16 min and the true saving is roughly **5 h, not 16 h**.
+> The decision stands — 31 redundant repetitions of an identical computation is
+> reason enough — but the number that motivated it was overstated and is
+> corrected here rather than left in place.
 >
 > **Why it does not weaken the arm:** S0 uses **no** pretraining at all and
 > still shows a +0.060 ensemble gain with per-seed SD 0.047 — all of its seed
