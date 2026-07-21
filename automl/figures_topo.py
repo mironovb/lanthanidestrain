@@ -516,6 +516,15 @@ def fig_control_decomposition() -> None:
             bars.append(("published FCNN, one line changed:\n"
                          "StandardScaler, 16 seeds",
                          float(m["adj_r2"].iloc[0]), False))
+    # S2, the variance-reduced simplicial arm, once it exists.  Its value is
+    # read from the confirmatory test's own output rather than recomputed, so
+    # the chart cannot disagree with the number it illustrates.
+    s2 = _read("s2_test.csv")
+    if s2 is not None and "kind" in s2.columns:
+        pri = s2[s2["kind"] == "primary"]
+        if len(pri):
+            bars.append(("SNN + contrast + conformers\n+ block-centring, 32 seeds",
+                         float(pri["arm_obs"].iloc[0]), True))
     bars.sort(key=lambda b: b[1])
 
     _style()
@@ -549,20 +558,30 @@ def fig_control_decomposition() -> None:
     # the paired interval has been computed, the title carries the verdict; the
     # first version of this title said "+0.018" with no interval, which reads as
     # a result and is not one.
+    # The headline is the most recent confirmatory test against the repaired
+    # baseline: S2 if it has been run, otherwise S0.  Both are the same
+    # comparison, so quoting the older one once a newer arm exists would
+    # understate the work; quoting both would bury the endpoint.
     best_flat = max(b[1] for b in bars if not b[2])
+    s2t = _read("s2_test.csv")
     fb = _read("fixed_baseline_test.csv")
-    if fb is not None and "S0" in set(fb["arm"]):
-        # One number, with its interval.  An earlier version quoted the raw gap
-        # (+0.018) beside the bootstrap mean (+0.026), which invited the reader
-        # to wonder which was the result; and the gap alone is a point estimate
-        # on a metric where the baseline itself spans 0.11 across seed
-        # conventions.
-        r = fb[fb["arm"] == "S0"].iloc[0]
-        sig = ("excludes zero" if float(r["lo"]) > 0 else
+    label, row = None, None
+    if s2t is not None and "kind" in s2t.columns and (s2t["kind"] == "primary").any():
+        row = s2t[s2t["kind"] == "primary"].iloc[0]
+        label = "S2 (conformers + block-centring)"
+    elif fb is not None and "S0" in set(fb["arm"]):
+        row = fb[fb["arm"] == "S0"].iloc[0]
+        label = "SNN"
+    if row is not None:
+        # One number with its interval.  An earlier version quoted the raw gap
+        # beside the bootstrap mean, inviting the reader to wonder which was the
+        # result; and a gap alone is a point estimate on a metric where the
+        # baseline itself spans 0.11 across seed conventions.
+        sig = ("excludes zero" if float(row["lo"]) > 0 else
                "spans zero — not distinguishable")
-        title = (f"SNN over the best model without topology: "
-                 f"{float(r['delta']):+.3f} "
-                 f"[{float(r['lo']):+.3f}, {float(r['hi']):+.3f}], {sig}")
+        title = (f"{label} over the best model without topology: "
+                 f"{float(row['delta']):+.3f} "
+                 f"[{float(row['lo']):+.3f}, {float(row['hi']):+.3f}], {sig}")
     else:
         title = (f"Best model without topology is "
                  f"{val['S0'] - best_flat:+.3f} from the best with it")
