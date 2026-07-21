@@ -38,13 +38,15 @@ from automl.dataset import BLOCK_PRESETS, GROUP_COL, TARGET
 from automl.topo.simplicial_data import SimplicialComplexes, collate
 from automl.topo.snn import SimplicialNet, MaskedChargeHead, count_parameters
 from automl.topo.pi_cnn import PersistenceImages, PersistenceCNN
+from automl.topo.tabular_net import TabularNet, NullCache
 
 REPO = Path(__file__).resolve().parents[2]
 OUT_DIR = REPO / "automl/artifacts/topo_runs"
 
 
 # ---------------------------------------------------------------------------
-def build_row_table(preset: str = "baseline_2d", arch: str = "snn"
+def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
+                    match_rows: str = "snn"
                     ) -> tuple[pd.DataFrame, np.ndarray, list[str]]:
     """Rows backed by this arm's 3D asset, plus their tabular design matrix.
 
@@ -52,9 +54,17 @@ def build_row_table(preset: str = "baseline_2d", arch: str = "snn"
     images), so the eligible row set differs slightly.  Both are joined on
     ``geometry_feature_build_id``, which reaches 4,746 rows -- ``build_id``
     only reaches 4,402 and would silently drop 344 rows.
+
+    ``arch="tabular"`` uses no 3D asset at all, but it still has to be scored on
+    the *same rows* as the arm it is a control for, or the paired bootstrap
+    silently compares two different datasets (4,746 vs 4,742 rows here).  So the
+    asset is still consulted, purely to select rows -- ``match_rows`` names
+    which arm's eligibility to reproduce.
     """
     df, blocks, _ = load_cache()
-    asset = SimplicialComplexes(verbose=False) if arch == "snn" else PersistenceImages()
+    key_arch = match_rows if arch == "tabular" else arch
+    asset = (SimplicialComplexes(verbose=False) if key_arch == "snn"
+             else PersistenceImages())
     key = df["geometry_feature_build_id"].astype(str)
     df = df.assign(_cplx=[asset.index_of(k) for k in key])
     df = df[df["_cplx"].notna() & df["geometry_ok"].astype(bool)].reset_index(drop=True)
@@ -191,7 +201,11 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
     y = df[target_col or TARGET].to_numpy(dtype=np.float32)
     ymu, ysd = float(y[fit_idx].mean()), float(y[fit_idx].std() or 1.0)
 
-    if cfg.get("arch", "snn") == "picnn":
+    if cfg.get("arch", "snn") == "tabular":
+        model = TabularNet(dim=cfg["dim"], dropout=cfg["dropout"],
+                           tabular_dim=X.shape[1],
+                           head_hidden=cfg["head_hidden"]).to(device)
+    elif cfg.get("arch", "snn") == "picnn":
         model = PersistenceCNN(dim=cfg["dim"], dropout=cfg["dropout"],
                                tabular_dim=X.shape[1],
                                head_hidden=cfg["head_hidden"]).to(device)
@@ -346,7 +360,12 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
 # ---------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--arch", choices=("snn", "picnn"), default="snn")
+    ap.add_argument("--arch", choices=("snn", "picnn", "tabular"), default="snn",
+                    help="'tabular' is the no-topology control: identical loop,\n"
+                         "loss, folds and seeds with a width-zero embedding")
+    ap.add_argument("--match-rows", choices=("snn", "picnn"), default="snn",
+                    help="for --arch tabular, whose row eligibility to reproduce\n"
+                         "so the paired bootstrap compares the same rows")
     ap.add_argument("--smoke-epochs", type=int, nargs="+",
                     default=[400, 1500, 4000])
     ap.add_argument("--preset", default="baseline_2d")
@@ -384,7 +403,14 @@ def main() -> int:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[topo] device={device} torch={torch.__version__}", flush=True)
 
-    df, X, cols = build_row_table(args.preset, args.arch)
+    if args.arch == "tabular" and args.topology_only:
+        # Width-zero embedding AND width-zero design matrix: a model with no
+        # inputs at all, which would train to the target mean and be recorded
+        # as though it were a control.
+        raise SystemExit("--arch tabular --topology-only leaves the model no "
+                         "inputs; use --arch snn/picnn --topology-only for the "
+                         "topology-only ablation.")
+    df, X, cols = build_row_table(args.preset, args.arch, args.match_rows)
     if args.topology_only:
         # A zero-width design matrix, not a zeroed one: this sets tabular_dim=0
         # so the head has no tabular weights at all.  Passing zeros instead
@@ -396,7 +422,13 @@ def main() -> int:
           f"distinct complexes={df['_cplx'].nunique()} tabular_dim={X.shape[1]}",
           flush=True)
 
-    if args.arch == "picnn":
+    if args.arch == "tabular":
+        # No asset is loaded, but the harness still batches by distinct complex
+        # and gathers per row, so the control's sampling matches the arm it
+        # controls for exactly.
+        cache = NullCache(device)
+        n_assets = int(df["_cplx"].nunique())
+    elif args.arch == "picnn":
         P = PersistenceImages()
         cache = ImageCache(P, device)
         n_assets = len(P)
@@ -438,8 +470,14 @@ def main() -> int:
             r2t = ev._r2(y_sub, run_fold(df, Xz, cache, sub, sub, cfg=c,
                                          device=device, seed=args.seed))
             best = max(best, r2)
+            # For the tabular control the second run zeroes the *only* inputs
+            # the model has, so it is a different and equally useful check: it
+            # must collapse to ~0.  A tabular arm that still fits with its
+            # features blanked is reading something it should not.
+            other = ("blanked-features" if args.arch == "tabular"
+                     else "topology-only")
             print(f"[smoke] epochs={ep:5d}  hybrid R2={r2:.4f}   "
-                  f"topology-only R2={r2t:.4f}", flush=True)
+                  f"{other} R2={r2t:.4f}", flush=True)
         print(f"[smoke] best hybrid R2 = {best:.4f} (regularisation off; "
               f"must exceed 0.95 to show the architecture can fit at all)")
         return 0 if best > 0.95 else 1
@@ -473,8 +511,12 @@ def main() -> int:
 
     metrics = ev.full_metrics(y, oof, df)
     out_dir = Path(args.out_dir); out_dir.mkdir(parents=True, exist_ok=True)
+    # The filtration/heavy suffix describes a Vietoris-Rips construction that a
+    # tabular run never performed; carrying it would label the control as though
+    # it had used one.
     stem = (f"{args.tag}_{args.arch}_{args.preset}"
-            f"_f{args.filtration_max}_h{int(args.heavy_only)}")
+            + ("" if args.arch == "tabular"
+               else f"_f{args.filtration_max}_h{int(args.heavy_only)}"))
     pd.DataFrame({
         "safe_exp_id": df["safe_exp_id"].to_numpy(), "y": y, "oof": oof,
         "extractant_group": groups,
