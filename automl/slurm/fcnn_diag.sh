@@ -19,7 +19,7 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK} MKL_NUM_THREADS=${SLURM_CPUS_PER_T
 export PYTHONPATH="${REPO}:${PYTHONPATH:-}" PYTHONWARNINGS=ignore
 cd "${REPO}"
 
-MODES=(published grouped no_stop ensemble16 std_scaler)
+MODES=(published grouped no_stop ensemble16 std_scaler repseed std_scaler_repseed std_scaler_ens16)
 M=${MODES[${SLURM_ARRAY_TASK_ID}]}
 echo "[fdiag] mode=${M}"
 python3 -m automl.topo.fcnn_diagnostic --modes "${M}"

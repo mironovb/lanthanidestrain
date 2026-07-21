@@ -31,13 +31,37 @@ together they really are.  A gradient-boosted tree is invariant to that (it only
 ever compares); a network asked to predict a *difference* is not.  That would
 also explain why CatBoost, sharing the same feature block, does not suffer.
 
+Third finding, and the one that reframes the other two: **the published baseline
+has no stable value on this metric.**  Three reproductions differing only in how
+the model seed is chosen -- fixed at 42, or ``42 + rep`` as ``experiment.py:213``
+does -- give **+0.0684** and **-0.0417**, against the sweep's reported
+**+0.0048**.  A spread of 0.11 on a quantity whose published value is +0.005.
+
+That is not a reproduction failure; it is the measurement.  Every headline in the
+study is an improvement *over this number*, and the number moves by more than the
+topology effect (~+0.04) when nothing changes but a seed convention.  It is also
+exactly what the study's own decision to ensemble 16 seeds was for -- applied to
+the arms, but never to the baseline they were measured against.
+
+So the scaler is quantified against matched seed schemes rather than against the
+single published point:
+
+    fixed seed 42        published +0.0684  ->  std_scaler +0.1736   (+0.105)
+    seed 42 + rep        published -0.0417  ->  std_scaler +0.2007   (+0.242)
+
+Large and consistent in sign either way, while the baseline's own value is not.
+
 Variants, identical features, rows and outer folds:
 
-    published    as reported: quantile transform, early_stopping=True
-    grouped      stopped on a GROUP-held-out split          -> tested, not it
-    no_stop      trained to max_iter, no early stopping
-    std_scaler   the published pipeline with StandardScaler instead
-    ensemble16   the published configuration, 16 seeds averaged
+    published           as reported: quantile transform, early_stopping=True
+    repseed             same, with experiment.py's per-repeat model seed
+    grouped             stopped on a GROUP-held-out split     -> tested, not it
+    no_stop             trained to max_iter, no early stopping -> tested, not it
+    std_scaler          the published pipeline with StandardScaler instead
+    std_scaler_repseed  the same, per-repeat model seed
+    ensemble16          the published configuration, 16 seeds averaged
+    std_scaler_ens16    StandardScaler, 16 seeds -- the only fair comparison,
+                        since the published arms were all 16-seed ensembles
 """
 
 from __future__ import annotations
@@ -124,7 +148,13 @@ def _fit_predict(X, y, tr, te, *, seed, mode, groups):
     return pipe.predict(X[te])
 
 
-def run(mode: str, seeds: list[int], folds: int, repeats: int) -> dict:
+def run(mode: str, seeds: list[int], folds: int, repeats: int,
+        rep_seed: bool = False) -> dict:
+    """``rep_seed`` reproduces experiment.py:213, which passes ``spec.seed + rep``
+    as the *model* seed so each repeat trains a slightly different network.  My
+    first reproduction held the model seed fixed and landed at +0.068 against the
+    sweep's +0.005 -- a gap worth explaining rather than asserting away, since
+    every claim built on the diagnostic depends on the harness matching."""
     df, X, _cols = build_row_table("baseline_2d", "snn")
     y = df[TARGET].to_numpy(dtype=float)
     groups = df[GROUP_COL].to_numpy()
@@ -136,8 +166,9 @@ def run(mode: str, seeds: list[int], folds: int, repeats: int) -> dict:
         oof_sum, oof_cnt = np.zeros(len(df)), np.zeros(len(df))
         for rep in range(repeats):
             for tr, te in ev.grouped_folds(groups, n_splits=folds, seed=42 + rep):
-                oof_sum[te] += _fit_predict(X, y, tr, te, seed=s, mode=mode,
-                                            groups=groups)
+                oof_sum[te] += _fit_predict(X, y, tr, te,
+                                            seed=s + rep if rep_seed else s,
+                                            mode=mode, groups=groups)
                 oof_cnt[te] += 1
         acc += oof_sum / np.maximum(oof_cnt, 1)
     oof = acc / len(seeds)
@@ -151,8 +182,9 @@ def run(mode: str, seeds: list[int], folds: int, repeats: int) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--modes", nargs="*",
-                    default=["published", "grouped", "no_stop", "std_scaler",
-                             "ensemble16"])
+                    default=["published", "repseed", "grouped", "no_stop",
+                             "std_scaler", "std_scaler_repseed",
+                             "ensemble16", "std_scaler_ens16"])
     ap.add_argument("--folds", type=int, default=5)
     ap.add_argument("--repeats", type=int, default=3)
     args = ap.parse_args()
@@ -163,9 +195,16 @@ def main() -> int:
     out = []
     for mode in args.modes:
         t0 = time.time()
-        r = run("published" if mode == "ensemble16" else mode,
-                seeds16 if mode == "ensemble16" else [42],
-                args.folds, args.repeats)
+        # repseed / std_scaler_repseed reproduce experiment.py:213 exactly, so
+        # the scaler can be compared against a harness that MATCHES the sweep
+        # rather than against one that merely resembles it.
+        base = {"ensemble16": "published", "repseed": "published",
+                "std_scaler_repseed": "std_scaler",
+                "std_scaler_ens16": "std_scaler"}.get(mode, mode)
+        r = run(base, seeds16 if mode.endswith("ens16") or mode == "ensemble16"
+                else [42],
+                args.folds, args.repeats,
+                rep_seed=mode.endswith("repseed"))
         r["mode"] = mode
         r["seconds"] = time.time() - t0
         out.append(r)
