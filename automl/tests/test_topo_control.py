@@ -19,6 +19,7 @@ Run:  python3 -m pytest automl/tests/test_topo_control.py -q
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 
@@ -155,6 +156,69 @@ def test_null_cache_reports_the_complex_count_the_harness_gathers_on():
     b = cache.batch([3, 9, 14])
     assert b["n_complexes"] == 3
     assert TabularNet(tabular_dim=2).encode(b).shape == (3, 0)
+
+
+# ---------------------------------------------------------------------------
+# 5. The interaction statistic, against cases whose answer is known
+# ---------------------------------------------------------------------------
+def _synthetic(n_groups: int = 24, seed: int = 0):
+    """A frame with the columns paired_interaction expects."""
+    rng = np.random.default_rng(seed)
+    rows = []
+    for g in range(n_groups):
+        for c in range(3):                       # composition blocks
+            for m in range(4):                   # four adjacent lanthanides
+                rows.append({"extractant_group": f"E{g}",
+                             "composition_key": f"E{g}_c{c}",
+                             "lanthanide_index": m,
+                             "y": float(rng.normal())})
+    return pd.DataFrame(rows).assign(
+        safe_exp_id=lambda d: [f"r{i}" for i in range(len(d))]).set_index(
+            "safe_exp_id")
+
+
+def test_interaction_is_zero_when_topology_changes_nothing():
+    """If S0==T0 and S1==T1, topology contributed nothing under either
+    objective, so the difference of differences must be exactly 0."""
+    from automl.topo.control_factorial import paired_interaction
+    base = _synthetic()
+    rng = np.random.default_rng(1)
+    same_c = base.assign(oof=rng.normal(size=len(base)))
+    same_p = base.assign(oof=rng.normal(size=len(base)))
+    r = paired_interaction({"S0": same_c, "T0": same_c,
+                            "S1": same_p, "T1": same_p}, n_boot=40)
+    assert r is not None
+    assert abs(r["obs"]) < 1e-12
+    # and every bootstrap draw must be 0 too, so the interval collapses
+    assert abs(r["lo"]) < 1e-9 and abs(r["hi"]) < 1e-9
+
+
+def test_interaction_matches_a_hand_computed_difference_of_differences():
+    """The observed statistic must equal the four R2 values combined by hand.
+
+    Guards the sign and the pairing: a transposed term here would silently
+    report 'topology helps more under the plain objective' as its opposite.
+    """
+    from automl.topo.control_factorial import paired_interaction
+    from automl.evaluation import adjacent_pair_metrics
+    base = _synthetic()
+    rng = np.random.default_rng(2)
+    arms = {k: base.assign(oof=base["y"].to_numpy() * a
+                           + rng.normal(scale=0.5, size=len(base)))
+            for k, a in (("S0", 0.9), ("T0", 0.6), ("S1", 0.5), ("T1", 0.45))}
+    r = paired_interaction(arms, n_boot=40)
+    assert r is not None
+
+    def a(k):
+        return adjacent_pair_metrics(
+            base["y"].to_numpy(), arms[k]["oof"].to_numpy(),
+            base["composition_key"].to_numpy(),
+            base["lanthanide_index"].to_numpy())["sel_adj_logSF_r2"]
+
+    expected = (a("S0") - a("T0")) - (a("S1") - a("T1"))
+    assert abs(r["obs"] - expected) < 1e-9
+    # constructed so topology helps more under the contrast objective
+    assert r["obs"] > 0
 
 
 def test_contrast_loss_finds_pairs_without_topology():
