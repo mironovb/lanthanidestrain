@@ -544,10 +544,29 @@ def fig_control_decomposition() -> None:
                        Patch(facecolor=FCNN, edgecolor="#fcfcfb", hatch="///",
                              label="no topology")],
               loc="lower right", fontsize=8.5)
+    # A bare gap is a point estimate, and this metric does not support point
+    # estimates -- the baseline alone spans 0.11 across seed conventions.  If
+    # the paired interval has been computed, the title carries the verdict; the
+    # first version of this title said "+0.018" with no interval, which reads as
+    # a result and is not one.
     best_flat = max(b[1] for b in bars if not b[2])
-    gap = val["S0"] - best_flat
-    ax.set_title(f"Best model without topology is {gap:+.3f} from the best "
-                 f"with it", loc="left", pad=10, fontsize=11)
+    fb = _read("fixed_baseline_test.csv")
+    if fb is not None and "S0" in set(fb["arm"]):
+        # One number, with its interval.  An earlier version quoted the raw gap
+        # (+0.018) beside the bootstrap mean (+0.026), which invited the reader
+        # to wonder which was the result; and the gap alone is a point estimate
+        # on a metric where the baseline itself spans 0.11 across seed
+        # conventions.
+        r = fb[fb["arm"] == "S0"].iloc[0]
+        sig = ("excludes zero" if float(r["lo"]) > 0 else
+               "spans zero — not distinguishable")
+        title = (f"SNN over the best model without topology: "
+                 f"{float(r['delta']):+.3f} "
+                 f"[{float(r['lo']):+.3f}, {float(r['hi']):+.3f}], {sig}")
+    else:
+        title = (f"Best model without topology is "
+                 f"{val['S0'] - best_flat:+.3f} from the best with it")
+    ax.set_title(title, loc="left", pad=10, fontsize=10.5)
     ax.grid(axis="y", visible=False)
     fig.text(0.0, -0.08,
              "Same 4,746 rows and leave-extractants-out folds throughout. "

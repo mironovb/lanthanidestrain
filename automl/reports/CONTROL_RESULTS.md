@@ -22,11 +22,24 @@ identical to four decimals — and `control_guard --verify` confirms all 125
 pinned artefacts, including every one of the 51 published out-of-fold parquets,
 are byte-identical.
 
-**But four post-hoc findings change what that +0.0485 is a fraction of, and
-three of them qualify claims the reports currently make.** The honest summary is
-that topology is real, small, conditional on the objective, and specific to one
-architecture — while the bulk of the published +0.243 is attributable to the
-baseline it was measured against.
+**But the pre-registered control was not the strongest no-topology model, and
+against the strongest one the headline does not survive.** Repairing a single
+line of the published FCNN pipeline — `QuantileTransformer` → `StandardScaler`,
+16 seeds, nothing else altered — takes that same sklearn model to **+0.2206**.
+Against it:
+
+> **The published +0.2426 becomes +0.0261, 90 % CI [−0.005, +0.076] — not
+> distinguishable from zero.**
+
+Both statements are true at once, and the distinction is the whole result:
+*topology beats a matched control built inside the topological harness, and does
+not beat a repaired baseline built outside it.* The pre-registered comparison
+was fair; it was not the most demanding one available, and nothing in the
+pre-registration required it to be.
+
+The honest summary is that topology is small, conditional on the objective,
+specific to one architecture, and — measured against the best no-topology model
+now known — not established at all.
 
 ---
 
@@ -147,7 +160,31 @@ Swapping it for `StandardScaler` and changing nothing else:
 | **StandardScaler, 16 seeds** | **+0.2206** | 0.3218 |
 
 The last row is the published FCNN with one line changed, ensembled exactly as
-every published arm was. It reaches **+0.2206** against the SNN's +0.2382.
+every published arm was. It reaches **+0.2206** against the SNN's +0.2382 — and
+the +0.018 gap is not a result until it has an interval, because on this metric
+a point estimate is unreadable. Paired cluster bootstrap over extractants, same
+machinery as everything else here:
+
+| arm vs the repaired baseline (+0.2206) | Δ | 90 % CI | P | verdict |
+|---|---|---|---|---|
+| **S0 — SNN + contrast** | **+0.0261** | **[−0.005, +0.076]** | 0.86 | **not distinguishable** |
+| P0 — PI-CNN + contrast | −0.0145 | [−0.042, +0.007] | 0.13 | not distinguishable |
+| T0w — tabular + contrast *(the control)* | −0.0224 | [−0.061, +0.004] | 0.08 | not distinguishable |
+| T1 — tabular + plain | −0.0527 | [−0.078, −0.007] | 0.03 | **worse** |
+
+So the repaired baseline is not merely competitive — it beats or matches every
+arm in the factorial, including the pre-registered control, and the SNN's
+remaining edge over it is indistinguishable from zero. **The published headline
+comparison does not survive a one-line fix to the baseline it was measured
+against.**
+
+This is also why the pre-registered endpoint and this result do not contradict
+each other. T0w is a *matched* control: same harness, folds, seeds and
+objective, differing only in the encoder — the right instrument for asking
+whether topology contributes anything. It is not the *best* no-topology model,
+and the pre-registration never claimed it was. Against a matched control
+topology adds +0.049; against the strongest available baseline it adds nothing
+measurable.
 
 The mechanism is confirmed by the direction of the trade: the transform moves
 adjacent-pair R² and overall R² *opposite* ways, which is what distinguishes a
@@ -232,9 +269,10 @@ pre-registration so the baseline cannot be quietly re-snapshotted.
 
 **The paper is no longer "topology improves adjacent-lanthanide separation."**
 On this dataset that claim survives only as: *a simplicial network trained with a
-pairwise-contrast objective beats a strong, identically trained tabular control
+pairwise-contrast objective beats a matched, identically trained tabular control
 by +0.049 [+0.009, +0.106], while a persistence-image CNN does not beat it at
-all.* That is a modest, conditional, single-architecture result.
+all — and neither beats a repaired FCNN baseline.* Written out that way it is
+not a topology paper.
 
 The larger and more transferable findings are the ones the control turned up on
 the way:
