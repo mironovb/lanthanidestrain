@@ -43,17 +43,28 @@ REPO = Path(__file__).resolve().parents[2]
 SNAP_DIR = REPO / "automl/artifacts/topo_control/_baseline_snapshot"
 MANIFEST = SNAP_DIR / "manifest.json"
 
-# Every artifact directory the five published tests read from.  topo_control is
-# deliberately absent: it is where the new runs land, so it is expected to grow.
+# Every artifact directory a reported test reads from.  topo_control is now
+# included: the control is finished and published, so its runs are as frozen as
+# the ones that came before.  The directories the *next* experiment writes to
+# (topo_s2, vr_conformers) are deliberately absent -- they are expected to grow.
 FROZEN_ART_DIRS = ("topo_runs", "topo_adjacent", "topo_adj_seeds",
-                   "topo_runs_radial", "topo_tight")
+                   "topo_runs_radial", "topo_tight", "topo_control")
 
 FROZEN_REPORTS = ("adjacent_pair_test.csv", "adjacent_ensemble.csv",
                   "adjacent_blend.csv", "topo_comparison.csv",
-                  "topo_comparison_paired.csv", "scatter_diagnostic.csv")
+                  "topo_comparison_paired.csv", "scatter_diagnostic.csv",
+                  # the control's own outputs, published in 6ddf853 / 4b737bf
+                  "control_cells.csv", "control_factorial.csv",
+                  "control_attribution.csv", "control_blend.csv",
+                  "bootstrap_audit.csv", "fcnn_diagnostic.csv",
+                  "fixed_baseline_test.csv",
+                  # the repaired-baseline predictions the S2 endpoint is scored
+                  # against; if these moved, the endpoint would move with them
+                  "oof_fcnn_std_scaler_ens16.parquet")
 
 APPEND_ONLY = ("PI_REPORT.md", "PUBLICATION_ASSESSMENT.md",
-               "TOPOLOGY_RESULTS.md", "TOPOLOGY_METHODS.md")
+               "TOPOLOGY_RESULTS.md", "TOPOLOGY_METHODS.md",
+               "CONTROL_RESULTS.md", "CONTROL_PREREGISTRATION.md")
 
 # Source files whose content decides what a run means.  Recorded rather than
 # frozen: this study once lost a batch to an array picking up a mid-flight edit,
@@ -88,6 +99,8 @@ def _frozen_paths() -> list[Path]:
         # Only the topological figures; the earlier study's figures are not at
         # risk from this work and hashing them would add noise, not safety.
         out += sorted(figs.glob("topo_*.png")) + sorted(figs.glob("topo_*.pdf"))
+    # The FCNN diagnostic's per-mode summaries, which the attribution quotes.
+    out += sorted((REPO / "automl/reports").glob("fcnn_diagnostic_*.json"))
     return out
 
 

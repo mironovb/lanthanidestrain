@@ -204,10 +204,44 @@ def single_point(symbols, coords, *, charge: int,
             args += ["--alpb", solvent]
         rc, out = _run(binary, args, wd, threads, timeout)
         e = _grep_energy(out)
-        return {"ok": rc == 0 and e is not None, "returncode": rc,
-                "energy_eh": e, "energy_ev": None if e is None else e * HARTREE_EV,
-                "gradient_norm_eh_bohr": _grep_gradient_norm(out),
-                "log_tail": out[-3000:] if rc != 0 else ""}
+        res = {"ok": rc == 0 and e is not None, "returncode": rc,
+               "energy_eh": e, "energy_ev": None if e is None else e * HARTREE_EV,
+               "gradient_norm_eh_bohr": _grep_gradient_norm(out),
+               "log_tail": out[-3000:] if rc != 0 else ""}
+        # Mulliken charges, read inside the temp directory before it is removed.
+        # The shipped Vietoris-Rips asset carries a per-atom partial charge on
+        # every node, so a re-optimised conformer without them is not a drop-in
+        # replacement: the "charge missing" flag would mark every augmented
+        # structure and let a model tell augmented from original.
+        q = _read_mulliken(wd, len(symbols))
+        if q is not None:
+            res["partial_charges"] = q
+            # Populations sum to the molecular charge (this module's own
+            # docstring relies on that for infer_charge).  Checking it here
+            # means a silently truncated or misparsed file fails loudly rather
+            # than producing plausible-looking wrong chemistry.
+            res["charge_sum_ok"] = bool(abs(float(np.sum(q)) - charge) < 0.05)
+        return res
+
+
+def _read_mulliken(workdir: Path, n_atoms: int) -> "np.ndarray | None":
+    """Per-atom Mulliken charges from an xTB run directory.
+
+    xtb writes one charge per line to a file named ``charges``.  Returned only
+    when the file holds exactly one finite value per atom -- a partial read is
+    worse than no read, because it would be silently padded downstream.
+    """
+    p = workdir / "charges"
+    if not p.exists():
+        return None
+    try:
+        vals = np.asarray([float(x) for x in p.read_text().split()],
+                          dtype=np.float32)
+    except ValueError:
+        return None
+    if vals.shape != (n_atoms,) or not np.all(np.isfinite(vals)):
+        return None
+    return vals
 
 
 def optimize(symbols, coords, *, charge: int,
