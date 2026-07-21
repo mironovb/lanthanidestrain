@@ -43,6 +43,11 @@ from automl.topo.tabular_net import TabularNet, NullCache
 
 REPO = Path(__file__).resolve().parents[2]
 OUT_DIR = REPO / "automl/artifacts/topo_runs"
+PRETRAIN_DIR = REPO / "automl/artifacts/pretrained"
+# Fixed, and deliberately independent of the run seed: the pretrained encoder is
+# shared across seeds, so tying it to one of them would be misleading about
+# which run produced it.
+PRETRAIN_SEED = 42
 
 
 # ---------------------------------------------------------------------------
@@ -613,12 +618,46 @@ def main() -> int:
 
     pretrained = None
     if args.pretrain_epochs and args.arch == "snn":
+        # The pretrained encoder is computed once and shared across seeds.
+        #
+        # It is self-supervised -- masked charges and edge radii, no log D -- so
+        # it is the *same* optimisation problem for every seed, and recomputing
+        # it per run cost an hour each (~16 h across 32 seeds at 2 concurrent
+        # nodes) to arrive at approximately the same weights.
+        #
+        # This does not weaken the ensembling lever.  S0 has no pretraining at
+        # all and still shows a +0.060 ensemble gain with per-seed SD 0.047, so
+        # all of its seed diversity already comes from the supervised phase --
+        # fold splits, batch order, dropout, head init -- none of which a shared
+        # encoder touches.
+        #
+        # The cache key carries every parameter that changes what the weights
+        # mean.  Reusing a cache built at a different width, depth or conformer
+        # count would silently warm-start from the wrong encoder.
+        key = (f"d{args.dim}_l{args.layers}_e{args.pretrain_epochs}"
+               f"_c{args.conformers}_s{PRETRAIN_SEED}")
+        cache_path = PRETRAIN_DIR / f"encoder_{key}.pt"
         model = SimplicialNet(dim=args.dim, layers=args.layers,
                               dropout=args.dropout, tabular_dim=0).to(device)
-        print(f"[topo] pretraining encoder ({count_parameters(model)} params) "
-              f"on all {n_assets} complexes", flush=True)
-        pretrain(model, cache, list(range(n_assets)), epochs=args.pretrain_epochs,
-                 batch_size=16, lr=1e-3, device=device, seed=args.seed)
+        if cache_path.exists():
+            model.load_state_dict(torch.load(cache_path, map_location=device))
+            print(f"[topo] loaded pretrained encoder from {cache_path.name}",
+                  flush=True)
+        else:
+            n_struct = (sum(cache.n_conformers(k) for k in range(n_assets))
+                        if args.conformers > 1 else n_assets)
+            print(f"[topo] pretraining encoder ({count_parameters(model)} "
+                  f"params) over {n_struct} structures "
+                  f"({n_assets} complexes)", flush=True)
+            pretrain(model, cache, list(range(n_assets)),
+                     epochs=args.pretrain_epochs, batch_size=16, lr=1e-3,
+                     device=device, seed=PRETRAIN_SEED)
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = cache_path.with_suffix(".tmp")
+            torch.save(model.state_dict(), tmp)
+            tmp.replace(cache_path)      # atomic: concurrent array tasks race
+            print(f"[topo] cached pretrained encoder -> {cache_path.name}",
+                  flush=True)
         pretrained = {k: v.detach().clone() for k, v in model.state_dict().items()}
 
     groups = df[GROUP_COL].to_numpy()

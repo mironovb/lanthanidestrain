@@ -3,6 +3,28 @@
 **Written and committed before any S2 run is submitted.** Nothing below may be
 revised once the first `sbatch` lands.
 
+> ### Amendment 1 — 21 July 2026, before any S2 result existed
+>
+> **What changed:** the self-supervised encoder is pretrained **once and shared
+> across all 32 seeds**, instead of being recomputed inside every run.
+>
+> **Why:** measured after launch — one pretraining epoch takes ~3 minutes, so 20
+> epochs cost ~1 h *per run*, ~16 h across 32 seeds at 2 concurrent nodes, to
+> re-solve an identical optimisation problem each time. It is self-supervised
+> (masked charges and edge radii, no log D), so every seed was computing the
+> same thing.
+>
+> **Why it does not weaken the arm:** S0 uses **no** pretraining at all and
+> still shows a +0.060 ensemble gain with per-seed SD 0.047 — all of its seed
+> diversity already comes from the supervised phase (fold splits, batch order,
+> dropout, head init), none of which a shared encoder touches. The pretraining
+> lever itself is unchanged: still 20 epochs over all 2,797 structures.
+>
+> **Standing of this amendment:** the array was cancelled and **zero S2 runs had
+> written any output**, so no outcome influenced it. It is a compute decision,
+> not a result-driven one. The endpoints, seed count, arm definition and
+> decision rules in §3–§5 are untouched. Recorded here rather than made quietly.
+
 Prior work: `CONTROL_RESULTS.md` (commits `4f39b91` → `89e77b3`). Baseline state
 pinned at
 `sha256(automl/artifacts/topo_control/_baseline_snapshot/manifest.json) =`
