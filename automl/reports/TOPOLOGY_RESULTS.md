@@ -1,5 +1,7 @@
 # Does 3D topology improve leave-extractants-out log D prediction?
 
+> **Update, 21 July 2026 —** the no-topology control is in [`CONTROL_RESULTS.md`](CONTROL_RESULTS.md); it also documents a resampling correction affecting every interval quoted here (all still exclude zero). Every number in this document is unchanged and reproduces exactly.
+
 Results companion to `TOPOLOGY_METHODS.md`. All arms share the same rows
 (4,746), the same leave-extractants-out folds (5 × 3 repeats, seed 42), and the
 same metric code. Deltas come from a paired cluster bootstrap that resamples

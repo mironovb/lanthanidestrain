@@ -1,5 +1,7 @@
 # Rigorous geometries + topological learning — methods and verification
 
+> **Update, 21 July 2026 —** the 'paired cluster bootstrap' described here collapses duplicate clusters and is an m-out-of-n subsample, not a cluster bootstrap; intervals are 12-29 % too narrow. Measured in [`CONTROL_RESULTS.md`](CONTROL_RESULTS.md) §5. No conclusion changes.
+
 Companion to `FINDINGS.md`. This file covers what was **built and verified**;
 results live in `TOPOLOGY_RESULTS.md` once the runs complete. Everything here
 is settled and will not change with the remaining arms.

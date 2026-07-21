@@ -1,5 +1,7 @@
 # Topological 3D features for lanthanide log D — results and one open control
 
+> **Update, 21 July 2026 — the missing control in §6 has been run.** Its result is in [`CONTROL_RESULTS.md`](CONTROL_RESULTS.md): topology does add on top of the objective (+0.0485 [+0.009, +0.106]), but it is a small and architecture-specific part of the +0.243 reported below, and four post-hoc findings qualify claims made here. Every number in this document is unchanged and reproduces exactly.
+
 **Bogdan Mironov · 20 July 2026**
 Companion files: `PUBLICATION_ASSESSMENT.md` (publication verdict),
 `TOPOLOGY_RESULTS.md` (full results), `TOPOLOGY_METHODS.md` (methods and

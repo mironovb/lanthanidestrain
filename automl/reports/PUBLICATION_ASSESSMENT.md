@@ -1,5 +1,7 @@
 # Is this publishable? An honest assessment
 
+> **Update, 21 July 2026 — blocker §3.1 is closed and §3.2 turned out larger than §3.1.** See [`CONTROL_RESULTS.md`](CONTROL_RESULTS.md). The verdict below stands; the recommended framing does not. Every number in this document is unchanged and reproduces exactly.
+
 Written to be read by a supervisor and reused in a cover letter. Target as
 stated: a **standalone methods paper**.
 
