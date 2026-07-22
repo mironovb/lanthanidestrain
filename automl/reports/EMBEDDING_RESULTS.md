@@ -145,3 +145,22 @@ The conclusion above rests only on the three arm values and the fold-identity
 diagnostic, both of which are valid. But it was drawn from an incomplete run,
 and the reproduce command below did not work until the bug was fixed — recorded
 rather than quietly re-run.
+
+### 5b. Completed contrasts — trained and random are statistically indistinguishable
+
+The re-run finished all contrasts (the first attempt crashed before them):
+
+| contrast | overall ΔR² | adjacent ΔR² |
+|---|---|---|
+| trained embedding − tabular | −0.2130 [−0.298, −0.135] | −0.1711 [−0.305, −0.088] |
+| random embedding − tabular | −0.1650 [−0.210, −0.140] | −0.1556 [−0.317, −0.061] |
+| **trained − random** | **−0.0480 [−0.123, +0.029]** | **−0.0155 [−0.057, +0.072]** |
+
+Both wreck the model; **neither is distinguishable from the other**. Training the
+encoder makes no measurable difference to how much damage its embedding does.
+
+That is the diagnosis confirmed at the level of the decisive contrast, not just
+by the arm values: if the collapse were about *what the encoder learned*, the
+trained and random arms would differ. They do not. The harm is the 864
+fold-incoherent columns, exactly as the 100 % fold-identifiability score
+predicted.

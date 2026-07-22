@@ -1,0 +1,7 @@
+base,arm,question,metric,delta,lo,hi,p_better,verdict
+B0_tabular,B1_plus_snn_emb,does the SNN representation add to CatBoost?,r2_overall,-0.2130227166059533,-0.29769785302652985,-0.13501265984598398,0.0,worse
+B0_tabular,B1_plus_snn_emb,does the SNN representation add to CatBoost?,adjacent,-0.1710653912097551,-0.3052559099332385,-0.08795765412734005,0.0,worse
+B0_tabular,B2_plus_random_emb,control: does an UNTRAINED encoder's projection add?,r2_overall,-0.1649728448252722,-0.20968751955597853,-0.14019687329077293,0.0,worse
+B0_tabular,B2_plus_random_emb,control: does an UNTRAINED encoder's projection add?,adjacent,-0.15558982892772785,-0.3165461106664765,-0.06118772939609555,0.0,worse
+B2_plus_random_emb,B1_plus_snn_emb,DECISIVE: does TRAINING the encoder add over random?,r2_overall,-0.0480498717806811,-0.1233500144729017,0.029385642746311842,0.2425,not distinguishable
+B2_plus_random_emb,B1_plus_snn_emb,DECISIVE: does TRAINING the encoder add over random?,adjacent,-0.015475562282027249,-0.0571968693156855,0.0718090808873113,0.2525,not distinguishable
