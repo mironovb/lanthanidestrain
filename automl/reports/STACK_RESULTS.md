@@ -298,3 +298,27 @@ It is also the one place in this project where a correction made a result
 *stronger* rather than weaker — the corrected point estimates (+0.0375, +0.0438)
 sit essentially on the uncorrected ones (+0.0381, +0.0446), so the collapse was
 not inflating the effect, only mis-stating its precision.
+
+---
+
+## 10. Split-half replication: both independent halves reproduce it
+
+The stack gain rests on one 16-seed S0 ensemble, so the obvious worry is that it
+is a property of that particular ensemble. Splitting the 16 seeds
+deterministically (alternating by sorted seed, so neither half is chosen) into
+two **independent** 8-seed ensembles and re-running the whole stack for each:
+
+| ensemble | stack adjacent-pair R² | Δ vs no-topology stack |
+|---|---|---|
+| half A (8 seeds) | +0.2704 | **+0.0393 [+0.0125, +0.0555] adds** |
+| half B (8 seeds) | +0.2652 | **+0.0375 [+0.0228, +0.0463] adds** |
+| all 16 | +0.2672 | +0.0381 [+0.0191, +0.0495] adds |
+
+**Both halves add independently, at nearly identical magnitude.** Neither half
+shares a single seed with the other, so this is internal replication of the
+effect rather than a re-description of it. It rules out the main remaining
+"lucky ensemble" explanation.
+
+Note also that 8 seeds suffice: the halves reach the same stack value as all 16,
+consistent with the S2 finding that the ensemble had largely converged and
+against the idea that the gain needs a large ensemble to appear.
