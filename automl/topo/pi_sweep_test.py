@@ -236,7 +236,13 @@ def explore(stage: str, min_seeds: int) -> int:
         # So the pre-registered selection statistic does recover the ground
         # truth here. It looked as though it might not: at 1 seed every arm is
         # too weak to earn any weight and they all tie at exactly +0.0000.
-        w_t = float(np.asarray(w)[:, 2].mean())
+        wcol = np.asarray(w)[:, 2]
+        w_t = float(wcol.mean())
+        # Fraction of extractants whose nested weights use the arm at all.  Far
+        # more interpretable than the mean: the simplex grid has step 0.1, so a
+        # single extractant out of 84 picking up 0.1 shows as a mean of 0.0012
+        # and looks like "nonzero weight" when it is nothing of the sort.
+        w_frac = float((wcol > 1e-9).mean())
         rows.append({"key": key, "resolution": cfg["resolution"],
                      "spread": cfg["spread"], "hi": cfg["hi"],
                      "weight": cfg["weight"], "channels": cfg["channels"],
@@ -244,10 +250,12 @@ def explore(stage: str, min_seeds: int) -> int:
                                   / (cfg["hi"] - cfg["lo"]),
                      "n_seeds": len(seeds), "adj_r2": adj, "err_corr": corr,
                      "stack_adj": a, "stack_overall": r2, "tune_gain": gain,
-                     "stack_weight": w_t, "is_anchor": is_anchor})
+                     "stack_weight": w_t, "stack_weight_frac": w_frac,
+                     "is_anchor": is_anchor})
         print(f"  {cfg['resolution']:4d}px s={cfg['spread']:.4f} "
               f"{cfg['channels']:5s} {cfg['weight']:8s} hi={cfg['hi']:.1f}   "
-              f"adjR2={adj:+.4f} corr={corr:+.3f} w={w_t:.2f} "
+              f"adjR2={adj:+.4f} corr={corr:+.3f} "
+              f"w={w_t:.3f}({100*w_frac:.0f}%) "
               f"tune_gain={gain:+.4f}" + ("   <- ANCHOR" if is_anchor else ""))
 
     if not rows:
@@ -259,16 +267,45 @@ def explore(stage: str, min_seeds: int) -> int:
     # than a remote one -- and it would otherwise be broken arbitrarily.
     # Strength comes before decorrelation because that is the order the
     # mechanism says binds for this arm, and it is what tuning targets.
-    out = (pd.DataFrame(rows)
-           .sort_values(["tune_gain", "adj_r2", "err_corr"],
-                        ascending=[False, False, True])
+    df = pd.DataFrame(rows)
+    # An arm the stack assigns weight 0.00 contributes nothing, and its "gain"
+    # is then not a property of the arm at all -- it is noise in how the other
+    # two components' nested weights land.  Observed directly: the 20px row
+    # spans gains of -0.0027 to -0.0030 with every weight at 0.00, differences
+    # far below anything meaningful.
+    #
+    # Sorting those by gain would rank configurations by that noise.  The
+    # pre-registered tie-break exists precisely because an all-zero-weight
+    # outcome was foreseeable; implementing "tie" as exact equality of gain
+    # missed its own rationale.  Corrected here: any configuration the stack
+    # actually uses outranks any it does not, and unused configurations are
+    # ordered by the mechanism's two axes instead of by noise.
+    # "Used" means the stack leans on the arm across extractants, not that some
+    # single extractant's weight vector happened to pick it up.  Threshold 0.05
+    # is half a grid step, i.e. roughly "a majority of extractants give it
+    # weight".  It is not a tuned cut: the published S0 arm sits at 0.41 and the
+    # persistence-image configurations at 0.0012, two orders of magnitude either
+    # side, so any threshold in between gives the same answer.
+    df["used"] = df["stack_weight"] >= 0.05
+    # Gain only carries information for configurations the stack actually uses.
+    # For the rest it is neutralised to a constant so they tie on it and fall
+    # through to the mechanism axes, rather than being ordered by noise in the
+    # other components' weights.
+    df["_gain_key"] = np.where(df["used"], df["tune_gain"], 0.0)
+    out = (df.sort_values(["used", "_gain_key", "adj_r2", "err_corr"],
+                          ascending=[False, False, False, True])
+           .drop(columns="_gain_key")
            .reset_index(drop=True))
-    if out["tune_gain"].abs().max() < 1e-12:
-        print("\n[!] EVERY configuration ties at stack gain +0.0000 (weight 0).")
+    if not out["used"].any():
+        print(f"\n[!] NO configuration earned meaningful stack weight "
+              f"(max mean weight {df['stack_weight'].max():.4f}, "
+              f"used by {100*df['stack_weight_frac'].max():.0f}% of extractants "
+              f"at best; the published S0 arm sits at 0.41).")
         print("    Tuning did not lift persistence images to where the stack "
               "will use them at all.")
-        print("    Winner decided by the pre-registered tie-break: highest "
-              "adjacent-pair R2, then lowest error correlation.")
+        print("    Ranked by the pre-registered tie-break: adjacent-pair R2, "
+              "then error correlation.")
+
     csv = REPORTS / f"pi_sweep_stage_{stage}.csv"
     out.to_csv(csv, index=False)
 
