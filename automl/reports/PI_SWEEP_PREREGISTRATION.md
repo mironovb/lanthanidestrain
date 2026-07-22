@@ -33,11 +33,21 @@ Over 120 complexes / 59,171 persistence points:
 
 | observation | value |
 |---|---|
-| Gaussian spread ÷ pixel spacing | 0.08 ÷ 0.132 = **0.61** — each point lands in ~one pixel, so the "image" is a sparse histogram |
+| Gaussian spread ÷ pixel spacing | 0.08 ÷ 0.132 = **0.61** — each kernel is narrower than a pixel *(see the correction below: this does **not** make the images sparse)* |
 | persistence points outside the (0, 2.5) window | **13.5 %** discarded; deaths reach 20.6, p95 = 3.24 |
 | kept points with persistence < 1 pixel, under `weight = death − birth` | **24.7 %**, effectively invisible |
 | channel layout | H0 (death median 0.30) and H1 (death median 1.98) **summed into one plane** |
 | points per complex | ~493 — Kostas's "many points" regime |
+
+> **Correction, 22 July, from measurement rather than inference.** I read the
+> sub-pixel spread as meaning the images were sparse and under-smoothed. They are
+> not: **65 % of pixels carry mass**, and smoothing makes the representation
+> strictly *poorer*, monotonically. The occupancy figure was available when I
+> wrote the original claim and I did not check it. What survives — far more
+> strongly than argued — is the resolution half: the shipped images have an
+> **effective dimension of 2.7** across 953 complexes, which tuning raises 7.4× to
+> 20.3. See [`PI_SWEEP_GEOMETRY.md`](PI_SWEEP_GEOMETRY.md), which also states a
+> falsifiable prediction for Stage A made before those runs completed.
 
 Under the study's mechanism — an arm helps only if **both** strong on the metric
 **and** decorrelated from its partners — P0 currently fails both: **+0.2101** and

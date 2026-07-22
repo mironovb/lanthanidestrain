@@ -7,10 +7,17 @@ Measured over 120 complexes / 59,171 persistence points, the shipped settings
 have three properties that between them explain why a CNN on these images
 carries so little signal:
 
-* **spread 0.08 against a pixel spacing of 0.132** -- ratio 0.61.  Each diagram
-  point deposits essentially all of its mass in one pixel, so the "image" is a
-  sparse histogram rather than a smooth surface.  There is very little spatial
-  structure for a convolution to exploit.
+* **spread 0.08 against a pixel spacing of 0.132** -- ratio 0.61, so each kernel
+  is narrower than a pixel.
+
+  *Corrected 22 July, after measuring:* this does NOT make the images sparse --
+  65 % of pixels carry mass, because ~493 diagram points cover a 400-pixel plane
+  however narrow each kernel is.  And smoothing turns out to make the
+  representation strictly **poorer**: effective dimension falls monotonically
+  from 3.2 to 1.2 as spread goes 0.5 -> 4.0 pixels at resolution 20.  The real
+  limitation is resolution, not smoothing: the shipped images vary in only ~2.7
+  effective directions across all 953 complexes, and raising resolution to 128
+  takes that to 20.3.  See ``PI_SWEEP_GEOMETRY.md``.
 * **the (0, 2.5) birth/death window discards 13.5 % of all points.**  Deaths
   reach 20.6 with a p95 of 3.24, so the entire upper tail is being clipped.
 * **H0 and H1 are summed into a single channel** despite occupying disjoint
