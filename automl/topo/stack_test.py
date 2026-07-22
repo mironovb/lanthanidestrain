@@ -45,9 +45,22 @@ GRID = np.round(np.arange(0.0, 1.001, 0.05), 2)
 def nested_blend(a: pd.DataFrame, b: pd.DataFrame) -> tuple[pd.DataFrame, list]:
     """Blend ``a`` and ``b`` with a per-extractant weight fitted on the others.
 
-    ``w`` weights ``b``; the returned frame carries the blended oof so it can go
+    ``w`` weights ``b``; the returned frame carries the blended oof so it goes
     straight into the same paired bootstrap every other number in this study
     used.
+
+    Fast because the arithmetic allows it, not by approximating: the blend is
+    linear in the predictions and ``adjacent_pair_arrays`` (average replicates
+    within a (block, metal) cell, then difference) is linear too, so for every
+    candidate weight
+
+        dp(w) = (1 - w) * dp_a + w * dp_b
+
+    exactly.  Each extractant's (dy, dp_a, dp_b) is therefore computed **once**
+    and the 21-point weight search becomes vector arithmetic.  The naive version
+    recomputed a groupby for every (extractant, weight) pair -- 149 x 21 x 4
+    blends -- and did not finish in 40 minutes.  ``_assert_fast_blend_matches``
+    checks this against the slow path before any result uses it.
     """
     idx = a.index.intersection(b.index)
     A, B = a.loc[idx], b.loc[idx]
@@ -57,21 +70,67 @@ def nested_blend(a: pd.DataFrame, b: pd.DataFrame) -> tuple[pd.DataFrame, list]:
     li = A["lanthanide_index"].to_numpy()
     g = A["extractant_group"].to_numpy()
 
+    # Per-extractant pair vectors, computed once.
+    groups = pd.unique(g)
+    per = {}
+    for grp in groups:
+        m = g == grp
+        dy, dpa = ev.adjacent_pair_arrays(y[m], pa[m], comp[m], li[m])
+        _, dpb = ev.adjacent_pair_arrays(y[m], pb[m], comp[m], li[m])
+        per[grp] = (dy, dpa, dpb)
+
     out = np.empty(len(A), dtype=float)
     chosen = []
-    for grp in pd.unique(g):
+    for grp in groups:
+        others = [per[o] for o in groups if o != grp and len(per[o][0])]
+        if not others:
+            best_w = 0.5
+        else:
+            dy = np.concatenate([o[0] for o in others])
+            dpa = np.concatenate([o[1] for o in others])
+            dpb = np.concatenate([o[2] for o in others])
+            ss_tot = float(np.sum((dy - dy.mean()) ** 2))
+            best_w, best_v = 0.0, -np.inf
+            for w in GRID:
+                dp = (1 - w) * dpa + w * dpb
+                v = 1.0 - float(np.sum((dy - dp) ** 2)) / ss_tot if ss_tot > 0 else np.nan
+                if np.isfinite(v) and v > best_v:
+                    best_v, best_w = v, w
         te = g == grp
-        tr = ~te
-        best_w, best_v = 0.0, -np.inf
-        for w in GRID:
-            v = adj_r2(y[tr], (1 - w) * pa[tr] + w * pb[tr], comp[tr], li[tr])
-            if np.isfinite(v) and v > best_v:
-                best_v, best_w = v, w
         out[te] = (1 - best_w) * pa[te] + best_w * pb[te]
         chosen.append(best_w)
     frame = A.copy()
     frame["oof"] = out
     return frame, chosen
+
+
+def _assert_fast_blend_matches(a: pd.DataFrame, b: pd.DataFrame,
+                               n_groups: int = 6) -> None:
+    """The vectorised weight search must agree with the groupby path.
+
+    A speedup that silently disagreed would be this study's worst recurring bug
+    (a figure and a table computing one quantity two ways), so the equivalence is
+    checked on real data before it is used.
+    """
+    idx = a.index.intersection(b.index)
+    A, B = a.loc[idx], b.loc[idx]
+    y = A["y"].to_numpy(float)
+    pa, pb = A["oof"].to_numpy(float), B["oof"].to_numpy(float)
+    comp = A["composition_key"].to_numpy(); li = A["lanthanide_index"].to_numpy()
+    g = A["extractant_group"].to_numpy()
+    groups = list(pd.unique(g))[:n_groups]
+    for grp in groups:
+        tr = g != grp
+        dy, dpa = ev.adjacent_pair_arrays(y[tr], pa[tr], comp[tr], li[tr])
+        _, dpb = ev.adjacent_pair_arrays(y[tr], pb[tr], comp[tr], li[tr])
+        for w in (0.0, 0.35, 0.5, 0.75, 1.0):
+            slow = adj_r2(y[tr], (1 - w) * pa[tr] + w * pb[tr], comp[tr], li[tr])
+            dp = (1 - w) * dpa + w * dpb
+            ss = float(np.sum((dy - dy.mean()) ** 2))
+            fast = 1.0 - float(np.sum((dy - dp) ** 2)) / ss
+            if np.isfinite(slow) and abs(slow - fast) > 1e-9:
+                raise AssertionError(
+                    f"fast blend disagrees at w={w}: {fast!r} vs {slow!r}")
 
 
 def _score(d: pd.DataFrame) -> tuple[float, float]:
@@ -119,6 +178,8 @@ def main() -> int:
         a, r = _score(v)
         print(f"  {k:10s} n={len(v):5d}  adjR2={a:+.4f}  R2={r:+.4f}")
 
+    _assert_fast_blend_matches(arms["repaired"], arms["S0"])
+    print("\n[fast nested blend verified against the groupby path to 1e-9]")
     print("\n=== nested blends with the repaired baseline ===")
     blends = {}
     for k in ("S0", "T0w", "S2", "CatBoost"):
