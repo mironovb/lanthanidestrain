@@ -39,10 +39,17 @@ reproduce it** (+0.0393 and +0.0375), so it is not a lucky ensemble.
 
 Four honest limits, each measured rather than assumed:
 
-1. **Not "3D topology helps."** A different topological encoder — the
-   persistence-image CNN — **fails to replicate** (−0.0041) and is as redundant
-   with fingerprints as the tabular control (corr 0.933 vs 0.928). The claim is
-   about *message passing over the Vietoris–Rips complex*, not 3D in general.
+1. **Demonstrated for one family of topological representation, not all.** The
+   effect replicates across filtration radii (3.0/4.0 Å), so it is a property of
+   the Vietoris–Rips complex rather than of a tuned radius. A persistence-image
+   CNN did **not** add (−0.0041) — but that is **weak evidence about topological
+   methods in general**, and should not be read as one. Persistence images are
+   known to be sensitive to their construction (resolution, spread, birth–death
+   range, weighting), and ours used the shipped fixed settings — resolution 20,
+   spread 0.08, range (0, 2.5), H0+H1 — with **no tuning at any point**. A fair
+   test of persistence homology would tune those first. The honest statement is
+   that we have positive evidence for one representation and an *untested*
+   verdict on the other.
 2. **Not "topology beats the baseline."** Alone it does not: four attempts
    failed ([`CONTROL_RESULTS.md`](CONTROL_RESULTS.md),
    [`S2_RESULTS.md`](S2_RESULTS.md), [`WO_RESULTS.md`](WO_RESULTS.md)). It earns
@@ -69,9 +76,11 @@ decorrelated from its partner. Only one arm is both:
 | CatBoost | +0.144 | +0.880 | ~0 (adds accuracy instead) |
 
 P0 fails *both* conditions at once; CatBoost is the most decorrelated of all and
-still adds nothing to selectivity because it is far too weak. This is why the
-replication failed, and it is the most useful thing the positive result has to
-say: it tells you *what to look for* in a candidate representation.
+still adds nothing to selectivity because it is far too weak. This tells you
+*what to look for* in a candidate representation — and it also says what P0's
+failure most likely means: an untuned persistence image is simply not yet strong
+enough on this metric (+0.210), not that persistent homology cannot work here.
+Tuning its construction is the obvious way to find out, and has not been done.
 
 ---
 
@@ -129,10 +138,12 @@ control, the S2 null, the geometry audit and the failed replication, this is a
 fourth-try positive with no story. With them, it is a narrow claim with a
 mechanism and a boundary.
 
-**Scope is now bounded on both sides.** Varying the *filtration radius*
-(3.0/4.0 A) reproduces the effect; varying the *representation class*
-(persistence images) does not. So "message passing over a VR complex" is
-supported and "3D topology" is not.
+**Scope.** Varying the *filtration radius* (3.0/4.0 Å) reproduces the effect, so
+it is not a tuned-radius artefact. The one alternative representation tried
+(persistence images, untuned) did not add — which bounds what has been
+*demonstrated*, not what is *possible*. "Message passing over a VR complex
+helps" is supported; "other topological representations do not" is **not
+established**, because only one was tried and it was never tuned.
 
 **Next, if the work continues:** a plain distance-based 3D GNN with no simplicial
 structure. That varies the representation class in the other direction and would

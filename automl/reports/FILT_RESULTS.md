@@ -63,9 +63,12 @@ marginally more redundant with the fingerprint model.
 > raises adjacent-pair R² from +0.2263 to +0.2619–0.2675.
 
 This is broader than the pre-filtration claim ("the simplicial encoder at
-3.5 Å") and still narrower than "3D topology helps", because the
-persistence-image CNN — a different topological representation entirely — does
-not replicate it.
+3.5 Å"). It is stated for the Vietoris–Rips complex because that is what was
+tested across radii; the one alternative representation tried — a
+persistence-image CNN at the shipped, **untuned** settings — did not reproduce
+it, which bounds what has been demonstrated rather than establishing that
+persistent homology cannot work here. Tuning the image construction is the
+obvious untried experiment.
 
 ---
 

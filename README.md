@@ -16,21 +16,22 @@ extractant never appears in both train and test.
 
 > **Message passing over a Vietoris–Rips complex of the 3D structure supplies
 > adjacent-lanthanide selectivity information that 2D fingerprint models do not
-> have.** Adding it to the best no-topology stack raises adjacent-pair
+> have.** Adding it to the best combination that has no 3D model raises adjacent-pair
 > log-separation-factor R² from **+0.2263 to +0.2672**, while *also* improving
 > overall `log D` accuracy.
 
-**Best model — CatBoost + repaired FCNN + simplicial network**, nested
+**Best model — CatBoost + scaling-corrected fingerprint network + simplicial
+network**, nested
 per-extractant weights 0.20 / 0.30 / **0.50**:
 
 | model | adjacent-pair log SF R² | overall `log D` R² |
 |---|---|---|
-| **stack + simplicial encoder** | **+0.2672** | **+0.4369** |
-| stack, no topology (CatBoost + repaired FCNN) | +0.2263 | +0.4328 |
-| stack with topology slot given to a matched control | +0.2208 | +0.4288 |
+| **combination including the simplicial network** | **+0.2672** | **+0.4369** |
+| combination without 3D (CatBoost + fingerprint network) | +0.2263 | +0.4328 |
+| same combination, 3D model replaced by a matched 2D control | +0.2208 | +0.4288 |
 | CatBoost alone | +0.1422 | +0.4987 |
-| repaired FCNN alone | +0.2206 | +0.3218 |
-| FCNN as originally published | +0.0048 | +0.3872 |
+| fingerprint network, scaling corrected | +0.2206 | +0.3218 |
+| fingerprint network as originally configured | +0.0048 | +0.3872 |
 
 ### Significance
 
@@ -38,8 +39,8 @@ Paired cluster bootstrap resampling whole extractants, 400 draws:
 
 | contrast | Δ adjacent-pair R² | 90 % CI | multiplicity-corrected |
 |---|---|---|---|
-| **drop-in** — add the encoder to the best no-topology stack | **+0.0381** | [+0.0191, +0.0495] | **[+0.0166, +0.0595]** (5-test) |
-| **swap** — encoder vs a matched no-topology control, same slot | **+0.0446** | [+0.0298, +0.0544] | **[+0.0272, +0.0621]** (5-test) |
+| add the simplicial network to the best 2D-only combination | **+0.0381** | [+0.0191, +0.0495] | **[+0.0166, +0.0595]** (5-test) |
+| simplicial network vs a matched 2D control in the same slot | **+0.0446** | [+0.0298, +0.0544] | **[+0.0272, +0.0621]** (5-test) |
 
 Both also survive a **multiplicity-respecting** cluster bootstrap (one that does
 not collapse duplicate clusters) applied *simultaneously* with the Bonferroni
@@ -64,9 +65,13 @@ the triangles), so **3.5 Å is not a tuned radius**.
 Each limit was measured, not assumed. These are why the result above is
 credible.
 
-1. **Not "3D topology helps."** A different topological representation — a CNN
-   on persistence images — **fails to replicate** (−0.0041, n.s.) and is as
-   redundant with fingerprints as the no-topology control.
+1. **Demonstrated for one representation family, not for "3D topology" as a
+   whole.** The effect replicates across filtration radii, so it is not a tuned
+   radius. A persistence-image CNN did not add (−0.0041, n.s.) — but ours used
+   the shipped fixed settings (resolution 20, spread 0.08, range 0–2.5) and was
+   **never tuned**, and persistence images are known to be sensitive to exactly
+   those choices. That single negative bounds what has been *demonstrated*, not
+   what is possible.
 2. **Not "topology beats the baseline."** Alone it does not — **four**
    pre-registered attempts failed. It earns its place by *complementarity*.
 3. **Not a selectivity signal readable from the geometry.** The
@@ -79,14 +84,14 @@ credible.
 
 ### The mechanism, which predicted rather than explained
 
-An arm improves a stack only if it is **both strong on the scored metric and
-decorrelated from its partner**:
+A model improves a combination only if it is **both strong on the scored
+metric and decorrelated from its partners**:
 
-| arm | adjacent-pair R² | error correlation with baseline | adds? |
+| model | adjacent-pair R² | error correlation with baseline | adds? |
 |---|---|---|---|
 | simplicial, 3.0–4.0 Å | +0.232 – +0.238 | 0.897 – 0.907 | **yes, all radii** |
 | persistence-image CNN | +0.210 | 0.933 | no |
-| matched tabular control | +0.203 | 0.928 | no |
+| matched 2D control | +0.203 | 0.928 | no |
 | CatBoost | +0.144 | 0.880 | no (contributes accuracy instead) |
 
 Stated after the persistence-image failure, this **predicted in advance** that
@@ -103,8 +108,8 @@ Arguably more transferable than the headline.
 | finding | evidence |
 |---|---|
 | **Train the contrast, not the absolute value.** Selectivity is a within-block contrast; conventional models optimise absolute `log D`. | +0.030 tabular, +0.042 PI-CNN, +0.186 SNN |
-| **Rank transforms destroy separation-factor signal.** `QuantileTransformer` preserves order and destroys *spacing*; a separation factor **is** spacing. Trees are immune, so it goes unnoticed. | one line took the published FCNN from **+0.005 to +0.221** |
-| **Baselines need the variance control the arms get.** | a single-seed baseline spanned 0.11 across seed conventions |
+| **Rank transforms destroy separation-factor signal.** `QuantileTransformer` preserves order and destroys *spacing*; a separation factor **is** spacing. Trees are immune, so it goes unnoticed. | one line took the original fingerprint network from **+0.005 to +0.221** |
+| **Baselines need the same variance control the candidate models get.** | a single-seed baseline spanned 0.11 across seed conventions |
 | **Model variance and ensembling are substitutes.** Reducing single-model variance cannibalises the ensemble's own gain. | SD −37 %, ensemble *worse*; every lever hurt |
 | **Stack predictions, not representations.** | fold identity recoverable from embeddings at 100 % |
 | **A cluster bootstrap that collapses duplicates isn't one.** | published intervals were 12–29 % too narrow |
@@ -136,7 +141,7 @@ module load anaconda/Python-ML-2025a
 export PYTHONPATH=$PWD
 
 python3 -m automl.topo.stack_test    --n-boot 400   # the pre-registered result
-python3 -m automl.topo.best_stack    --n-boot 400   # the deployable 3-way stack
+python3 -m automl.topo.best_stack    --n-boot 400   # the deployable 3-model combination
 python3 -m automl.topo.filt_test     --n-boot 400   # replication across radii
 python3 -m automl.topo.control_guard --verify       # nothing published moved
 ```

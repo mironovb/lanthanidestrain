@@ -210,7 +210,7 @@ while S0 takes the largest weight (0.50).
 
 ---
 
-## 8. Replication across architectures — it FAILED, and that narrows the claim
+## 8. Replication across architectures — one alternative did not reproduce it
 
 The strongest available check on a positive result is whether a different
 encoder of the same kind reproduces it. The PI-CNN (persistence images + CNN)
@@ -224,10 +224,21 @@ to the same no-topology stack, in the same slot:
 | T0w (tabular control) | +0.2006 | −0.0066 [−0.0182, +0.0026] | nothing |
 | both S0 **and** P0 | — | +0.0387 [+0.0212, +0.0495] adds | P0 adds ~0 over S0 alone (+0.2700 vs +0.2672) |
 
-**A different topological encoder does not replicate the effect.** So the claim
-supported by this study is narrower than "3D topology adds to the best model":
-it is **"the simplicial encoder adds"**. Persistence images, on this data, do
-not — they behave like the no-topology control.
+**The persistence-image encoder did not reproduce the effect**, so what this
+study *demonstrates* is that **the simplicial encoder adds**. It does **not**
+show that other topological representations cannot.
+**Important caveat on that comparison, added 22 July.** This is **weak evidence
+about topological methods in general and must not be read as strong.**
+Persistence images are well known to be sensitive to their construction —
+resolution, Gaussian spread, birth–death range, and the weighting function —
+and the ones used here are the **shipped asset's fixed settings** (resolution
+20, spread 0.08, range (0, 2.5), H0 + H1), **never tuned at any point in this
+study**. Their own separation R² of +0.2101 is the lowest of the topological
+arms, which is exactly what an untuned representation would look like. A fair
+test of persistent homology on this problem would tune the image construction
+first, and that has not been done. The correct reading is: *we have positive
+evidence for the simplicial complex and no verdict on persistence images.*
+
 
 **This also retires an argument from the earlier study.** `PUBLICATION_ASSESSMENT.md`
 cited "architecture-independent replication — SNN +0.1972 and PI-CNN +0.1968
@@ -263,12 +274,15 @@ the intersection with the PI-CNN row set, not a different result):
   selectivity, because +0.144 is far too weak. It earns its place in the stack
   for *overall accuracy* instead, at a down-weighted 0.20.
 
-**The sharpest way to put the failed replication:** the persistence-image CNN is
-as redundant with fingerprint models as the *tabular control* is (+0.933 vs
-+0.928). Message passing over the Vietoris–Rips complex captures something ECFP
-does not; persistence images, on this data, essentially do not. That is a
-statement about **which 3D representation**, not about 3D in general — and it is
-the most useful thing this positive result has to say.
+**The sharpest way to put it:** as configured, the persistence-image CNN is as
+redundant with fingerprint models as the 2D control is (+0.933 vs +0.928), and
+it is also the weakest topological arm (+0.2101). Message passing over the
+Vietoris–Rips complex captures something ECFP does not; the untuned persistence
+images do not — but "untuned" is doing real work in that sentence. The
+mechanism says a representation must be both accurate and complementary, and
+tuning the image construction is precisely the lever that would move it on both
+axes. Until that is tried, this is a statement about **one configuration of one
+representation**, not about persistent homology.
 
 ---
 

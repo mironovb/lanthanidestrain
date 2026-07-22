@@ -29,10 +29,13 @@ regenerated, no shipped table is modified. All new artefacts live under
 > ([`STACK_RESULTS.md`](reports/STACK_RESULTS.md))
 >
 > **What did not.** Topology does **not** beat the strongest baseline *alone* —
-> four attempts failed. And the claim is **not** "3D topology": a different
-> topological encoder (persistence images + CNN) fails to replicate and is as
-> redundant with fingerprints as the tabular control. The supported claim is
-> *the simplicial encoder adds by complementarity*.
+> four attempts failed; it earns its place by complementarity. And the effect is
+> **demonstrated for the simplicial complex specifically**: it replicates across
+> filtration radii (3.0/4.0 Å), but an untuned persistence-image CNN did not
+> reproduce it. That comparator used the shipped fixed settings (resolution 20,
+> spread 0.08, range 0–2.5) and was **never tuned**, and persistence images are
+> known to be sensitive to exactly those choices — so it bounds what has been
+> *shown*, not what is *possible*.
 >
 > **The +0.263 headline below is against the FCNN as originally shipped.** One
 > line of that baseline — `QuantileTransformer` → `StandardScaler` — takes it
