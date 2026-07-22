@@ -60,8 +60,18 @@ class PersistenceImages:
         # pixels near the diagonal carry most of the mass).  A log1p keeps the
         # dynamic range trainable without destroying the ordering.
         self.images = np.log1p(self.images)
-        s = self.images.std()
-        self.images = self.images / (s if s > 1e-8 else 1.0)
+        # Standardise per channel.  With the shipped single-channel images this
+        # is identical to the previous global divisor, so published runs are
+        # unaffected.  It matters once H0 and H1 are separate channels: their
+        # deaths sit around 0.30 and 1.98 respectively, so a single shared
+        # divisor set by the louder channel would push the other one towards
+        # zero before the network ever saw it.
+        s = self.images.std(axis=(0, 2, 3), keepdims=True)
+        self.images = self.images / np.where(s > 1e-8, s, 1.0)
+
+    @property
+    def n_channels(self) -> int:
+        return int(self.images.shape[1])
 
     def __len__(self) -> int: return len(self.build_ids)
 
@@ -78,9 +88,13 @@ class PersistenceCNN(nn.Module):
 
     def __init__(self, dim: int = 64, dropout: float = 0.15,
                  tabular_dim: int = 0, head_hidden: int = 256,
-                 channels: tuple[int, ...] = (16, 32, 64)):
+                 channels: tuple[int, ...] = (16, 32, 64),
+                 in_channels: int = 1):
         super().__init__()
-        c_in = 1
+        # in_channels is 1 for the shipped images, which sum H0 and H1 into a
+        # single plane, and 2 when the sweep renders them as separate channels.
+        c_in = in_channels
+        self.in_channels = in_channels
         blocks = []
         for c_out in channels:
             blocks += [nn.Conv2d(c_in, c_out, 3, padding=1),

@@ -38,7 +38,7 @@ from automl.dataset import BLOCK_PRESETS, GROUP_COL, TARGET
 from automl.topo.simplicial_data import (ConformerComplexes,
                                          SimplicialComplexes, collate)
 from automl.topo.snn import SimplicialNet, MaskedChargeHead, count_parameters
-from automl.topo.pi_cnn import PersistenceImages, PersistenceCNN
+from automl.topo.pi_cnn import PersistenceImages, PersistenceCNN, PI_PATH
 from automl.topo.tabular_net import TabularNet, NullCache
 
 REPO = Path(__file__).resolve().parents[2]
@@ -236,7 +236,8 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
     elif cfg.get("arch", "snn") == "picnn":
         model = PersistenceCNN(dim=cfg["dim"], dropout=cfg["dropout"],
                                tabular_dim=X.shape[1],
-                               head_hidden=cfg["head_hidden"]).to(device)
+                               head_hidden=cfg["head_hidden"],
+                               in_channels=cfg.get("in_channels", 1)).to(device)
     else:
         model = SimplicialNet(dim=cfg["dim"], layers=cfg["layers"],
                               dropout=cfg["dropout"], tabular_dim=X.shape[1],
@@ -546,6 +547,10 @@ def main() -> int:
     ap.add_argument("--pair-loss-weight", type=float, default=0.0,
                     help="weight on the within-composition pairwise-difference "
                          "loss; 0 reproduces the plain regression objective")
+    ap.add_argument("--restrict-groups", default=None,
+                    help="file of extractant names, one per line; the run sees "
+                         "only those. Used to keep a hyperparameter sweep off "
+                         "the confirmation half of the frozen split.")
     ap.add_argument("--smoke", action="store_true",
                     help="overfit a tiny subset; sanity check that it can learn")
     ap.add_argument("--out-dir", default=str(OUT_DIR))
@@ -562,6 +567,31 @@ def main() -> int:
                          "inputs; use --arch snn/picnn --topology-only for the "
                          "topology-only ablation.")
     df, X, cols = build_row_table(args.preset, args.arch, args.match_rows)
+    if args.restrict_groups:
+        # Confine the run to a named set of extractants.  This is what keeps a
+        # hyperparameter sweep off the confirmation half: selection is made on
+        # the tune extractants only, so the confirm extractants never influence
+        # which configuration is chosen and the confirmatory interval needs no
+        # penalty for the number of configurations tried.
+        #
+        # Applied here, before folds are built, so the held-out extractants are
+        # absent from training, from the inner early-stopping split and from the
+        # out-of-fold table alike -- not merely filtered out at scoring time.
+        want = {ln.strip() for ln in
+                Path(args.restrict_groups).read_text().splitlines() if ln.strip()}
+        have = set(df[GROUP_COL].astype(str))
+        unknown = want - have
+        if unknown:
+            raise SystemExit(f"--restrict-groups names {len(unknown)} extractants "
+                             f"not in the data, e.g. {sorted(unknown)[:3]}")
+        keep = df[GROUP_COL].astype(str).isin(want).to_numpy()
+        if not keep.any():
+            raise SystemExit("--restrict-groups selects no rows")
+        print(f"[topo] restrict-groups: {keep.sum()}/{len(df)} rows, "
+              f"{len(want)} of {len(have)} extractants "
+              f"({Path(args.restrict_groups).name})", flush=True)
+        df = df[keep].reset_index(drop=True)
+        X = X[keep]
     if args.topology_only:
         # A zero-width design matrix, not a zeroed one: this sets tabular_dim=0
         # so the head has no tabular weights at all.  Passing zeros instead
@@ -583,6 +613,11 @@ def main() -> int:
         P = PersistenceImages()
         cache = ImageCache(P, device)
         n_assets = len(P)
+        # 1 for the shipped images (H0+H1 summed); 2 when a swept configuration
+        # renders the homology dimensions as separate channels.
+        pi_channels = P.n_channels
+        print(f"[topo] persistence images: {P.images.shape} from {PI_PATH.name}",
+              flush=True)
     else:
         # ConformerComplexes is a superset wrapper: conformer 0 is the shipped
         # geometry and index_of/__len__ match SimplicialComplexes exactly, so
@@ -603,6 +638,9 @@ def main() -> int:
     cfg["select_on"] = args.select_on
     cfg["n_conformers"] = args.conformers
     cfg["block_centre"] = args.block_centre
+    if args.arch == "picnn":
+        cfg["in_channels"] = pi_channels
+        cfg["pi_images"] = str(PI_PATH)
 
     if args.smoke:
         # Capacity check, not a generalisation check: regularisation OFF.
@@ -729,7 +767,15 @@ def main() -> int:
         "metal": df["metal"].to_numpy(),
         "lanthanide_index": df["lanthanide_index"].to_numpy(),
     }).to_parquet(out_dir / f"oof_{stem}.parquet", index=False)
+    # ``cfg`` is recorded alongside ``vars(args)`` because it carries what the
+    # command line does not: the resolved persistence-image asset and its
+    # channel count, both set by the PI_IMAGES_PATH environment override.  The
+    # sweep analysis identifies runs by recorded configuration rather than by
+    # tag, so this is what makes a run self-describing.
     rec = {"tag": args.tag, "preset": args.preset, "config": vars(args),
+           "resolved": {k: v for k, v in cfg.items()
+                        if k in ("arch", "in_channels", "pi_images",
+                                 "pair_loss_weight", "select_on")},
            "n_rows": int(len(df)), "n_complexes": int(df["_cplx"].nunique()),
            "metrics": {k: (None if not np.isfinite(v) else float(v))
                        for k, v in metrics.items()},
