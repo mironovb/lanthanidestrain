@@ -197,8 +197,16 @@ def pretrain(model: SimplicialNet, cache: ComplexCache, complex_ids: list[int],
 
 # ---------------------------------------------------------------------------
 def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
-             pretrained_state=None, target_col: str | None = None) -> np.ndarray:
-    """Train on tr_idx, predict te_idx.  Returns predictions for te_idx."""
+             pretrained_state=None, target_col: str | None = None,
+             emb_out: np.ndarray | None = None) -> np.ndarray:
+    """Train on tr_idx, predict te_idx.
+
+    ``emb_out``, when given, receives this fold's **test-row** encoder
+    embeddings.  They come from a model that never saw those extractants, so the
+    assembled out-of-fold embedding matrix is leakage-free in the same sense the
+    out-of-fold predictions are -- which is what makes it legitimate to hand to a
+    downstream learner.
+    """
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
 
@@ -470,6 +478,21 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                     break
     if best_state is not None:
         model.load_state_dict(best_state)
+
+    if emb_out is not None:
+        # Test-row embeddings from the restored best checkpoint -- the same
+        # weights that produce the returned predictions, so the embedding and
+        # the prediction describe one model, not two.
+        model.eval()
+        with torch.no_grad():
+            for take in _eval_chunks(te_idx):
+                rows = te_idx[take]
+                ids = sorted(set(cplx[rows].tolist()))
+                remap = {c: i for i, c in enumerate(ids)}
+                e = _centre(_encode(ids)[torch.as_tensor(
+                    [remap[c] for c in cplx[rows]], device=device)],
+                    comp_all[rows])
+                emb_out[rows] = e.cpu().numpy()
     return _predict(te_idx, Xte)
 
 
@@ -512,6 +535,10 @@ def main() -> int:
                     help="number of geometries per complex to use; >1 samples "
                          "one at random per epoch and mean-pools all of them at "
                          "inference (requires automl/artifacts/vr_conformers)")
+    ap.add_argument("--dump-embeddings", action="store_true",
+                    help="also save the out-of-fold encoder embeddings, so a "
+                         "downstream learner can use the topological "
+                         "representation directly")
     ap.add_argument("--block-centre", action="store_true",
                     help="concatenate each embedding with its deviation from "
                          "the composition-block mean, cancelling common-mode "
@@ -663,15 +690,25 @@ def main() -> int:
     groups = df[GROUP_COL].to_numpy()
     y = df[TARGET].to_numpy(dtype=float)
     oof_sum = np.zeros(len(df)); oof_cnt = np.zeros(len(df))
+    emb_sum = emb_cnt = None       # allocated lazily: width is known per model
     t0 = time.time()
     for rep in range(args.repeats):
         for fi, (tr, te) in enumerate(
                 ev.grouped_folds(groups, n_splits=args.folds, seed=args.seed + rep)):
             ts = time.time()
+            emb_buf = None
+            if args.dump_embeddings:
+                width = (2 if args.block_centre else 1) * 9 * args.dim
+                if emb_sum is None:
+                    emb_sum = np.zeros((len(df), width), dtype=np.float32)
+                    emb_cnt = np.zeros(len(df), dtype=np.float32)
+                emb_buf = np.zeros((len(df), width), dtype=np.float32)
             pred = run_fold(df, X, cache, tr, te, cfg=cfg, device=device,
                             seed=args.seed + rep * 100 + fi,
-                            pretrained_state=pretrained)
+                            pretrained_state=pretrained, emb_out=emb_buf)
             oof_sum[te] += pred; oof_cnt[te] += 1
+            if emb_buf is not None:
+                emb_sum[te] += emb_buf[te]; emb_cnt[te] += 1
             print(f"  rep{rep} fold{fi}: n_te={len(te)} "
                   f"R2={ev._r2(y[te], pred):+.4f} [{time.time()-ts:.0f}s]",
                   flush=True)
@@ -697,6 +734,14 @@ def main() -> int:
            "metrics": {k: (None if not np.isfinite(v) else float(v))
                        for k, v in metrics.items()},
            "seconds": time.time() - t0}
+    if emb_sum is not None:
+        # Averaged over repeats, exactly like the predictions, so the embedding
+        # matrix and the OOF vector describe the same ensemble.
+        emb = emb_sum / np.maximum(emb_cnt, 1)[:, None]
+        np.savez_compressed(out_dir / f"emb_{stem}.npz",
+                            embeddings=emb.astype(np.float32),
+                            safe_exp_id=df["safe_exp_id"].to_numpy().astype("U64"))
+        print(f"[topo] wrote embeddings {emb.shape} -> emb_{stem}.npz", flush=True)
     (out_dir / f"run_{stem}.json").write_text(json.dumps(rec, indent=2))
     with open(out_dir / "results.jsonl", "a") as fh:
         fh.write(json.dumps(rec) + "\n")
