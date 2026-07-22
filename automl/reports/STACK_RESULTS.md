@@ -207,3 +207,37 @@ control is correlated, CatBoost is weak.
 That also explains why the three-way stack does best: CatBoost contributes
 overall accuracy where it is strong and is down-weighted (0.20) on selectivity,
 while S0 takes the largest weight (0.50).
+
+---
+
+## 8. Replication across architectures — it FAILED, and that narrows the claim
+
+The strongest available check on a positive result is whether a different
+encoder of the same kind reproduces it. The PI-CNN (persistence images + CNN)
+shares no layers, readout or inductive bias with the simplicial network. Added
+to the same no-topology stack, in the same slot:
+
+| stack addition | own adjacent-pair R² | Δ vs no-topology stack | 5-test corrected |
+|---|---|---|---|
+| **S0 (simplicial)** | +0.2382 | **+0.0381** [+0.0191, +0.0495] | **[+0.0166, +0.0595] adds** |
+| **P0 (persistence CNN)** | +0.2101 | **−0.0041** [−0.0139, +0.0028] | [−0.0159, +0.0077] **nothing** |
+| T0w (tabular control) | +0.2006 | −0.0066 [−0.0182, +0.0026] | nothing |
+| both S0 **and** P0 | — | +0.0387 [+0.0212, +0.0495] adds | P0 adds ~0 over S0 alone (+0.2700 vs +0.2672) |
+
+**A different topological encoder does not replicate the effect.** So the claim
+supported by this study is narrower than "3D topology adds to the best model":
+it is **"the simplicial encoder adds"**. Persistence images, on this data, do
+not — they behave like the no-topology control.
+
+**This also retires an argument from the earlier study.** `PUBLICATION_ASSESSMENT.md`
+cited "architecture-independent replication — SNN +0.1972 and PI-CNN +0.1968
+agree to 0.0004" as evidence for topology. The control already showed that
+agreement came from both architectures measuring the *objective*, which is
+architecture-independent. Here, where the encoder itself has to contribute
+something the partner lacks, the two diverge sharply. The agreement was never
+evidence about topology.
+
+**What would settle it:** a third encoder (e.g. a plain 3D GNN with no simplicial
+structure, or a different filtration). If it adds, the claim broadens back toward
+"3D representations"; if it does not, the finding is specific to message passing
+over the Vietoris–Rips complex, and the honest paper says so.
