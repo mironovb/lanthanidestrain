@@ -322,6 +322,30 @@ def test_single_channel_normalisation_is_unchanged():
     assert np.abs(P.images - raw / raw.std()).max() < 1e-6
 
 
+def test_every_cache_accepts_the_conformer_argument():
+    """All three caches must share ComplexCache's signature.
+
+    The training loop calls ``cache.batch(ids, confs)`` unconditionally, passing
+    ``None`` when there is one conformer.  ``--conformers`` widened
+    ``ComplexCache`` but not ``ImageCache`` or ``NullCache``, so ``--arch picnn``
+    and ``--arch tabular`` raised TypeError from 33324ea onwards.  Nothing
+    re-ran those arms until this sweep, so it stayed silent for two days -- and
+    the published P0 and T0w numbers predate the regression, meaning the
+    committed code could not have reproduced them.
+
+    A signature check is cheap; re-running a GPU array to discover it is not.
+    """
+    import inspect
+    from automl.topo.train import ImageCache, ComplexCache
+    from automl.topo.tabular_net import NullCache
+    for cls in (ComplexCache, ImageCache, NullCache):
+        params = list(inspect.signature(cls.batch).parameters)
+        assert params[:3] == ["self", "ids", "conformers"], \
+            f"{cls.__name__}.batch has signature {params}"
+        assert (inspect.signature(cls.batch).parameters["conformers"].default
+                is None), f"{cls.__name__}.batch conformers is not optional"
+
+
 def test_cnn_accepts_both_channel_counts():
     import torch
     from automl.topo.pi_cnn import PersistenceCNN

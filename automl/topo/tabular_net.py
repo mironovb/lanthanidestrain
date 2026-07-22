@@ -58,7 +58,15 @@ class NullCache:
     def __init__(self, device):
         self.device = device
 
-    def batch(self, ids: list[int]) -> dict[str, Any]:
+    def batch(self, ids: list[int],
+              conformers: list[int] | None = None) -> dict[str, Any]:
+        # Signature matches ComplexCache.  The control loads no 3D asset, so
+        # there is no conformer axis; the argument is accepted and ignored
+        # because the training loop passes it unconditionally.  See the note in
+        # train.ImageCache.batch -- omitting it made `--arch tabular` raise
+        # TypeError from 33324ea onwards.
+        if conformers is not None and any(c != 0 for c in conformers):
+            raise ValueError("the tabular control has no conformer axis")
         return {"n_complexes": len(ids)}
 
 

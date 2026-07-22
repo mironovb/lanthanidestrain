@@ -103,7 +103,19 @@ class ImageCache:
     def __init__(self, P: PersistenceImages, device):
         self.P, self.device = P, device
 
-    def batch(self, ids: list[int]):
+    def batch(self, ids: list[int], conformers: list[int] | None = None):
+        # Signature matches ComplexCache.  Persistence images are one per
+        # complex, so there is nothing to select a conformer from; the argument
+        # is accepted and ignored rather than rejected, because the training
+        # loop passes it unconditionally.
+        #
+        # This was a live regression: `--conformers` added a second positional
+        # argument at the call site without widening ImageCache or NullCache, so
+        # `--arch picnn` and `--arch tabular` both raised TypeError from 33324ea
+        # onwards.  The published P0 and T0w runs predate that commit, which is
+        # why it went unnoticed -- nothing re-ran those arms until now.
+        if conformers is not None and any(c != 0 for c in conformers):
+            raise ValueError("persistence images have no conformer axis")
         return self.P.batch(ids, self.device)
 
 
