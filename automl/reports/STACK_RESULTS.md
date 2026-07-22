@@ -269,3 +269,32 @@ as redundant with fingerprint models as the *tabular control* is (+0.933 vs
 does not; persistence images, on this data, essentially do not. That is a
 statement about **which 3D representation**, not about 3D in general — and it is
 the most useful thing this positive result has to say.
+
+---
+
+## 9. The result under BOTH corrections at once
+
+The bootstrap audit ([`WO_RESULTS.md`](WO_RESULTS.md) lineage,
+`automl/topo/bootstrap_check.py`) found that the standard resampling path
+collapses duplicate clusters, so every interval in this study — including the
+ones above — is **12–29 % too narrow**. The positive result should therefore be
+checked under the *corrected* resampling as well as under multiplicity
+correction, not just one at a time.
+
+Multiplicity-respecting cluster bootstrap (each drawn copy of an extractant
+tagged so a twice-drawn cluster counts twice), 400 draws:
+
+| contrast | corrected resampling, 90 % | **+ 5-test multiplicity** |
+|---|---|---|
+| drop-in (S0 vs nothing) | +0.0375 [+0.0173, +0.0510] | **[+0.0136, +0.0613] excludes 0** |
+| **swap (S0 vs matched control)** | +0.0438 [+0.0253, +0.0554] | **[+0.0225, +0.0651] excludes 0** |
+
+**Both survive both corrections simultaneously.** This is the form of the claim
+worth defending: a resampling scheme that respects cluster multiplicity, and a
+Bonferroni penalty for five looks at the same question, and the intervals still
+clear zero.
+
+It is also the one place in this project where a correction made a result
+*stronger* rather than weaker — the corrected point estimates (+0.0375, +0.0438)
+sit essentially on the uncorrected ones (+0.0381, +0.0446), so the collapse was
+not inflating the effect, only mis-stating its precision.
