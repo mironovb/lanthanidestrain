@@ -137,16 +137,63 @@ and spread. Spread is held at the same *multiple of pixel spacing* so that
 "wider range" and "more smoothing" are not confounded.
 
 ```
-range     (0, 2.5) | (0, 4.0) | (0, 6.0) | auto (p99 of observed deaths)
+range     (0, 2.5) | (0, 4.0) | (0, 6.0) | auto (p99 of observed deaths = 4.97)
 channels  H0+H1 summed | H0 and H1 as separate channels
 weight    linear (shipped) | constant | squared | arctan
-                                              -> 24 configurations
+                                              -> 32 configurations
 ```
 
-**Seeds.** 3 per configuration exploratory (drawn from the published matched
+> **Erratum, 22 July, before Stage B ran.** This line originally read "24
+> configurations". That was an arithmetic slip: 4 ranges x 2 channel layouts x
+> 4 weightings is **32**. The grid itself is exactly as enumerated above and is
+> unchanged — only my multiplication was wrong. Sweep total is therefore
+> **25 + 32 = 57** configurations, not 49.
+>
+> This changes nothing about the endpoint or its multiplicity. `N_LOOKS` stays
+> at 8 because the correction for the sweep's size is the frozen split, not a
+> Bonferroni term: selection happens on extractants the endpoint never sees, so
+> the confirmatory interval is insensitive to how many configurations were tried.
+
+**Seeds.** 8 per configuration exploratory (drawn from the published matched
 set), 16 for the winner. **Readout unchanged** — same CNN, same
 `--pair-loss-weight 2.0 --select-on adjacent`, same 5×3 folds — so any change is
 attributable to the representation and not to the model.
+
+> **Seed count, raised 3 → 8 before Stage A launched.** The smoke run showed a
+> configuration costs 40 s, not the ~2 min assumed, and that a *single* seed
+> scores +0.0401 against the published 16-seed +0.2101. Three seeds would have
+> made selection mostly ensembling noise; eight costs ~6 min per configuration.
+> See [`PI_SWEEP_HARNESS_CHECK.md`](PI_SWEEP_HARNESS_CHECK.md).
+
+### A stated confound on the resolution axis specifically
+
+Holding the readout fixed is what makes a gain attributable to the
+representation — but it does mean the **resolution** axis is not a clean
+manipulation, and this is written down now rather than discovered afterwards.
+
+`PersistenceCNN` is three 3×3 convolutions with no striding or pooling between
+them, so its receptive field is **7×7 regardless of resolution**, followed by a
+*global* mean+max pool over the whole plane. The fraction of the image any unit
+can integrate over therefore shrinks as resolution rises:
+
+| resolution | receptive field as a fraction of the image |
+|---|---|
+| 20 | 35 % |
+| 48 | 15 % |
+| 128 | **5.5 %** |
+
+So higher resolution does not simply supply more detail to the same model: it
+also gives that model a proportionally narrower view before everything is pooled
+away. **If the benchmark curve is flat or declining in resolution, the honest
+reading is "at fixed readout capacity and a fixed 7×7 receptive field", not
+"resolution does not help persistence images."** Distinguishing those would need
+the readout swept too, which is deliberately out of scope here and is recorded
+as the obvious follow-up.
+
+The **spread** axis carries no such confound: smoothing changes the image
+in-place without changing what fraction of it a unit sees, which is a further
+reason to read the spread result as the more interpretable of the two axes
+Kostas named.
 
 ---
 
