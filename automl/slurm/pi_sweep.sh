@@ -26,9 +26,12 @@
 # a configuration is never left with a partial seed set, which would ensemble
 # over a different seed set than the configurations it is ranked against.
 #
-# --restrict-groups confines every run to the frozen tune half. That is what
-# lets the confirmatory interval skip a multiplicity penalty for the ~49
-# configurations swept: selection never sees the confirm extractants.
+# AMENDED 22 July: runs train on ALL 162 extractants; only the SCORING is
+# restricted to the tune half (in pi_sweep_test.py). --restrict-groups was the
+# original design and it does not work: it removes 57% of the training rows
+# (4,742 -> 2,030) and the PI-CNN collapses from adjR2 +0.1562 to +0.0362 on
+# identical tune rows, so every configuration ties at stack weight 0.00 and the
+# selection rule cannot rank anything. See PI_SWEEP_PREREGISTRATION.md #2a.
 #
 # PI_IMAGES_PATH selects the rendered image set; PersistenceImages already
 # honours it, so pointing a run at a configuration needs no code change.
@@ -49,8 +52,9 @@ SEEDS=("$@")
 # the same way.
 if [ ${#SEEDS[@]} -eq 0 ]; then SEEDS=(7 11 23 37 42 51 67 83); fi
 
-OUT="${REPO}/automl/artifacts/pi_sweep/runs"
-SPLIT="${REPO}/automl/artifacts/pi_sweep/tune_extractants.txt"
+# Separate directory from the superseded tune-trained runs, which are kept as
+# the evidence for the amendment rather than deleted.
+OUT="${REPO}/automl/artifacts/pi_sweep/runs_full"
 mkdir -p "${OUT}"
 
 read -r KEY IMG < <(python3 -c "
@@ -70,7 +74,6 @@ for S in "${SEEDS[@]}"; do
     # averaged, so partial progress is still worth keeping.
     if python3 -m automl.topo.train --arch picnn --tag "sw${KEY}_s${S}" \
         --pair-loss-weight 2.0 --select-on adjacent \
-        --restrict-groups "${SPLIT}" \
         --folds 5 --repeats 3 --seed "${S}" --out-dir "${OUT}"; then
         echo "PISW SEED OK key=${KEY} seed=${S}"
     else

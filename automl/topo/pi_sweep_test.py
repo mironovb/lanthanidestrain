@@ -46,7 +46,8 @@ from automl.topo import pi_split
 REPO = Path(__file__).resolve().parents[2]
 REPORTS = REPO / "automl/reports"
 SWEEP = REPO / "automl/artifacts/pi_sweep"
-RUNS = SWEEP / "runs"
+RUNS = SWEEP / "runs_full"      # amended: full-data training, tune-half scoring
+RUNS_TUNETRAIN = SWEEP / "runs"  # superseded, kept as evidence (see prereg #2a)
 FINAL = REPO / "automl/artifacts/pi_final"
 
 N_LOOKS = 8      # S0, S2, stack primary, stack decisive, S0X, F30, F40, this
@@ -166,7 +167,11 @@ def explore(stage: str, min_seeds: int) -> int:
     print(f"\nno-topology stack, TUNE half: adjR2 = {an:+.4f}")
     print(f"({rec['n_tune']} extractants, {rec['tune_pairs']} adjacent pairs)\n")
 
-    runs = load_runs(tune_only=True)
+    # Amended 22 July: sweep runs train on ALL extractants and are SCORED on the
+    # tune half.  tune_only=False asserts that -- a run still carrying
+    # --restrict-groups belongs to the superseded design, where the PI-CNN
+    # collapsed to adjR2 +0.0362 and every configuration tied at weight 0.00.
+    runs = load_runs(tune_only=False)
     rows = []
     for key, cfg in manifest.items():
         seeds = runs.get(key, {})

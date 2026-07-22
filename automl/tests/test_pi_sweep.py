@@ -322,20 +322,19 @@ def test_single_channel_normalisation_is_unchanged():
     assert np.abs(P.images - raw / raw.std()).max() < 1e-6
 
 
-def test_no_sweep_run_ever_saw_a_confirm_extractant():
-    """The load-bearing guarantee, checked against what is actually on disk.
+def test_superseded_tune_trained_runs_are_still_clean():
+    """The original design's runs, kept as evidence, must be what they claim.
 
-    The confirmatory interval skips a multiplicity penalty for the ~49
-    configurations swept purely because selection happened on disjoint
-    extractants.  If a single sweep run leaked a confirm extractant into its
-    out-of-fold table, that reasoning collapses and the endpoint would be
-    silently biased.  Asserting it on the artefacts is cheap; assuming it is
-    not.
+    These are the runs that showed --restrict-groups cripples the PI-CNN
+    (adjR2 +0.0362 against +0.1562 for the same representation on full data).
+    They are retained rather than deleted, so they should still contain no
+    confirm extractant -- otherwise the measurement backing the amendment is
+    itself wrong.
     """
-    from automl.topo.pi_sweep_test import load_runs
-    runs = load_runs(tune_only=True)
+    from automl.topo.pi_sweep_test import load_runs, RUNS_TUNETRAIN
+    runs = load_runs(RUNS_TUNETRAIN, tune_only=True)
     if not runs:
-        pytest.skip("no sweep runs yet")
+        pytest.skip("no tune-trained runs")
     confirm = set(pi_split.load()["confirm"])
     for key, seeds in runs.items():
         for seed, df in seeds.items():
@@ -343,6 +342,28 @@ def test_no_sweep_run_ever_saw_a_confirm_extractant():
             assert not leaked, (
                 f"config {key} seed {seed} contains {len(leaked)} confirm "
                 f"extractants, e.g. {sorted(leaked)[:3]}")
+
+
+def test_sweep_runs_train_on_everything():
+    """Amended design: sweep runs must NOT be restricted.
+
+    Selection is now made by scoring on tune-half rows, not by training on them.
+    A sweep run still carrying --restrict-groups would be a 2,030-row model,
+    which cannot be ranked meaningfully and cannot be compared to the published
+    arms. See PI_SWEEP_PREREGISTRATION.md #2a.
+    """
+    from automl.topo.pi_sweep_test import load_runs
+    runs = load_runs(tune_only=False)
+    if not runs:
+        pytest.skip("amended sweep has not run yet")
+    tune = set(pi_split.load()["tune"])
+    confirm = set(pi_split.load()["confirm"])
+    for key, seeds in runs.items():
+        for seed, df in seeds.items():
+            seen = set(df["extractant_group"].astype(str))
+            assert seen & tune and seen & confirm, (
+                f"config {key} seed {seed} does not span both halves; "
+                "it looks restricted")
 
 
 def test_stage_c_runs_are_not_restricted():

@@ -76,13 +76,74 @@ sha256  6070dc55ee5ff2d0e285f3169e18e8fe9184b829408e788f1d131868f75f74ec
 ```
 
 `pi_split.py --verify` recomputes the rule and refuses to proceed if the hash
-moves. Runs are confined with `train.py --restrict-groups`, applied **before**
-folds are built, so held-out extractants are absent from training, from the inner
-early-stopping split and from the out-of-fold table alike.
+moves.
 
-**Because selection happens on disjoint extractants, the confirmatory interval
-carries no penalty for the number of configurations swept** — only one new look.
-That is the entire reason for accepting the loss of power.
+---
+
+## 2a. AMENDMENT, 22 July — how the tune half is used
+
+**Superseded:** the sweep was to be confined with `train.py --restrict-groups`,
+so that sweep models never *trained* on confirm extractants.
+
+**Amended to:** every sweep configuration trains on **all 162 extractants**;
+selection is scored on **tune-half rows only**. The winner is then evaluated on
+confirm-half rows.
+
+### Why — the original design does not work, measured
+
+The first complete 8-seed read showed the flaw. `--restrict-groups` removes 57 %
+of the training rows (4,742 → **2,030**; 953 → **494** complexes), and the
+persistence-image CNN cannot survive that. Scored on identical tune-half rows:
+
+| the same representation | trained on | tune-half adj R² |
+|---|---|---|
+| published P0 | all 4,742 rows | **+0.1562** |
+| sweep anchor | 2,030 tune rows | **+0.0362** |
+
+At +0.036 against a tune-half baseline stack of **+0.2473**, the stack assigns
+**every** configuration weight 0.00 and gain exactly **+0.0000**. All 25 Stage A
+configurations tie, and the selection rule cannot rank anything. The design was
+unable to answer its own question.
+
+Two further reasons the amended form is the correct one:
+
+* **Comparability.** The published S0, P0 and T0w arms were all trained on the
+  full dataset. An arm trained on 2,030 rows is not comparable to them, so even a
+  clean tune-half ranking could not be carried across to the confirmatory test.
+* **Transfer.** The optimal smoothing at 2,030 rows need not be the optimal
+  smoothing at 4,742. Selecting in a crippled-data regime and hoping the choice
+  transfers is a poor inference even when the ranking is well estimated.
+
+### What this costs, stated honestly
+
+The original claim was that selection *never saw* the confirm extractants in any
+capacity, so no multiplicity penalty could be warranted. That is now weaker:
+sweep models do train on confirm extractants in other folds.
+
+The endpoint remains unbiased, and this is the standard selection-on-a-holdout
+argument: the winner is chosen as a function of **tune-row outcomes only**, and
+the reported statistic is computed from out-of-fold predictions for **confirm
+rows**, made by models that never saw those rows. No confirm-row label
+influences which configuration is selected, so the confirm estimate is unbiased
+for the selected configuration.
+
+What is lost is the stronger, simpler guarantee. `N_LOOKS` stays at **8** on that
+basis, and because the tune and confirm halves are disjoint in *rows scored*. To
+keep this falsifiable rather than merely argued, `PI_SWEEP_RESULTS.md` will
+additionally report the interval under a deliberately punitive
+`N_LOOKS = 8 + 57` — one look per configuration swept — so a reader who rejects
+the argument above can still see whether the conclusion would survive without it.
+
+### A result in its own right
+
+The collapse from **+0.1562 to +0.0362** on 57 % fewer training rows is worth
+recording independently: the persistence-image CNN is severely data-limited on
+953 images. That is a plausible partial explanation for why P0 underperforms S0
+generally, and it is a concrete argument that the representation is not yet at
+its ceiling — which is the question this sweep exists to probe.
+
+The 66 tune-trained runs are **kept**, not discarded; they are the evidence for
+this amendment.
 
 ---
 
