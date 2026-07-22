@@ -149,3 +149,22 @@ more models" compete for the same variance.
 
 *Reproduce: `python3 -m automl.topo.s2_test --n-boot 400`. Per-seed and
 seed-paired views regenerate from `automl/artifacts/topo_s2/run_*.json`.*
+
+---
+
+## 6. Ablation (added after the fact): every lever hurt
+
+Leave-one-out ablation, 8 seeds per cell, descriptive. Unambiguous — dropping
+*any* lever **raises** the per-seed mean:
+
+| configuration | per-seed adjacent-pair R2 |
+|---|---|
+| full S2 (all three levers) | +0.163 +/- 0.029 |
+| drop pretraining | +0.174 +/- 0.026 |
+| drop conformers | +0.184 +/- 0.021 |
+| drop block-centring | +0.189 +/- 0.031 |
+
+Each lever actively hurt; the best row is the one closest to plain S0. The same
+finding as sections 1-2 from the other side: conformers, block-centring and
+pretraining all shrink the per-seed spread the ensemble was harvesting. Nothing
+here was worth adding. (Ablation runs: automl/artifacts/topo_s2_ablate/.)
