@@ -1,5 +1,23 @@
 # Topological 3D features for lanthanide log D — results and one open control
 
+> ### Update, 22 July 2026 — a positive, control-verified topology result
+>
+> The open control from §6 was run, and three further arms after it.
+> Headline: **a three-way stack (CatBoost + repaired FCNN + simplicial
+> encoder) reaches adjacent-pair R² = +0.2672 at overall R² = +0.4369** —
+> the best of both in this study. Removing the topological arm costs
+> **−0.0381 [+0.019, +0.050]**, and *swapping it for a matched
+> no-topology control in the same slot* costs **−0.0446 [+0.030, +0.054]**;
+> both survive five-test multiplicity correction. See
+> [`STACK_RESULTS.md`](STACK_RESULTS.md).
+>
+> Equally important, and it changes the framing below: topology does **not**
+> beat the strongest baseline *alone* — four attempts failed, and
+> [`CONTROL_RESULTS.md`](CONTROL_RESULTS.md), [`S2_RESULTS.md`](S2_RESULTS.md)
+> and [`WO_RESULTS.md`](WO_RESULTS.md) explain why. It earns its place by
+> being *decorrelated from* fingerprint models while still being strong on
+> the metric. Every number in this document is unchanged and reproduces.
+
 > **Update, 21 July 2026 — the missing control in §6 has been run.** Its result is in [`CONTROL_RESULTS.md`](CONTROL_RESULTS.md): topology does add on top of the objective (+0.0485 [+0.009, +0.106]), but it is a small and architecture-specific part of the +0.243 reported below, and four post-hoc findings qualify claims made here. Every number in this document is unchanged and reproduces exactly.
 
 **Bogdan Mironov · 20 July 2026**
