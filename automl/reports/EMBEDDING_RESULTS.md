@@ -133,3 +133,15 @@ So the conclusion stands and is now controlled: **this test cannot speak to the
 value of the representation in either direction.** The scalar route
 ([`STACK_RESULTS.md`](STACK_RESULTS.md)) is the one that can, and it says the
 representation helps.
+
+### 5a. Provenance note — the first run crashed after printing the arms
+
+The run those three arm values come from **crashed** before completing: `meta`
+omitted `lanthanide_index`, which `paired_adjacent_fast` requires, so the
+adjacent-pair contrasts never ran and no CSV was written. The overall contrast
+B1 − B0 = −0.2130 [−0.2977, −0.1350] had printed, as had all three arm values.
+
+The conclusion above rests only on the three arm values and the fold-identity
+diagnostic, both of which are valid. But it was drawn from an incomplete run,
+and the reproduce command below did not work until the bug was fixed — recorded
+rather than quietly re-run.

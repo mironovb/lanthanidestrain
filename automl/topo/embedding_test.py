@@ -121,10 +121,14 @@ def main() -> int:
     Xbase = sub[base_cols].to_numpy(np.float32)
     y = sub[TARGET].to_numpy(float)
     groups = sub[GROUP_COL].to_numpy()
+    # lanthanide_index is required by paired_adjacent_fast; omitting it crashed
+    # the first run *after* it had printed the arm values, so the adjacent-pair
+    # contrasts never ran and no CSV was written.
     meta = pd.DataFrame({
         "safe_exp_id": sub["safe_exp_id"].to_numpy(), "y": y,
         "extractant_group": groups,
         "composition_key": sub["composition_key"].to_numpy(),
+        "lanthanide_index": sub["lanthanide_index"].to_numpy(),
     }).set_index("safe_exp_id")
     comp = sub["composition_key"].to_numpy(); li = sub["lanthanide_index"].to_numpy()
     print(f"rows={len(sub)}  tabular={Xbase.shape[1]}  emb={Esnn.shape[1]}",
