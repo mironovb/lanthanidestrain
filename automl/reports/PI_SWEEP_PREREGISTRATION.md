@@ -129,10 +129,25 @@ for the selected configuration.
 
 What is lost is the stronger, simpler guarantee. `N_LOOKS` stays at **8** on that
 basis, and because the tune and confirm halves are disjoint in *rows scored*. To
-keep this falsifiable rather than merely argued, `PI_SWEEP_RESULTS.md` will
-additionally report the interval under a deliberately punitive
-`N_LOOKS = 8 + 57` — one look per configuration swept — so a reader who rejects
-the argument above can still see whether the conclusion would survive without it.
+keep this falsifiable rather than merely argued, the results will additionally
+report the interval under a deliberately punitive **`N_LOOKS = 8 + 57 = 65`** —
+one look per configuration swept, on top of the eight confirmatory looks taken
+across the whole study — so a reader who rejects the argument above can still see
+whether the conclusion survives without it.
+
+**That bar is passable, which is what makes reporting it worth anything.**
+Calibrated against S0's published effect (+0.0381 [+0.0191, +0.0495]):
+
+| correction | interval | clears 0? |
+|---|---|---|
+| uncorrected | [+0.0191, +0.0495] | yes |
+| primary, 8 looks | [+0.0150, +0.0612] | yes |
+| **punitive, 65 looks** | **[+0.0088, +0.0674]** | **yes** |
+
+So an S0-sized persistence-image effect would survive full multiplicity charged
+per configuration. The punitive column is a real test, not an unfalsifiable
+gesture — and if the tuned arm clears it, the finding needs none of the
+argument in this section to stand.
 
 ### A result in its own right
 

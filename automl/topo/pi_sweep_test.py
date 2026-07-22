@@ -52,6 +52,24 @@ FINAL = REPO / "automl/artifacts/pi_final"
 
 N_LOOKS = 8      # S0, S2, stack primary, stack decisive, S0X, F30, F40, this
 
+# A deliberately punitive alternative: one look per configuration swept, on top
+# of the eight confirmatory looks taken across the whole study.
+#
+# The primary number uses N_LOOKS. The justification is that selection is a
+# function of tune-row outcomes only, while the endpoint is computed from
+# out-of-fold predictions for confirm rows -- so no confirm label influences
+# which configuration is chosen and the estimate is unbiased for it.
+#
+# That argument is sound but it is an argument, and the amendment of 22 July
+# weakened the simpler guarantee it replaced (sweep models now do train on
+# confirm extractants in other folds). So the punitive interval is reported
+# alongside, unasked, letting a reader who rejects the argument see whether the
+# conclusion survives without it. Charging full multiplicity for a search whose
+# selection statistic never saw the confirm labels is far harsher than standard
+# practice; that is the point.
+N_CONFIGS_SWEPT = 25 + 32        # Stage A + Stage B
+N_LOOKS_PUNITIVE = N_LOOKS + N_CONFIGS_SWEPT
+
 # The published anchors this module refuses to report without.
 S0_ADJ = 0.2382
 P0_PUBLISHED_ADJ = 0.2101
@@ -305,11 +323,18 @@ def confirm(key: str, n_boot: int, min_seeds: int) -> int:
     clo, chi = _corrected(res["delta"], res["lo"], res["hi"], N_LOOKS)
     v = "adds" if res["lo"] > 0 else ("spans 0" if res["hi"] > 0 else "hurts")
     cv = "significant" if clo > 0 else "not significant"
+    plo, phi = _corrected(res["delta"], res["lo"], res["hi"], N_LOOKS_PUNITIVE)
+    pv = "significant" if plo > 0 else "not significant"
     print(f"  delta {res['delta']:+.4f}  [{res['lo']:+.4f}, {res['hi']:+.4f}]  {v}")
     print(f"  {N_LOOKS}-look corrected [{clo:+.4f}, {chi:+.4f}]  {cv}")
+    print(f"  punitive {N_LOOKS_PUNITIVE}-look (one per configuration swept) "
+          f"[{plo:+.4f}, {phi:+.4f}]  {pv}")
     rows.append({"contrast": "P* added to no-topology stack", **res,
                  f"lo_{N_LOOKS}look": clo, f"hi_{N_LOOKS}look": chi,
-                 "verdict": v, "verdict_corrected": cv})
+                 f"lo_{N_LOOKS_PUNITIVE}look": plo,
+                 f"hi_{N_LOOKS_PUNITIVE}look": phi,
+                 "verdict": v, "verdict_corrected": cv,
+                 "verdict_punitive": pv})
 
     # --- secondary: the decisive swap S0 faced ------------------------------
     t0w = _matched_control()
