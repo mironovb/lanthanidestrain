@@ -1,6 +1,6 @@
 # Topological 3D features for lanthanide log D — results and one open control
 
-> ### Update, 22 July 2026 — a positive, control-verified topology result
+> ### Update, 22 July 2026 — a positive, control-verified result for the simplicial encoder
 >
 > The open control from §6 was run, and three further arms after it.
 > Headline: **a three-way stack (CatBoost + repaired FCNN + simplicial
@@ -16,7 +16,16 @@
 > [`CONTROL_RESULTS.md`](CONTROL_RESULTS.md), [`S2_RESULTS.md`](S2_RESULTS.md)
 > and [`WO_RESULTS.md`](WO_RESULTS.md) explain why. It earns its place by
 > being *decorrelated from* fingerprint models while still being strong on
-> the metric. Every number in this document is unchanged and reproduces.
+> the metric.
+>
+> **And the claim is narrower than "topology".** A different topological
+> encoder — the persistence-image CNN — does **not** replicate it
+> (−0.0041 [−0.014, +0.003] in the same slot, i.e. nothing). What is
+> supported is *the simplicial encoder adds*, not *3D topology adds*. This
+> also retires the "architecture-independent replication" argument in
+> `PUBLICATION_ASSESSMENT.md` §2: SNN and PI-CNN agreed there because both
+> were measuring the objective, which is architecture-independent by
+> nature. Every number in this document is unchanged and reproduces.
 
 > **Update, 21 July 2026 — the missing control in §6 has been run.** Its result is in [`CONTROL_RESULTS.md`](CONTROL_RESULTS.md): topology does add on top of the objective (+0.0485 [+0.009, +0.106]), but it is a small and architecture-specific part of the +0.243 reported below, and four post-hoc findings qualify claims made here. Every number in this document is unchanged and reproduces exactly.
 
