@@ -13,6 +13,33 @@ regenerated, no shipped table is modified. All new artefacts live under
 
 # Headlines
 
+> ## ⚠ Current state (22 July 2026) — read this before the headlines below
+>
+> The headlines in this section were written before the missing control was run.
+> **Every number in them is still correct**, but what they *mean* changed twice.
+> [`SYNTHESIS.md`](reports/SYNTHESIS.md) is the current picture; the short version:
+>
+> **What survived.** A simplicial encoder supplies adjacent-pair information that
+> fingerprint models lack. The best model — CatBoost + repaired FCNN + simplicial
+> encoder — reaches **adjacent-pair R² = +0.2672 at overall R² = +0.4369**.
+> Removing the encoder costs **[+0.0136, +0.0613]**; swapping it for a *matched
+> no-topology control in the same slot* costs **[+0.0225, +0.0651]** — both after
+> a multiplicity-respecting cluster bootstrap **and** Bonferroni for five looks,
+> with both independent halves of the seed set replicating it.
+> ([`STACK_RESULTS.md`](reports/STACK_RESULTS.md))
+>
+> **What did not.** Topology does **not** beat the strongest baseline *alone* —
+> four attempts failed. And the claim is **not** "3D topology": a different
+> topological encoder (persistence images + CNN) fails to replicate and is as
+> redundant with fingerprints as the tabular control. The supported claim is
+> *the simplicial encoder adds by complementarity*.
+>
+> **The +0.263 headline below is against the FCNN as originally shipped.** One
+> line of that baseline — `QuantileTransformer` → `StandardScaler` — takes it
+> from +0.005 to +0.221 ([`CONTROL_RESULTS.md`](reports/CONTROL_RESULTS.md)),
+> so most of that gap was the baseline, not topology.
+
+
 **4,746 measurements · 162 extractants · 14 lanthanides · 953 unique GFN2-xTB
 complexes · leave-extractants-out CV throughout.**
 
