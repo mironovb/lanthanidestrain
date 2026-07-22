@@ -685,7 +685,72 @@ def fig_stack() -> None:
     _save(fig, "topo_stack")
 
 
-FIGS = {"forest": fig_forest, "stack": fig_stack, "blend": fig_blend_curve, "tradeoff": fig_tradeoff,
+def fig_ladder() -> None:
+    """The whole study on one axis: every model, and what topology is worth.
+
+    Two axes matter here and they trade off, so this is a scatter rather than a
+    bar chart: selectivity (adjacent-pair R², the claim) against overall
+    accuracy (what a practitioner also needs). A bar chart of one axis would
+    hide that the best stack is strong on BOTH, which is the substantive
+    improvement over every earlier topological arm.
+
+    Colour and marker both encode whether an arm uses the simplicial encoder,
+    since the whole point is the contrast between those two families.
+    """
+    # (label, adj_r2, overall_r2, uses_topology, marker, dx, dy, ha)
+    # Offsets are per point: the two stack markers sit ~0.008 apart on both axes
+    # and collided into an unreadable clump with a shared upward offset.
+    pts = [
+        ("FCNN as published", 0.0048, 0.3872, False, "o", 0, 11, "center"),
+        ("CatBoost", 0.1422, 0.4987, False, "o", 0, 11, "center"),
+        ("repaired FCNN", 0.2206, 0.3218, False, "o", 0, 13, "center"),
+        ("tabular control (T0w)", 0.2006, 0.2963, False, "o", 0, -14, "center"),
+        ("PI-CNN (P0)", 0.2101, 0.3631, False, "^", 0, -16, "center"),
+        ("SNN (S0)", 0.2382, 0.3678, True, "s", 0, 12, "center"),
+        ("stack, no topology", 0.2263, 0.4328, False, "D", -10, -4, "right"),
+        ("stack + PI-CNN", 0.2254, 0.4404, False, "D", 12, -14, "left"),
+        ("BEST: stack + SNN", 0.2672, 0.4369, True, "*", 0, 14, "center"),
+    ]
+    _style()
+    fig, ax = plt.subplots(figsize=(7.8, 5.0))
+    for lbl, a, r, topo, mk, dx, dy, ha in pts:
+        big = lbl.startswith("BEST")
+        ax.scatter(r, a, s=340 if big else 110, marker=mk,
+                   facecolor=TOPO if topo else FCNN,
+                   edgecolor="#fcfcfb", linewidth=1.6,
+                   zorder=4 if big else 3)
+        ax.annotate(lbl, (r, a), xytext=(dx, dy),
+                    textcoords="offset points", ha=ha, va="center",
+                    fontsize=8.5 if big else 8,
+                    color=INK if big else INK2,
+                    fontweight="bold" if big else "normal")
+    ax.axhline(0.2206, color=GRID, lw=1.1, ls="--", zorder=1)
+    # The dashed line is explained in the caption, not on the panel. Three
+    # placements were tried and each collided with a different label -- the
+    # region around y = 0.22 is where most of the interesting arms live, which
+    # is exactly why the line is there and why there is no room for text.
+    ax.set_xlabel("overall log D R²  (what a practitioner also needs)")
+    ax.set_ylabel("adjacent-pair log SF R²  (the selectivity claim)")
+    ax.set_xlim(0.27, 0.53); ax.set_ylim(-0.02, 0.30)
+    from matplotlib.patches import Patch
+    ax.legend(handles=[Patch(facecolor=TOPO, edgecolor="#fcfcfb",
+                             label="uses the simplicial encoder"),
+                       Patch(facecolor=FCNN, edgecolor="#fcfcfb",
+                             label="does not")],
+              loc="lower left", fontsize=8.5)
+    ax.set_title("Only the simplicial-encoder stack is strong on both axes",
+                 loc="left", pad=10, fontsize=11)
+    fig.text(0.0, -0.07,
+             "4,746 rows · 162 extractants · leave-extractants-out CV. Stacks use "
+             "nested per-extractant weights. Dashed line = the repaired baseline "
+             "(+0.2206), the level to beat. Adding the PI-CNN instead of the SNN "
+             "does not move the stack (+0.2254 vs +0.2263), which is why the claim "
+             "is about the simplicial encoder and not about 3D topology.",
+             fontsize=7.5, color=INK2, wrap=True)
+    _save(fig, "topo_ladder")
+
+
+FIGS = {"forest": fig_forest, "stack": fig_stack, "ladder": fig_ladder, "blend": fig_blend_curve, "tradeoff": fig_tradeoff,
         "seeds": fig_seed_spread, "stage2": fig_stage2,
         "parity": fig_adjacent_parity, "control": fig_control_factorial,
         "decomposition": fig_control_decomposition}
