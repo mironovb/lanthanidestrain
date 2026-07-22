@@ -180,3 +180,30 @@ Two further points:
 - The nested weights put the **largest share (0.50) on the topological arm**,
   chosen per held-out extractant on the others only.
 
+
+---
+
+## 7. The mechanism, and the part of it that is not the simple story
+
+Pair-level error correlation against the repaired baseline (correlation of the
+adjacent-pair residuals, i.e. errors at the level the metric actually scores):
+
+| arm | corr with repaired-baseline error | its own adjacent-pair R² | blend gain |
+|---|---|---|---|
+| S0 (simplicial) | **+0.897** | +0.2382 | **+0.0351** |
+| T0w (matched control) | +0.929 | +0.2006 | +0.0055 |
+| CatBoost | +0.881 | +0.1422 | +0.0004 |
+
+S0 is more decorrelated from the repaired baseline than the matched tabular
+control is, which is the mechanism the stack result requires.
+
+**But decorrelation alone is not the explanation, and it would be convenient to
+pretend otherwise.** CatBoost is the *most* decorrelated of the three (+0.881)
+and its blend gains essentially nothing, because it is weak on this metric
+(+0.1422). The requirement is **both**: strong on the scored quantity *and*
+decorrelated from the partner. S0 is the only arm that is both — the tabular
+control is correlated, CatBoost is weak.
+
+That also explains why the three-way stack does best: CatBoost contributes
+overall accuracy where it is strong and is down-weighted (0.20) on selectivity,
+while S0 takes the largest weight (0.50).
