@@ -277,9 +277,34 @@ Kostas named.
 
 The winner **P\*** is the single configuration maximising the **stack gain on the
 tune half**: `nested_stack(CatBoost, repaired, P) − nested_stack(CatBoost,
-repaired)`, restricted to tune extractants. Ties broken by the earlier grid
-position (deterministic). **One winner. No re-selection after any confirm-half
-number is seen.**
+repaired)`, scored on tune-half rows. **One winner. No re-selection after any
+confirm-half number is seen.**
+
+### Tie-break, fixed before Stage A completed
+
+The published P0 arm receives stack weight **exactly 0.00**, and so gain exactly
+**+0.0000**. If tuning fails to lift any configuration over the threshold where
+the stack will use it at all, *every* configuration ties at +0.0000 and "earlier
+grid position" would decide the winner arbitrarily. That is a foreseeable
+outcome, not a remote one, so the rule is fixed now:
+
+1. **Highest tune-half stack gain.**
+2. Ties (including an all-zero tie) → **highest tune-half adjacent-pair R²**.
+3. Still tied → **lowest error correlation** with the repaired baseline.
+4. Still tied → earliest grid position (deterministic).
+
+Steps 2 and 3 are the mechanism's two axes, in the order the mechanism says
+binds for this arm: P0's diagnosed failure was that it is *too weak* (+0.210
+against S0's +0.241) **and** too correlated (+0.933 against +0.896), and strength
+is what tuning most directly targets. This is the study's own predictive rule —
+stated after the P0 failure and since used to predict the filtration outcome
+before those runs existed — not a criterion invented for this data.
+
+**If every configuration ties at weight 0.00, that is itself the headline
+finding** and will be reported as such: tuning across 57 configurations did not
+make persistence images strong enough for the stack to use them at all. The
+confirmatory test still runs on the tie-break winner, so the claim is measured
+rather than asserted.
 
 Reported alongside, for every configuration, the mechanism's two axes —
 standalone adjacent-pair R² and error correlation with the repaired baseline — so

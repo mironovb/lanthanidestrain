@@ -7,16 +7,27 @@ before any sweep run existed.  This module executes only what was fixed there.
 Two modes, and the separation between them is the point:
 
 ``--stage a`` / ``--stage b``
-    Exploratory.  Scores every configuration on the **tune half only** and
-    writes the benchmark curve.  This is where selection happens.
+    Exploratory.  Every configuration trains on all 162 extractants and is
+    **scored on tune-half rows only**.  This is where selection happens.
 
 ``--confirm``
-    Confirmatory.  Takes the single winner, scores it on the **confirm half**,
-    which no sweep run ever saw, and applies the pre-registered decision rule.
+    Confirmatory.  Takes the single winner, retrained at 16 seeds, and scores it
+    on **confirm-half rows**, then applies the pre-registered decision rule.
 
-Because selection happened on disjoint extractants, the confirmatory interval
-carries no penalty for the ~49 configurations swept -- only one new look, so
-``N_LOOKS`` goes from 7 to 8.
+The winner is chosen as a function of tune-row outcomes alone, and the reported
+statistic comes from out-of-fold predictions for confirm rows -- made by models
+that never saw those rows.  No confirm-row label influences which configuration
+is selected, so the confirm estimate is unbiased for it.  ``N_LOOKS`` is 8 on
+that basis.
+
+That is an argument rather than a structural guarantee: the original design
+confined sweep *training* to the tune half, which would have made the point
+unarguable, but it removed 57 % of the rows and collapsed the arm under test
+from adj R2 +0.1562 to +0.0362 -- at which point every configuration tied at
+stack weight 0.00 and nothing could be ranked (see
+``PI_SWEEP_PREREGISTRATION.md`` #2a).  So ``N_LOOKS_PUNITIVE`` is reported
+alongside, charging one look per configuration swept, for readers who would
+rather not take the argument on trust.
 
 Everything reuses the machinery the published results were computed with rather
 than reimplementing it: ``nested_stack``/``_score`` from ``best_stack``,
@@ -242,7 +253,22 @@ def explore(stage: str, min_seeds: int) -> int:
     if not rows:
         print("\nno complete configurations yet")
         return 1
-    out = pd.DataFrame(rows).sort_values("tune_gain", ascending=False)
+    # Pre-registered ordering: gain, then the mechanism's two axes, then grid
+    # position.  The published P0 arm gets stack weight exactly 0.00, so an
+    # all-zero tie across every configuration is a foreseeable outcome rather
+    # than a remote one -- and it would otherwise be broken arbitrarily.
+    # Strength comes before decorrelation because that is the order the
+    # mechanism says binds for this arm, and it is what tuning targets.
+    out = (pd.DataFrame(rows)
+           .sort_values(["tune_gain", "adj_r2", "err_corr"],
+                        ascending=[False, False, True])
+           .reset_index(drop=True))
+    if out["tune_gain"].abs().max() < 1e-12:
+        print("\n[!] EVERY configuration ties at stack gain +0.0000 (weight 0).")
+        print("    Tuning did not lift persistence images to where the stack "
+              "will use them at all.")
+        print("    Winner decided by the pre-registered tie-break: highest "
+              "adjacent-pair R2, then lowest error correlation.")
     csv = REPORTS / f"pi_sweep_stage_{stage}.csv"
     out.to_csv(csv, index=False)
 
