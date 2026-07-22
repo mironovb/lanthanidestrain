@@ -107,3 +107,29 @@ checking.
 
 *Reproduce: `python3 -m automl.topo.embedding_test --n-boot 400`; the
 fold-identifiability check is in this document's commit message.*
+
+---
+
+## 5. The random-encoder control confirms the diagnosis
+
+The run included an untrained encoder (`--epochs 0`, so its weights keep their
+initialisation) precisely to discriminate "the representation is useless" from
+"the construction is invalid". Result:
+
+| arm | adjacent-pair R² | overall R² |
+|---|---|---|
+| B0 tabular | +0.1422 | +0.4987 |
+| B1 + **trained** SNN embedding | −0.0092 | +0.2856 |
+| B2 + **random** SNN embedding | +0.0176 | +0.3337 |
+
+**Both collapse.** An encoder that learned nothing damages the model just as
+thoroughly as the trained one — slightly *less*, if anything. That is exactly
+what the fold-identity diagnosis predicts: with `--epochs 0` each fold still gets
+its own random initialisation, so the assembled matrix is just as
+basis-incoherent, and the harm comes from the 864 incoherent columns rather than
+from their content.
+
+So the conclusion stands and is now controlled: **this test cannot speak to the
+value of the representation in either direction.** The scalar route
+([`STACK_RESULTS.md`](STACK_RESULTS.md)) is the one that can, and it says the
+representation helps.
