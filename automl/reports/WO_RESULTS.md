@@ -118,3 +118,15 @@ re-captioned earlier. `data/` untouched.
 
 *Reproduce: `python3 -m automl.qc.water_octanol_features` then
 `python3 -m automl.topo.water_octanol_test --n-boot 400`.*
+
+---
+
+> **Correction (22 July 2026).** Section 3 below said the geometry carries no
+> recoverable signal beyond a strong tabular model. That was too strong. The
+> audit tested the **89-column tabular 3D summary**, not the raw geometry, and
+> [`STACK_RESULTS.md`](STACK_RESULTS.md) subsequently showed the raw-geometry SNN
+> encoder *does* add to the strongest baseline in a stack (+0.0351 [+0.017,
+> +0.065]), with a matched no-topology control adding nothing. The defensible
+> claim is: no tabular 3D summary improves on a strong tabular model, and the
+> encoder does not win alone -- but it is decorrelated enough to add in
+> combination.
