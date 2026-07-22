@@ -597,7 +597,95 @@ def fig_control_decomposition() -> None:
     _save(fig, "topo_control_decomposition")
 
 
-FIGS = {"forest": fig_forest, "blend": fig_blend_curve, "tradeoff": fig_tradeoff,
+def fig_stack() -> None:
+    """The positive result: topology adds to the strongest baseline, and the
+    matched control does not.
+
+    Two panels because the claim has two halves and a reader must not take the
+    first without the second.  Left: where each blend lands, with the repaired
+    baseline as the line to beat.  Right: the three pre-registered contrasts,
+    with the four-test corrected interval drawn as a lighter bar behind the
+    nominal one -- contrast 3 is nominally significant and spans zero once
+    corrected, and a figure that showed only the nominal interval would overstate
+    exactly the thing the write-up is careful about.
+    """
+    cells = _read("stack_test.csv")
+    if cells is None:
+        print("skip stack: run automl.topo.stack_test first")
+        return
+    _style()
+    fig, (ax, ax2) = plt.subplots(
+        1, 2, figsize=(10.6, 4.0),
+        gridspec_kw={"width_ratios": [1.0, 1.15], "wspace": 0.45})
+
+    # --- left: where the blends land -------------------------------------
+    bars = [("repaired baseline\n(no topology)", 0.2206, False),
+            ("+ matched tabular\ncontrol (T0w)", 0.2289, False),
+            ("SNN alone (S0)", 0.2382, True),
+            ("+ SNN (S0)", 0.2511, True)]
+    ys = np.arange(len(bars))
+    for y, (lbl, v, topo) in zip(ys, bars):
+        ax.barh(y, v, height=0.6, color=TOPO if topo else FCNN,
+                hatch="" if topo else "///", edgecolor="#fcfcfb", linewidth=1.2,
+                zorder=3)
+        ax.annotate(f"{v:+.3f}", (v, y), xytext=(6, 0),
+                    textcoords="offset points", va="center", fontsize=8.5,
+                    color=INK2)
+    ax.axvline(0.2206, color=GRID, lw=1.2, ls="--", zorder=1)
+    ax.set_yticks(ys); ax.set_yticklabels([b[0] for b in bars], fontsize=8.5)
+    ax.set_xlabel("adjacent-pair log SF R²")
+    ax.set_xlim(0.19, 0.275)
+    ax.set_title("Blending topology with the best baseline", loc="left",
+                 pad=10, fontsize=10.5)
+    ax.grid(axis="y", visible=False)
+    from matplotlib.patches import Patch
+    ax.legend(handles=[Patch(facecolor=TOPO, edgecolor="#fcfcfb",
+                             label="uses 3D topology"),
+                       Patch(facecolor=FCNN, edgecolor="#fcfcfb", hatch="///",
+                             label="no topology")],
+              loc="lower right", fontsize=8)
+
+    # --- right: the pre-registered contrasts, nominal AND corrected --------
+    want = [("1_primary", "blend(S0) − repaired\n(does topology add?)", TOPO),
+            ("2_control", "blend(T0w) − repaired\n(control: any 2nd model?)", FCNN),
+            ("3_decisive", "blend(S0) − blend(T0w)\n(topology-specific?)", TOPO)]
+    rows = []
+    for key, lbl, col in want:
+        m = cells[cells["contrast"] == key]
+        if len(m):
+            r = m.iloc[0]
+            rows.append((lbl, float(r["delta"]), float(r["lo"]), float(r["hi"]),
+                         float(r.get("lo_3test", np.nan)),
+                         float(r.get("hi_3test", np.nan)), col))
+    yy = np.arange(len(rows))[::-1]
+    for y, (lbl, d, lo, hi, clo, chi, col) in zip(yy, rows):
+        if np.isfinite(clo):
+            ax2.plot([clo, chi], [y, y], color=col, lw=5, alpha=0.25,
+                     solid_capstyle="butt", zorder=2)
+        ax2.plot([lo, hi], [y, y], color=col, lw=2, solid_capstyle="round",
+                 zorder=3)
+        ax2.plot([d], [y], "o", ms=8, color=col, mec="#fcfcfb", mew=2, zorder=4)
+        ax2.annotate(f"{d:+.3f}", (hi, y), xytext=(7, 0),
+                     textcoords="offset points", va="center", fontsize=8.5,
+                     color=INK2)
+    ax2.axvline(0, color=INK, lw=1.4, zorder=1)
+    ax2.set_yticks(yy); ax2.set_yticklabels([r[0] for r in rows], fontsize=8.5)
+    ax2.set_xlabel("Δ adjacent-pair R²   (dark = 90 %, pale = 4-test corrected)")
+    n_nom = sum(1 for r in rows if r[2] > 0)
+    n_cor = sum(1 for r in rows if np.isfinite(r[4]) and r[4] > 0)
+    ax2.set_title(f"{n_nom}/3 clear zero nominally, {n_cor}/3 after correction",
+                  loc="left", pad=10, fontsize=10.5)
+    ax2.grid(axis="y", visible=False)
+
+    fig.text(0.0, -0.07,
+             "4,746 rows · 162 extractants · leave-extractants-out CV · nested "
+             "per-extractant blend weights · paired cluster bootstrap · "
+             "pre-registered in STACK_PREREGISTRATION.md",
+             fontsize=7.5, color=INK2)
+    _save(fig, "topo_stack")
+
+
+FIGS = {"forest": fig_forest, "stack": fig_stack, "blend": fig_blend_curve, "tradeoff": fig_tradeoff,
         "seeds": fig_seed_spread, "stage2": fig_stage2,
         "parity": fig_adjacent_parity, "control": fig_control_factorial,
         "decomposition": fig_control_decomposition}
