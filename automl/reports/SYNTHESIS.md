@@ -8,10 +8,17 @@ Every claim below links to a pre-registered test and its own results file.
 
 ## The result
 
-> A **simplicial encoder** over 3D lanthanide complexes carries adjacent-pair
-> selectivity information that fingerprint models do not, and adding it to the
-> best no-topology stack raises adjacent-pair R² from **+0.2263 to +0.2672**
-> while *also* improving overall R².
+> **Message passing over a Vietoris–Rips complex** of the 3D structure carries
+> adjacent-pair selectivity information that fingerprint models do not, and
+> adding it to the best no-topology stack raises adjacent-pair R² from
+> **+0.2263 to +0.2672** while *also* improving overall R².
+
+**Replicated across filtration radii** (added 22 July, after this document was
+first written): the same gain appears at 3.0 Å (+0.0382) and 4.0 Å (+0.0327) as
+at the published 3.5 Å (+0.0381), all three surviving Bonferroni for every one
+of the seven confirmatory looks taken. So the result is **not** an artefact of a
+tuned radius — which was the live alternative until that test ran.
+([`FILT_RESULTS.md`](FILT_RESULTS.md))
 
 | contrast | Δ | corrected resampling + 5-test multiplicity |
 |---|---|---|
@@ -122,12 +129,39 @@ control, the S2 null, the geometry audit and the failed replication, this is a
 fourth-try positive with no story. With them, it is a narrow claim with a
 mechanism and a boundary.
 
-**Next, if the work continues:** a third encoder (a plain 3D GNN, or a different
-filtration) would settle whether the finding is about simplicial message passing
-specifically or about a class of 3D representations. That is the single most
-informative remaining experiment.
+**Scope is now bounded on both sides.** Varying the *filtration radius*
+(3.0/4.0 A) reproduces the effect; varying the *representation class*
+(persistence images) does not. So "message passing over a VR complex" is
+supported and "3D topology" is not.
+
+**Next, if the work continues:** a plain distance-based 3D GNN with no simplicial
+structure. That varies the representation class in the other direction and would
+say whether "simplicial" or "3D message passing" is the operative word -- the
+one boundary the filtration test could not probe.
 
 ---
 
 *All results reproduce from `automl/reports/*.csv`; `control_guard --verify`
 confirms 324 pinned artefacts byte-identical across the entire study.*
+
+---
+
+## Postscript: the last two pre-registered tests (22 July)
+
+| test | outcome | effect on the claim |
+|---|---|---|
+| **Extended S0** - 48 seeds of the unchanged config | **negative**: +0.0244 [-0.006, +0.073], n.s.; convergence bought -0.0017 | none. The seed curve shows the ensemble was already at its asymptote by 16 seeds, so the premise that motivated the test was wrong. Fourth failed attempt to beat the baseline *alone*. ([`S0X_RESULTS.md`](S0X_RESULTS.md)) |
+| **Filtration 3.0 / 4.0 A** | **both add**: +0.0382 and +0.0327, surviving 7-look correction | **broadens** it from "the simplicial encoder at 3.5 A" to "message passing over a VR complex, across radii". ([`FILT_RESULTS.md`](FILT_RESULTS.md)) |
+
+Both were pre-registered with their outcomes' meanings fixed in advance, and both
+analyses were committed before their data existed. The extended-S0
+pre-registration explicitly predicted its own failure - *"the honest prior is
+that this does not clear"* - which is the right thing for a pre-registration to
+do when the prior is genuinely poor.
+
+**The mechanism now has a track record rather than a rationale.** Stated after
+the PI-CNN failure, it predicted *before* the filtration runs that those variants
+would add, because they are both strong and decorrelated. They did. The effect
+even declines monotonically with radius (+0.0382 -> +0.0381 -> +0.0327) as the
+error correlation rises (0.898 -> 0.897 -> 0.907), which is the same mechanism
+operating inside the family.
