@@ -322,6 +322,51 @@ def test_single_channel_normalisation_is_unchanged():
     assert np.abs(P.images - raw / raw.std()).max() < 1e-6
 
 
+def test_no_sweep_run_ever_saw_a_confirm_extractant():
+    """The load-bearing guarantee, checked against what is actually on disk.
+
+    The confirmatory interval skips a multiplicity penalty for the ~49
+    configurations swept purely because selection happened on disjoint
+    extractants.  If a single sweep run leaked a confirm extractant into its
+    out-of-fold table, that reasoning collapses and the endpoint would be
+    silently biased.  Asserting it on the artefacts is cheap; assuming it is
+    not.
+    """
+    from automl.topo.pi_sweep_test import load_runs
+    runs = load_runs(tune_only=True)
+    if not runs:
+        pytest.skip("no sweep runs yet")
+    confirm = set(pi_split.load()["confirm"])
+    for key, seeds in runs.items():
+        for seed, df in seeds.items():
+            leaked = confirm & set(df["extractant_group"].astype(str))
+            assert not leaked, (
+                f"config {key} seed {seed} contains {len(leaked)} confirm "
+                f"extractants, e.g. {sorted(leaked)[:3]}")
+
+
+def test_stage_c_runs_are_not_restricted():
+    """The winner must be trained on everything, or the endpoint is not the endpoint.
+
+    The mirror of the test above.  Stage C deliberately omits
+    ``--restrict-groups``: selection is over, so the winner is trained exactly
+    as the published arms were.  A Stage C run that was still restricted would
+    score the confirm half using a model that never trained on 78 of the 162
+    extractants.
+    """
+    from automl.topo.pi_sweep_test import load_runs, FINAL
+    runs = load_runs(FINAL, tune_only=False)
+    if not runs:
+        pytest.skip("Stage C has not run yet")
+    tune = set(pi_split.load()["tune"])
+    confirm = set(pi_split.load()["confirm"])
+    for key, seeds in runs.items():
+        for seed, df in seeds.items():
+            seen = set(df["extractant_group"].astype(str))
+            assert seen & confirm, f"{key} seed {seed} has no confirm extractants"
+            assert seen & tune, f"{key} seed {seed} has no tune extractants"
+
+
 def test_every_cache_accepts_the_conformer_argument():
     """All three caches must share ComplexCache's signature.
 

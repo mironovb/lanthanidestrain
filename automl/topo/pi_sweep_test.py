@@ -47,6 +47,7 @@ REPO = Path(__file__).resolve().parents[2]
 REPORTS = REPO / "automl/reports"
 SWEEP = REPO / "automl/artifacts/pi_sweep"
 RUNS = SWEEP / "runs"
+FINAL = REPO / "automl/artifacts/pi_final"
 
 N_LOOKS = 8      # S0, S2, stack primary, stack decisive, S0X, F30, F40, this
 
@@ -55,20 +56,31 @@ S0_ADJ = 0.2382
 P0_PUBLISHED_ADJ = 0.2101
 
 
-def load_runs() -> dict[str, dict[int, pd.DataFrame]]:
-    """Sweep runs grouped by image-configuration key, then by seed.
+def load_runs(root: Path | None = None,
+              tune_only: bool | None = None) -> dict[str, dict[int, pd.DataFrame]]:
+    """Runs grouped by image-configuration key, then by seed.
 
     Runs are identified by their **recorded configuration** -- the resolved
     ``pi_images`` path written into ``run_*.json`` -- rather than by parsing the
     tag, so a tag typo cannot silently merge two configurations.
+
+    ``tune_only`` filters on whether the run was confined to the tune half.
+    This is a safety interlock rather than a convenience: a sweep run and a
+    Stage C run can share an image configuration, and mixing them would put
+    tune-half-only predictions into the confirmatory endpoint, quietly voiding
+    the separation the whole design rests on.
     """
+    root = root or RUNS
     out: dict[str, dict[int, pd.DataFrame]] = {}
-    if not RUNS.exists():
+    if not root.exists():
         return out
-    for js in sorted(RUNS.glob("run_*.json")):
+    for js in sorted(root.glob("run_*.json")):
         rec = json.loads(js.read_text())
         img = rec.get("resolved", {}).get("pi_images")
         if not img:
+            continue
+        restricted = bool(rec["config"].get("restrict_groups"))
+        if tune_only is not None and restricted is not tune_only:
             continue
         key = Path(img).stem.replace("img_", "")
         seed = int(rec["config"]["seed"])
@@ -154,7 +166,7 @@ def explore(stage: str, min_seeds: int) -> int:
     print(f"\nno-topology stack, TUNE half: adjR2 = {an:+.4f}")
     print(f"({rec['n_tune']} extractants, {rec['tune_pairs']} adjacent pairs)\n")
 
-    runs = load_runs()
+    runs = load_runs(tune_only=True)
     rows = []
     for key, cfg in manifest.items():
         seeds = runs.get(key, {})
@@ -266,7 +278,9 @@ def confirm(key: str, n_boot: int, min_seeds: int) -> int:
               "direction. Pre-registered outcome: the test is VOID.")
         return 1
 
-    runs = load_runs()
+    # Stage C only: full-data runs, from their own directory, with the
+    # tune-half interlock asserted rather than assumed.
+    runs = load_runs(FINAL, tune_only=False)
     seeds = runs.get(key, {})
     print(f"\nwinner {key}: {len(seeds)} seeds"
           + ("" if len(seeds) >= min_seeds else "  -- INCOMPLETE"))
