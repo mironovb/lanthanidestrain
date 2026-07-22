@@ -750,7 +750,89 @@ def fig_ladder() -> None:
     _save(fig, "topo_ladder")
 
 
+def fig_pi_benchmark() -> None:
+    """The resolution benchmark Kostas asked for, on both axes that matter.
+
+    "Image resolution: we usually go from 20x20 up to 150x150 (not
+    recommended). I would suggest benchmarking this hyperparameter and see how
+    the accuracy of your model is increasing/decreasing. Spread: ... another
+    hyperparameter that can be tuned."
+
+    Left panel is that benchmark directly -- adjacent-pair R2 against
+    resolution, one line per spread (expressed in pixels, so it means the same
+    thing at every resolution).  Right panel is the quantity that actually
+    decides whether a configuration is useful here: under this study's
+    mechanism an arm must be **both** strong on the metric and decorrelated from
+    its partners, and the shipped configuration failed both.  A configuration
+    that climbs the left panel but not the right one will still contribute
+    nothing.
+
+    Everything is scored on the tune half only -- this is the selection stage,
+    not the endpoint.
+    """
+    df = _read("pi_sweep_stage_a.csv")
+    if df is None or df.empty:
+        print("[figures_topo] pi_benchmark: no stage A results yet")
+        return
+    swept = df[~df["is_anchor"]].copy()
+    anchor = df[df["is_anchor"]]
+    swept["px"] = swept["spread_px"].round(1)
+
+    _style()
+    fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.6))
+    shades = [0.35, 0.6, 0.85, 1.0]
+    marks = ["o", "s", "^", "D"]
+    levels = sorted(swept["px"].unique())
+
+    for ax, col, lab in ((axes[0], "adj_r2", "adjacent-pair log SF $R^2$"),
+                         (axes[1], "err_corr",
+                          "error correlation with the fingerprint baseline")):
+        for i, px in enumerate(levels):
+            s = swept[swept["px"] == px].sort_values("resolution")
+            ax.plot(s["resolution"], s[col], marker=marks[i % len(marks)],
+                    color=TOPO, alpha=shades[i % len(shades)], lw=1.6, ms=5,
+                    label=f"spread = {px:g} px")
+        if len(anchor):
+            a = anchor.iloc[0]
+            ax.scatter([a["resolution"]], [a[col]], marker="*", s=210,
+                       color=FCNN, zorder=5, edgecolor="white", linewidth=0.8,
+                       label=f"shipped ({a['spread_px']:.2f} px)")
+        ax.set_xlabel("image resolution (pixels per side)")
+        ax.set_ylabel(lab)
+        ax.grid(True, color=GRID, lw=0.6, alpha=0.7)
+        ax.set_axisbelow(True)
+
+    # The thresholds the mechanism sets, drawn from the published arms rather
+    # than chosen: S0 contributes at +0.241 / 0.896, the shipped images do not
+    # at +0.210 / 0.933.
+    axes[0].axhline(0.2382, color=INK2, ls="--", lw=1.0)
+    axes[0].annotate("S0 simplicial, +0.2382", xy=(0.98, 0.2382),
+                     xycoords=("axes fraction", "data"), ha="right",
+                     va="bottom", fontsize=8, color=INK2)
+    axes[1].axhline(0.896, color=INK2, ls="--", lw=1.0)
+    axes[1].annotate("S0 simplicial, 0.896", xy=(0.98, 0.896),
+                     xycoords=("axes fraction", "data"), ha="right",
+                     va="bottom", fontsize=8, color=INK2)
+    axes[1].invert_yaxis()
+    axes[1].set_ylabel("error correlation  (lower is better)")
+
+    best = df.sort_values("tune_gain", ascending=False).iloc[0]
+    a_txt = (f"shipped {anchor.iloc[0]['adj_r2']:+.4f}"
+             if len(anchor) else "shipped n/a")
+    fig.suptitle(
+        f"Persistence-image benchmark: {len(df)} configurations, "
+        f"{int(df['n_seeds'].min())}-{int(df['n_seeds'].max())} seeds, tune half\n"
+        f"best {best['resolution']:.0f}px / {best['spread_px']:.1f}px spread: "
+        f"adj $R^2$ {best['adj_r2']:+.4f}, corr {best['err_corr']:+.3f}, "
+        f"stack gain {best['tune_gain']:+.4f}  ({a_txt})",
+        fontsize=10.5)
+    axes[0].legend(frameon=False, fontsize=8, loc="best")
+    fig.tight_layout(rect=(0, 0, 1, 0.90))
+    _save(fig, "pi_sweep_benchmark")
+
+
 FIGS = {"forest": fig_forest, "stack": fig_stack, "ladder": fig_ladder, "blend": fig_blend_curve, "tradeoff": fig_tradeoff,
+        "pi_benchmark": fig_pi_benchmark,
         "seeds": fig_seed_spread, "stage2": fig_stage2,
         "parity": fig_adjacent_parity, "control": fig_control_factorial,
         "decomposition": fig_control_decomposition}

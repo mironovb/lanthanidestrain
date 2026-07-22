@@ -173,6 +173,24 @@ def explore(stage: str, min_seeds: int) -> int:
         is_anchor = (cfg["resolution"] == 20 and abs(cfg["spread"] - 0.08) < 1e-9
                      and cfg["channels"] == "sum" and cfg["weight"] == "linear"
                      and abs(cfg["hi"] - 2.5) < 1e-9)
+        # The weight the stack actually gives the arm.  ``nested_stack`` returns
+        # one weight vector per extractant, in the order of ``names``, so the
+        # arm's share is column 2.
+        #
+        # This is recorded because it is the cleanest signal available, and
+        # because a gain of exactly +0.0000 is ambiguous on its own: it means
+        # the arm was assigned weight 0 and correctly ignored, not that it was
+        # given weight and failed to help.  Validated against the arms whose
+        # answers are already known, on this same tune half at 8 seeds:
+        #
+        #     S0  (adds, +0.0381 on full data)   weight 0.41, gain +0.0039
+        #     P0  (does not add)                 weight 0.00, gain -0.0027
+        #     T0w (does not add)                 weight 0.00, gain -0.0078
+        #
+        # So the pre-registered selection statistic does recover the ground
+        # truth here. It looked as though it might not: at 1 seed every arm is
+        # too weak to earn any weight and they all tie at exactly +0.0000.
+        w_t = float(np.asarray(w)[:, 2].mean())
         rows.append({"key": key, "resolution": cfg["resolution"],
                      "spread": cfg["spread"], "hi": cfg["hi"],
                      "weight": cfg["weight"], "channels": cfg["channels"],
@@ -180,10 +198,10 @@ def explore(stage: str, min_seeds: int) -> int:
                                   / (cfg["hi"] - cfg["lo"]),
                      "n_seeds": len(seeds), "adj_r2": adj, "err_corr": corr,
                      "stack_adj": a, "stack_overall": r2, "tune_gain": gain,
-                     "is_anchor": is_anchor})
+                     "stack_weight": w_t, "is_anchor": is_anchor})
         print(f"  {cfg['resolution']:4d}px s={cfg['spread']:.4f} "
               f"{cfg['channels']:5s} {cfg['weight']:8s} hi={cfg['hi']:.1f}   "
-              f"adjR2={adj:+.4f} corr={corr:+.3f} "
+              f"adjR2={adj:+.4f} corr={corr:+.3f} w={w_t:.2f} "
               f"tune_gain={gain:+.4f}" + ("   <- ANCHOR" if is_anchor else ""))
 
     if not rows:
