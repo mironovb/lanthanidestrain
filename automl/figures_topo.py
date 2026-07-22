@@ -750,6 +750,67 @@ def fig_ladder() -> None:
     _save(fig, "topo_ladder")
 
 
+def _pi_prediction_panel(df: pd.DataFrame) -> None:
+    """Does adjacent-pair R2 track the representation's effective dimension?
+
+    This is the falsification test for the prediction in ``PI_SWEEP_GEOMETRY.md``,
+    made before Stage A completed: the shipped images vary in only ~2.7 effective
+    directions and tuning raises that 7.4x, so *if* information content is the
+    binding constraint, accuracy should climb with it.
+
+    The competing hypothesis is already on record: ``PersistenceCNN`` has a fixed
+    7x7 receptive field and a global pool, so a unit sees 35 % of the plane at
+    resolution 20 and 5.5 % at 128.  Information rises with resolution while the
+    readout's ability to integrate it falls.  A flat or negative slope here
+    implicates the *readout*, not the representation, and the correlation is
+    printed into the title so the figure states its own verdict.
+    """
+    geo = _read("pi_sweep_geometry_a.csv")
+    if geo is None or geo.empty:
+        return
+    m = df.merge(geo[["key", "eff_dim", "rho_vs_anchor"]], on="key", how="inner")
+    if len(m) < 4:
+        print(f"[figures_topo] pi_prediction: only {len(m)} configurations, "
+              "skipping")
+        return
+
+    r = float(np.corrcoef(np.log(m["eff_dim"]), m["adj_r2"])[0, 1])
+    _style()
+    fig, ax = plt.subplots(figsize=(6.4, 4.8))
+    anc = m[m["is_anchor"]]
+    sw = m[~m["is_anchor"]]
+    sc = ax.scatter(sw["eff_dim"], sw["adj_r2"], c=sw["resolution"],
+                    cmap="viridis", s=55, edgecolor="white", linewidth=0.6,
+                    zorder=3)
+    if len(anc):
+        ax.scatter(anc["eff_dim"], anc["adj_r2"], marker="*", s=260, color=FCNN,
+                   edgecolor="white", linewidth=0.8, zorder=5,
+                   label="shipped settings")
+    ax.axhline(0.2382, color=INK2, ls="--", lw=1.0)
+    ax.annotate("S0 simplicial, +0.2382", xy=(0.98, 0.2382),
+                xycoords=("axes fraction", "data"), ha="right", va="bottom",
+                fontsize=8, color=INK2)
+    fig.colorbar(sc, ax=ax, label="image resolution (px)")
+    ax.set_xscale("log")
+    ax.set_xlabel("effective dimension of the representation\n"
+                  "(participation ratio, measured without any training)")
+    ax.set_ylabel("adjacent-pair log SF $R^2$ (tune half)")
+    ax.grid(True, color=GRID, lw=0.6, alpha=0.7)
+    ax.set_axisbelow(True)
+    if len(anc):
+        ax.legend(frameon=False, fontsize=8, loc="best")
+
+    verdict = ("information was the binding constraint"
+               if r > 0.3 else
+               "the fixed 7x7 receptive field dominates -- the constraint is the "
+               "READOUT" if r < -0.3 else
+               "neither binds: the target cannot use this representation")
+    ax.set_title(f"Prediction test: r = {r:+.3f} over {len(m)} configurations\n"
+                 f"{verdict}", fontsize=10)
+    fig.tight_layout()
+    _save(fig, "pi_sweep_prediction")
+
+
 def fig_pi_benchmark() -> None:
     """The resolution benchmark Kostas asked for, on both axes that matter.
 
@@ -819,6 +880,7 @@ def fig_pi_benchmark() -> None:
     best = df.sort_values("tune_gain", ascending=False).iloc[0]
     a_txt = (f"shipped {anchor.iloc[0]['adj_r2']:+.4f}"
              if len(anchor) else "shipped n/a")
+    _pi_prediction_panel(df)
     fig.suptitle(
         f"Persistence-image benchmark: {len(df)} configurations, "
         f"{int(df['n_seeds'].min())}-{int(df['n_seeds'].max())} seeds, tune half\n"
