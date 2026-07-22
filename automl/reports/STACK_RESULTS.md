@@ -141,3 +141,42 @@ Either could sharpen or overturn this.
 ---
 
 *Reproduce: `python3 -m automl.topo.stack_test --n-boot 400`.*
+
+---
+
+## 6. The best deployable model (descriptive, but with the decisive control)
+
+**This section is descriptive, not a pre-registered endpoint** — the confirmatory
+claim is section 1. It is reported because it answers the practical question and
+because its controls are the strongest in the study.
+
+A three-way nested stack of CatBoost (accuracy), the repaired FCNN (selectivity)
+and S0 (3D):
+
+| stack | adjacent-pair R² | overall R² | median weights |
+|---|---|---|---|
+| **CatBoost + repaired + S0** | **+0.2672** | **+0.4369** | 0.20 / 0.30 / **0.50** |
+| no topology (CatBoost + repaired) | +0.2263 | +0.4328 | 0.30 / 0.70 |
+| topology slot given to the control (T0w) | +0.2208 | +0.4288 | 0.30 / 0.30 / 0.40 |
+
+| contrast | Δ | 90 % CI | 5-test corrected |
+|---|---|---|---|
+| drop-in: add S0 to the best no-topology stack | +0.0381 | [+0.0191, +0.0495] | **[+0.0166, +0.0595] adds** |
+| **swap: S0 vs the matched control in the same slot** | **+0.0446** | [+0.0298, +0.0544] | **[+0.0272, +0.0621] adds** |
+
+**Both survive five-test correction** — unlike the two-way stack, whose decisive
+contrast did not. The swap is the strongest form of the control available: the
+same stack, the same two partners, the same slot, and only the occupant changes.
+Filling it with the matched tabular arm gives +0.2208; filling it with the
+simplicial encoder gives +0.2672.
+
+Two further points:
+
+- **+0.2672 is the highest adjacent-pair R² in the study**, above the originally
+  published +0.2641 blend, and it reaches it at **+0.4369 overall R²** — close to
+  CatBoost’s +0.4987 and far above any pure topological arm (+0.37). The
+  selectivity/accuracy trade-off that characterised every earlier topological arm
+  is largely gone.
+- The nested weights put the **largest share (0.50) on the topological arm**,
+  chosen per held-out extractant on the others only.
+
