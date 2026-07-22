@@ -45,7 +45,37 @@ and a positive gain; both non-contributing arms receive weight **exactly 0.00**
 and a negative gain. The ordering also holds on the mechanism's two axes: S0 is
 both stronger (+0.243 vs +0.156) and less correlated (+0.928 vs +0.966).
 
-**No amendment. The pre-registered rule stands unchanged.**
+**No amendment to the selection rule. It stands unchanged.**
+
+---
+
+## Postscript — what this check did and did not cover
+
+Added after the sweep design was amended, because the distinction matters and
+this document read more broadly than it was entitled to.
+
+The three arms above are **trained on all 162 extractants and restricted to the
+tune half only at scoring time**. That is precisely the *amended* design
+([`PI_SWEEP_PREREGISTRATION.md` §2a](PI_SWEEP_PREREGISTRATION.md)) — so this
+check validates the sweep as it now runs, and the selection rule is sound for it.
+
+It did **not** cover the design that was in force when it was written, in which
+sweep runs were confined to the tune half with `--restrict-groups` and therefore
+trained on 2,030 rows rather than 4,742. That condition was never reproduced
+here, and it is the one that failed: the same representation collapses from
+**+0.1562 to +0.0362**, every configuration ties at weight 0.00, and the rule
+ranks nothing.
+
+So the conclusion drawn at the time — "no amendment needed" — was correct about
+the statistic and wrong about the sweep, because the check tested the wrong
+training condition. **The lesson is narrow and worth stating: a harness check
+must reproduce the condition the harness will actually run under, not a
+convenient neighbour of it.** Validating on published artefacts was what made
+the check cheap, and also what made it miss.
+
+The failure was caught one stage later by the first complete 8-seed read, at a
+cost of 66 GPU runs. It would have been caught here, before any of them, by
+restricting one published arm's *training* rather than only its scoring.
 
 ## Why the one-seed read was misleading
 
