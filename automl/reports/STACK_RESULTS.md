@@ -241,3 +241,31 @@ evidence about topology.
 structure, or a different filtration). If it adds, the claim broadens back toward
 "3D representations"; if it does not, the finding is specific to message passing
 over the Vietoris–Rips complex, and the honest paper says so.
+
+### 8a. Why P0 fails where S0 succeeds — the mechanism explains the failed replication
+
+Both properties are required, and only one arm has both. Measured on the rows
+all five arms share (4,742; the small shift from +0.2382 to +0.2410 for S0 is
+the intersection with the PI-CNN row set, not a different result):
+
+| arm | strong? (adj R²) | decorrelated? (corr with repaired error) | stack gain |
+|---|---|---|---|
+| **S0 simplicial** | **+0.241** | **+0.896** | **+0.0381** |
+| P0 persistence CNN | +0.210 | +0.933 | −0.0041 |
+| T0w tabular control | +0.203 | +0.928 | −0.0066 |
+| CatBoost | +0.144 | +0.880 | ~0 |
+
+- **S0** is the only arm that is both strong on the metric and the least
+  correlated among the strong arms. It adds.
+- **P0** is *both* weaker **and** more correlated than S0, so it fails on both
+  counts at once — it does not merely miss narrowly.
+- **CatBoost** is the most decorrelated of all and still adds nothing to
+  selectivity, because +0.144 is far too weak. It earns its place in the stack
+  for *overall accuracy* instead, at a down-weighted 0.20.
+
+**The sharpest way to put the failed replication:** the persistence-image CNN is
+as redundant with fingerprint models as the *tabular control* is (+0.933 vs
++0.928). Message passing over the Vietoris–Rips complex captures something ECFP
+does not; persistence images, on this data, essentially do not. That is a
+statement about **which 3D representation**, not about 3D in general — and it is
+the most useful thing this positive result has to say.
