@@ -129,10 +129,23 @@ def main() -> int:
     if not stats:
         print("\nnot enough replicates to estimate the floor yet")
         return 1
-    floor_sd = float(np.mean([s["sd"] for s in stats]))
+    # Pool across configurations rather than averaging SDs: each contributes
+    # (n-1) degrees of freedom and n is small, so an unweighted mean of SDs
+    # would throw away the little information there is.
+    ss = sum(float(((g["adj_r2"] - g["adj_r2"].mean()) ** 2).sum())
+             for _, g in df.groupby("key") if len(g) >= 2)
+    dof = sum(len(g) - 1 for _, g in df.groupby("key") if len(g) >= 2)
+    floor_sd = float(np.sqrt(ss / dof)) if dof else float("nan")
     floor_rng = float(np.max([s["range"] for s in stats]))
-    print(f"\nNOISE FLOOR: mean within-configuration SD {floor_sd:.4f}, "
-          f"worst range {floor_rng:.4f}")
+    # A *difference* between two independently-run configurations carries the
+    # nondeterminism of both, so its standard error is sigma*sqrt(2).  Comparing
+    # a difference against a single-measurement sigma overstates significance by
+    # 41 %, which is exactly the kind of error this document exists to catch.
+    diff_se = floor_sd * np.sqrt(2.0)
+    print(f"\nNOISE FLOOR: pooled within-configuration SD {floor_sd:.4f} "
+          f"({dof} d.o.f.), worst observed range {floor_rng:.4f}")
+    print(f"  a DIFFERENCE between two configurations therefore has SE "
+          f"{diff_se:.4f} = sigma*sqrt(2)")
     print(f"  per-seed SD (what the 8-seed ensembling was designed to control): "
           f"{df['per_seed_sd'].mean():.4f}")
 
@@ -146,12 +159,14 @@ def main() -> int:
         for lab, val in (("best - anchor", best - anchor),
                          ("full Stage A range", rng_a),
                          ("S0 - best tuned", 0.2429 - best)):
-            k = val / floor_sd if floor_sd > 0 else float("inf")
+            k = val / diff_se if diff_se > 0 else float("inf")
             verdict = ("resolvable" if k >= 3 else
                        "MARGINAL" if k >= 2 else "NOT RESOLVABLE")
-            print(f"  {lab:22s} {val:+.4f}   {k:5.1f}x the floor   {verdict}")
-        print("\nA difference under ~2x the floor is not a finding, however "
-              "many configurations it was selected from.")
+            print(f"  {lab:22s} {val:+.4f}   {k:5.1f} sigma   {verdict}")
+        print("\nSigma here is the SE of a difference between two independently"
+              "-run\nconfigurations. Under ~2 sigma is not a finding, however "
+              "many\nconfigurations it was selected from -- selection makes it "
+              "worse, not better.")
     return 0
 
 
