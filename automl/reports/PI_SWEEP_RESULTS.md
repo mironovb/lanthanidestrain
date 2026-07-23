@@ -2,9 +2,8 @@
 
 **Bogdan Mironov · 23 July 2026**
 Pre-registered in [`PI_SWEEP_PREREGISTRATION.md`](PI_SWEEP_PREREGISTRATION.md),
-committed before any sweep run existed. Stage B main effects and the
-confirmatory endpoint are still running; everything below is complete and will
-not be changed by them.
+committed before any sweep run existed. All 57 constructions and the replication
+are complete; Stage C and the confirmatory endpoint remain.
 
 ---
 
@@ -12,17 +11,29 @@ not be changed by them.
 
 > Persistence images were tuned across **57 constructions** — resolution 20–128,
 > Gaussian spread 0.5–4 pixels, four birth–death windows, both channel layouts
-> and four weightings. **The best construction found is indistinguishable from
-> the shipped defaults**: +0.0003 ± 0.0034 (**0.1 σ**). The arm remains
-> **+0.0759 (14.3 σ)** short of the simplicial encoder, and no construction
-> earned meaningful weight in the stack.
+> and four weightings.
+>
+> **One construction choice genuinely matters, and it is not one anyone
+> identified in advance.** Weighting each topological feature *equally* beats the
+> shipped weighting-by-persistence by **+0.0120 ± 0.0031 (3.9 σ)**, replicated
+> (§8). Resolution and spread — the two axes the PI named — do nothing, and so do
+> the birth–death window and the H0/H1 channel split (§§1, 3, 8).
+>
+> **It changes nothing that matters.** The improvement buys strength and leaves
+> redundancy untouched (error correlation 0.966 → 0.961, against S0's 0.928), so
+> the arm still earns meaningful stack weight from **2 %** of extractants against
+> S0's **41 %**, and remains **+0.064** short of the simplicial encoder.
 >
 > **The limitation is not the construction.** The untuned P0 result in the
-> published study was not disadvantaged by its settings.
+> published study was not materially disadvantaged by its settings.
 
 This closes the first item on [`PI_EMAIL.md`](PI_EMAIL.md)'s "what I suggest
-next" — in the direction that supports the published work rather than qualifying
-it.
+next", broadly in the direction that supports the published work rather than
+qualifying it.
+
+**Read §§1–2 before any number below.** The sweep's per-cell precision is worse
+than most of the differences it measures, and the first result I drew from it was
+entirely an artefact of that.
 
 ---
 
@@ -77,8 +88,10 @@ Not everything is lost to noise — these clear the floor comfortably:
 | 20 px / 1.0 px is genuinely worse than both the anchor and the best | 3.4 σ, 4.6 σ |
 | effective dimension 2.7 → 20.3 | training-free, exact |
 
-So constructions *do* differ measurably. What fails is specifically the claim
-that tuning found something **better than the defaults**.
+So constructions *do* differ measurably. What fails at this point in the analysis
+is the claim that tuning found something better than the defaults *on the
+resolution and spread axes*. §8 revisits this: the weighting axis, tested in
+Stage B, does yield a replicated improvement.
 
 ## 4. Information content and usefulness are independent here
 
@@ -101,7 +114,8 @@ Recorded because the pattern matters more than any one number.
 |---|---|
 | "the images are a sparse histogram" | **wrong** — 65 % of pixels carry mass; the occupancy figure was in my own earlier output |
 | "they are under-smoothed" | **backwards** — smoothing makes the representation monotonically *poorer* |
-| "tuning is worth +0.0178" | **withdrawn** — 0.1 σ on replication |
+| "tuning is worth +0.0178" (resolution/spread) | **withdrawn** — 0.1 σ on replication |
+| "no tuned construction beats shipped" | **too broad** — true for resolution/spread, false for weighting (§8, +0.0120, 3.9 σ) |
 | "resolution is trending down" (at 81 runs) | **premature** — the complete curve is non-monotone |
 | `--restrict-groups` protects the endpoint | **broke it** — removed 57 % of training rows, collapsed the arm to +0.0362, cost 66 GPU runs |
 
