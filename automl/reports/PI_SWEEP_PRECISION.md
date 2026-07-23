@@ -147,3 +147,47 @@ it turns out to be what rescues the stage from its own noise floor. The winning
 **The general form of this:** when per-measurement noise is irreducible, buy
 precision with design (pairing, factorial averaging) rather than with repetition.
 Repetition was the instinct and the measurement says it would not have worked.
+
+---
+
+## 9. The selection is demonstrably unstable — one cell changed the winner
+
+The clearest evidence that this sweep cannot select is not a variance estimate.
+It is that the answer changed.
+
+Stage B's re-run of the single shared cell moved it from **+0.1696 to +0.1587**.
+Regenerating Stage A's table from the current runs on disk — **one cell of 25
+altered, the other 24 untouched** — moves the winner:
+
+| | winning configuration | adj R² |
+|---|---|---|
+| Stage A as first computed | **96 px**, 0.5 px spread | +0.1696 |
+| Stage A regenerated | **128 px**, 1.0 px spread | +0.1670 |
+
+The two are **0.0026 apart**, well under the 0.0092 SE of a difference. They are
+not distinguishable, and which one is called "the winner" is decided by
+nondeterminism.
+
+This has a consequence for Stage B, which should be stated rather than buried:
+**Stage B's entire grid was rendered at 96 px / 0.5 px because that was Stage A's
+winner** — a selection that does not reproduce. Stage B is not invalidated by
+this: it is a factorial over range × channels × weighting at a *fixed*
+resolution and spread, and its main effects remain interpretable conditional on
+that fixed point. But the fixed point is arbitrary among several statistically
+indistinguishable options, and any claim of the form "the best configuration
+is …" is unsupportable.
+
+**This is arguably the sweep's principal finding.** A 57-configuration
+hyperparameter search, 8 seeds per configuration, ~450 GPU runs, cannot identify
+a best persistence-image construction on this problem — because the differences
+between constructions are smaller than the noise of re-running one of them, and
+that noise does not shrink with more seeds.
+
+What the sweep *can* support, because these clear the floor comfortably:
+
+| statement | margin |
+|---|---|
+| no configuration enters the stack (5 % of extractants vs S0's 41 %) | not a 0.0092-sized question |
+| the gap from the best tuned arm to S0 (+0.0733) | 8.0 σ |
+| effective dimension 2.7 → 20.3 | training-free, exact |
+| main effects of range / channels / weighting (16 cells per level) | SE 0.0023 |
