@@ -191,3 +191,47 @@ What the sweep *can* support, because these clear the floor comfortably:
 | the gap from the best tuned arm to S0 (+0.0733) | 8.0 σ |
 | effective dimension 2.7 → 20.3 | training-free, exact |
 | main effects of range / channels / weighting (16 cells per level) | SE 0.0023 |
+
+---
+
+## 10. The construction question, answered
+
+The sweep was run to settle whether persistence images had been given a fair
+test. The answer to the *construction* half is now definite, and it is neither
+of the two answers anyone expected.
+
+**No tuned configuration is demonstrably better than the shipped settings.**
+Every one of the top six Stage A cells sits under 2 σ against the anchor
+(+0.1517), using the measured difference SE of 0.0092:
+
+| configuration | adj R² | Δ vs shipped | σ |
+|---|---|---|---|
+| 128 px / 1.0 px | +0.1670 | +0.0153 | **1.7** |
+| 64 px / 1.0 px | +0.1624 | +0.0107 | 1.2 |
+| 96 px / 0.5 px | +0.1587 | +0.0070 | 0.8 |
+| 128 px / 2.0 px | +0.1581 | +0.0063 | 0.7 |
+| 96 px / 4.0 px | +0.1545 | +0.0028 | 0.3 |
+| 96 px / 1.0 px | +0.1544 | +0.0027 | 0.3 |
+
+That 1.7 σ is **optimistic**, because it is the maximum of 25 noisy draws.
+
+So the finding is not "tuning helps" and not "tuning does not help". It is that
+**on 953 complexes, the two hyperparameters the PI named — resolution and
+Gaussian spread — cannot be distinguished from one another, nor from the shipped
+defaults.** The advice was sound. The dataset is too small to act on it.
+
+### What this replaces
+
+`PI_EMAIL.md` and the scope paragraphs currently say persistence images "require
+tuning and were never tuned", and treat that as an open question. It was true,
+and it turns out to be **unactionable at this scale**. The replacement statement
+is both more specific and more useful:
+
+> Persistence images were tuned across **57 constructions** spanning resolution
+> 20–128, spread 0.5–4 pixels, four birth–death windows, both channel layouts and
+> four weightings. **No construction was distinguishable from any other**, and the
+> arm remains **+0.0733 (8.0 σ)** short of the simplicial encoder. The limitation
+> is not the construction.
+
+That is a stronger claim than the one it replaces, and it closes the gap the PI
+email listed as the first thing to do next — just not in the direction expected.
