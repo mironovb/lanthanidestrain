@@ -170,24 +170,18 @@ spread across the set rather than coming from one fortunate ligand.
 - **It does not show that overall accuracy needs 3D.** CatBoost on 2D descriptors
   remains the best single model for overall `log D` (+0.499).
 - **The demonstration is for the Vietoris–Rips / simplicial representation.** A
-  persistence-image CNN did not reproduce the gain — but I want to be careful
-  here, because that is **weak evidence about topological methods generally**.
-  Persistence images are sensitive to how they are constructed (resolution,
-  Gaussian spread, birth–death range, weighting), and ours used the shipped
-  fixed settings — resolution 20, spread 0.08, range (0, 2.5) — **never tuned at
-  any point**. Their standalone score (+0.210) is the lowest of the topological
-  models, which is what an untuned representation looks like. Under the rule in
-  §6, tuning is exactly the lever that would move them on both axes. **I would
-  not conclude anything against persistent homology from this**; I would conclude
-  that we have not yet given it a fair test.
+  persistence-image CNN did not reproduce the gain. When I first wrote this I
+  flagged that as weak evidence, because our images used the shipped fixed
+  settings and had never been tuned. **I have since tuned them — 57
+  constructions — and can now say something much more specific.** See §10.
 
 ---
 
 ## 9. What I suggest next
 
-1. **Tune the persistence-image construction** and re-test. It is cheap, it is
-   the obvious gap, and if it then contributes, the claim broadens from one
-   representation to a class of them.
+1. ~~**Tune the persistence-image construction** and re-test.~~ **Done — see
+   §10.** It did not change the conclusion, but it produced one result worth
+   having in its own right.
 2. **A plain distance-based 3D network** with no simplicial structure, to
    determine whether "simplicial" or simply "3D message passing" is the operative
    ingredient.
@@ -206,6 +200,70 @@ correction especially — are a substantial part of the value.
 
 Everything is in the repository, with each test's pre-registration committed
 before its data existed. Happy to walk through any of it.
+
+---
+
+## 10. Addendum — the persistence images have now been tuned
+
+Thank you for the guidance on resolution and spread. I ran the benchmark you
+suggested, plus three further construction axes, and replicated the result. **57
+constructions in total**, all on the same folds and the same readout, so any
+difference is attributable to the image rather than the model.
+
+### What matters, and what does not
+
+| construction axis | effect on neighbouring-lanthanide R² |
+|---|---|
+| **feature weighting** | **the only axis that matters** — see below |
+| image resolution (20 → 128) | none detectable |
+| Gaussian spread (0.5 → 4 pixels) | none detectable |
+| birth–death window | shipped (0, 2.5) is the **best** of four; widening it *hurts* |
+| H₀ and H₁ as separate channels vs summed | none detectable |
+
+**The weighting result is the interesting one, and it runs against usual
+practice.** Weighting each topological feature by how long it persists — the
+standard choice, and what our images used — is *worse* than treating every
+feature equally. The effect is monotone in how strongly persistence is
+emphasised:
+
+| weighting | neighbouring-lanthanide R² |
+|---|---|
+| **constant (equal weight)** | **+0.161** |
+| arctan | +0.148 |
+| linear (persistence) — *what we used* | +0.148 |
+| persistence squared | +0.128 |
+
+Switching to equal weighting is worth **+0.012 ± 0.003**, which I replicated
+three times independently before believing it. On this dataset, long-lived
+topological features are not the informative ones.
+
+### It does not change the conclusion
+
+The improvement makes the persistence-image model *more accurate* but **no less
+redundant** with the fingerprint models — its errors still correlate with theirs
+at 0.96, where the simplicial model sits at 0.93. Under the rule in §6 a model
+needs both, so the tuned version still contributes almost nothing to the
+combination, and remains about **0.064 behind** the simplicial model.
+
+**So the honest revision of §8 is:** the persistence-image result was *not*
+materially handicapped by its settings. One setting was mildly wrong, fixing it
+helps a little, and the gap to the simplicial model is not a tuning gap.
+
+### One caution about this dataset
+
+With 953 complexes, **re-running the identical configuration moves the score by
+about 0.005–0.009** — GPU training is not reproducible at fixed seed. That is
+larger than most of the differences between constructions, and it caught me out:
+my first reading of this sweep showed a +0.018 gain from tuning that turned out
+to be **zero** once I replicated both the tuned and the baseline configuration.
+Ensembling more seeds does not fix it, because the noise is shared across seeds
+within a run.
+
+If your group tunes persistence images on datasets of this size, that is the
+number I would most want to have known at the start: **replicate both sides of
+any comparison before believing it**, because a search over many constructions
+will reliably manufacture an apparent winner.
+
 
 Best regards,
 Bogdan
