@@ -58,6 +58,10 @@ of 25 noisy measurements meeting an unlucky draw for its comparator — winner's
 curse in its purest form. Full detail in
 [`PI_SWEEP_PRECISION.md`](PI_SWEEP_PRECISION.md).
 
+*This section concerns the resolution and spread axes only. A real construction
+effect was found later, on the weighting axis — see §8, which corrects the
+conclusion this section supports.*
+
 ## 2. The noise floor, and why more seeds would not have helped
 
 GPU training here is **not reproducible at fixed seed**: `train.py` sets
