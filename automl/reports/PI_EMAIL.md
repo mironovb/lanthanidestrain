@@ -242,8 +242,13 @@ topological features are not the informative ones.
 The improvement makes the persistence-image model *more accurate* but **no less
 redundant** with the fingerprint models — its errors still correlate with theirs
 at 0.96, where the simplicial model sits at 0.93. Under the rule in §6 a model
-needs both, so the tuned version still contributes almost nothing to the
-combination, and remains about **0.064 behind** the simplicial model.
+needs both, so the tuned version still contributes essentially nothing to the
+combination: it earns a share of the weighting for **2 %** of held-out
+extractants, against the simplicial model's **41 %**.
+
+For scale, the untuned persistence-image model scores **+0.210** against the
+simplicial model's **+0.238** (§3). The +0.012 that tuning buys is real, and it
+is not what stands between them.
 
 **So the honest revision of §8 is:** the persistence-image result was *not*
 materially handicapped by its settings. One setting was mildly wrong, fixing it

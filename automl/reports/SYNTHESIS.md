@@ -42,14 +42,17 @@ Four honest limits, each measured rather than assumed:
 1. **Demonstrated for one family of topological representation, not all.** The
    effect replicates across filtration radii (3.0/4.0 Å), so it is a property of
    the Vietoris–Rips complex rather than of a tuned radius. A persistence-image
-   CNN did **not** add (−0.0041) — but that is **weak evidence about topological
-   methods in general**, and should not be read as one. Persistence images are
-   known to be sensitive to their construction (resolution, spread, birth–death
-   range, weighting), and ours used the shipped fixed settings — resolution 20,
-   spread 0.08, range (0, 2.5), H0+H1 — with **no tuning at any point**. A fair
-   test of persistence homology would tune those first. The honest statement is
-   that we have positive evidence for one representation and an *untested*
-   verdict on the other.
+   CNN did **not** add (−0.0041). When this was written I called that weak
+   evidence, because the images had never been tuned. **They have now been —
+   57 constructions** ([`PI_SWEEP_RESULTS.md`](PI_SWEEP_RESULTS.md)) — and the
+   verdict is no longer untested: resolution, Gaussian spread, birth–death window
+   and the H0/H1 channel split are all inert, and the single axis that matters
+   (feature weighting, where *equal* beats weighting-by-persistence) is worth
+   **+0.0120 ± 0.0031** and buys strength without buying independence. The tuned
+   arm is redundant with the fingerprints at 0.961 against S0's 0.928, earns
+   weight from **2 %** of extractants against S0's 41 %.
+   **The comparison is now a fair one, and it still fails** — which is a stronger
+   statement than the one it replaces.
 2. **Not "topology beats the baseline."** Alone it does not: four attempts
    failed ([`CONTROL_RESULTS.md`](CONTROL_RESULTS.md),
    [`S2_RESULTS.md`](S2_RESULTS.md), [`WO_RESULTS.md`](WO_RESULTS.md)). It earns
@@ -77,10 +80,14 @@ decorrelated from its partner. Only one arm is both:
 
 P0 fails *both* conditions at once; CatBoost is the most decorrelated of all and
 still adds nothing to selectivity because it is far too weak. This tells you
-*what to look for* in a candidate representation — and it also says what P0's
-failure most likely means: an untuned persistence image is simply not yet strong
-enough on this metric (+0.210), not that persistent homology cannot work here.
-Tuning its construction is the obvious way to find out, and has not been done.
+*what to look for* in a candidate representation.
+
+**Tuning has since been done** (57 constructions). It moves P0 on the *strength*
+axis only — **+0.0120 ± 0.0031**, measured on the same rows and compared like
+with like — and leaves the correlation axis essentially where it was
+(0.966 → 0.961). So the mechanism's diagnosis survives its own strongest test:
+P0's problem was never that it was untuned, it is that construction buys accuracy
+and cannot buy independence from the fingerprint baseline.
 
 ---
 

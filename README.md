@@ -67,11 +67,14 @@ credible.
 
 1. **Demonstrated for one representation family, not for "3D topology" as a
    whole.** The effect replicates across filtration radii, so it is not a tuned
-   radius. A persistence-image CNN did not add (−0.0041, n.s.) — but ours used
-   the shipped fixed settings (resolution 20, spread 0.08, range 0–2.5) and was
-   **never tuned**, and persistence images are known to be sensitive to exactly
-   those choices. That single negative bounds what has been *demonstrated*, not
-   what is possible.
+   radius. A persistence-image CNN did not add (−0.0041, n.s.), and that arm has
+   now been **tuned across 57 constructions**
+   ([`PI_SWEEP_RESULTS.md`](automl/reports/PI_SWEEP_RESULTS.md)): resolution,
+   spread, birth–death window and H0/H1 channel split are all inert, and the one
+   axis that matters — feature weighting — is worth **+0.0120 (3.9 σ)** and still
+   leaves the arm redundant with the fingerprints (err corr 0.961 vs S0's 0.928),
+   at **2 %** of extractants against S0's 41 %. **The limitation is not the
+   construction.**
 2. **Not "topology beats the baseline."** Alone it does not — **four**
    pre-registered attempts failed. It earns its place by *complementarity*.
 3. **Not a selectivity signal readable from the geometry.** The
@@ -90,7 +93,7 @@ metric and decorrelated from its partners**:
 | model | adjacent-pair R² | error correlation with baseline | adds? |
 |---|---|---|---|
 | simplicial, 3.0–4.0 Å | +0.232 – +0.238 | 0.897 – 0.907 | **yes, all radii** |
-| persistence-image CNN | +0.210 | 0.933 | no |
+| **persistence-image CNN** | +0.210 | 0.933 | no — and still no when tuned across 57 constructions |
 | matched 2D control | +0.203 | 0.928 | no |
 | CatBoost | +0.144 | 0.880 | no (contributes accuracy instead) |
 
