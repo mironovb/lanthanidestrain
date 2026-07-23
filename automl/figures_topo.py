@@ -783,9 +783,17 @@ def _pi_prediction_panel(df: pd.DataFrame) -> None:
                     cmap="viridis", s=55, edgecolor="white", linewidth=0.6,
                     zorder=3)
     if len(anc):
-        ax.scatter(anc["eff_dim"], anc["adj_r2"], marker="*", s=260, color=FCNN,
-                   edgecolor="white", linewidth=0.8, zorder=5,
-                   label="shipped settings")
+        a = anc.iloc[0]
+        ax.scatter([a["eff_dim"]], [a["adj_r2"]], marker="*", s=300, color=FCNN,
+                   edgecolor="white", linewidth=1.0, zorder=6)
+        # Annotated in place rather than via a legend.  A frameless legend puts
+        # a full-size star marker inside the axes with text beside it, which
+        # reads as a data point -- it did, on the first render of this figure.
+        ax.annotate(f"shipped settings\n{a['eff_dim']:.1f} dims, {a['adj_r2']:+.4f}",
+                    xy=(a["eff_dim"], a["adj_r2"]),
+                    xytext=(-14, 40), textcoords="offset points",
+                    ha="right", va="bottom", fontsize=8, color=FCNN,
+                    arrowprops=dict(arrowstyle="-", color=FCNN, lw=0.9))
     ax.axhline(0.2382, color=INK2, ls="--", lw=1.0)
     ax.annotate("S0 simplicial, +0.2382", xy=(0.98, 0.2382),
                 xycoords=("axes fraction", "data"), ha="right", va="bottom",
@@ -797,8 +805,14 @@ def _pi_prediction_panel(df: pd.DataFrame) -> None:
     ax.set_ylabel("adjacent-pair log SF $R^2$ (tune half)")
     ax.grid(True, color=GRID, lw=0.6, alpha=0.7)
     ax.set_axisbelow(True)
-    if len(anc):
-        ax.legend(frameon=False, fontsize=8, loc="best")
+
+    # Mark the arm this has to reach, so the gap is legible rather than implied.
+    best = m.sort_values("adj_r2").iloc[-1]
+    ax.annotate(f"best tuned\n{best['resolution']:.0f}px, {best['adj_r2']:+.4f}",
+                xy=(best["eff_dim"], best["adj_r2"]),
+                xytext=(-8, 26), textcoords="offset points", ha="right",
+                fontsize=8, color=TOPO,
+                arrowprops=dict(arrowstyle="-", color=TOPO, lw=0.9))
 
     verdict = ("information was the binding constraint"
                if r > 0.3 else
