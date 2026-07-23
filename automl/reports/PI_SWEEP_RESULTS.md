@@ -145,3 +145,59 @@ measurement is not conservative even when the noise floor is known.**
 `python3 -m automl.topo.pi_precision`, `python3 -m automl.topo.pi_sweep_test
 --stage a`. `control_guard --verify` confirms 324 published artefacts
 byte-identical throughout.*
+
+---
+
+## 8. Correction: tuning *does* help — on an axis nobody named
+
+§1 reported that no tuned construction beats the shipped defaults. That was true
+for **resolution and spread** — the two axes the PI named, and the two Stage A
+swept — and **false** for weighting, which Stage B tested and which I had
+included almost as filler.
+
+**Constant weighting beats the shipped linear weighting**, replicated three
+times with tight scatter:
+
+| configuration | replicates | mean |
+|---|---|---|
+| constant weighting (96 px, 0.5 px, range 2.5, summed) | +0.1715, +0.1693, +0.1733 | **+0.1713 ± 0.0012** |
+| shipped anchor (20 px, 0.61 px, linear) | +0.1536, +0.1629, +0.1614 | +0.1593 ± 0.0029 |
+
+**Δ = +0.0120 ± 0.0031 = 3.9 σ, resolvable.** Unlike the withdrawn Stage A
+"winner", the single draw here *under*-estimated the effect (+0.1674 against a
+replicated +0.1713), so this is not winner's curse. It is also a pre-specified
+axis contrast rather than a selected maximum: the Stage B main effect gives
+constant − linear = +0.0135 ± 0.0046 over 8 cells per level, independently.
+
+The full weighting effect is monotone in how strongly the weight emphasises
+persistence — **constant +0.1614 > arctan ≈ linear +0.1479 > squared +0.1277** —
+so *weighting by persistence actively hurts on this task*. That contradicts the
+usual practice rather than confirming it, and it is the one actionable finding
+for anyone building persistence images on a comparable problem.
+
+### It still does not change the outcome
+
+| arm (24 seeds, replicated) | adj R² | err corr | stack weight | used by |
+|---|---|---|---|---|
+| constant weighting | +0.1718 | +0.961 | 0.004 | **2 %** |
+| shipped anchor | +0.1596 | +0.966 | 0.001 | 1 % |
+| **S0 simplicial** | **+0.2355** | **+0.928** | **0.41** | **41 %** |
+
+The improvement buys **strength** and leaves **decorrelation untouched** (0.966 →
+0.961 against S0's 0.928). Under this study's mechanism an arm must be *both*
+strong and decorrelated, so a genuinely better construction still earns weight
+from 2 % of extractants rather than 1 %, and the gap to S0 remains **+0.0642**.
+
+### The revised statement
+
+> Persistence-image construction was mildly suboptimal in exactly one respect —
+> the persistence weighting — which no diagnosis of mine identified and which the
+> PI did not name. Fixing it is worth **+0.0120 (3.9 σ)**, replicated. It does not
+> change the conclusion: the arm remains far short of the simplicial encoder and
+> earns no meaningful stack weight, because what disqualifies it is **redundancy
+> with the fingerprint baseline**, which construction cannot address.
+
+Three of my four diagnoses (spread, birth–death range, H0/H1 channels) were not
+merely unhelpful but **wrong in sign or magnitude**: the shipped range is the
+best of four tested, and widening it — the "13.5 % of points discarded" defect I
+opened with — costs 3.0 σ.
