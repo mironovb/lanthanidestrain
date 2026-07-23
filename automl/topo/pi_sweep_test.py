@@ -324,6 +324,9 @@ def explore(stage: str, min_seeds: int) -> int:
               f"{r['channels']:5s} {r['weight']:8s} hi={r['hi']:.1f}   "
               f"gain={r['tune_gain']:+.4f}  adjR2={r['adj_r2']:+.4f}  "
               f"corr={r['err_corr']:+.3f}")
+    if stage == "b":
+        _main_effects(out)
+
     w = out.iloc[0]
     print(f"\nWINNER (stage {stage}): key={w['key']}  res={w['resolution']:.0f} "
           f"spread={w['spread']:.5f} ({w['spread_px']:.2f} px) "
@@ -332,6 +335,50 @@ def explore(stage: str, min_seeds: int) -> int:
           f"err corr {w['err_corr']:+.3f}")
     print(f"  -> {csv}")
     return 0
+
+
+
+def _main_effects(out: pd.DataFrame) -> None:
+    """Stage B as a factorial, because cell-by-cell it cannot resolve anything.
+
+    Measured run-to-run noise on an identical configuration is SD 0.0065, so a
+    difference between two independently-run cells has SE ~0.0092
+    (``PI_SWEEP_PRECISION.md``).  Stage B's cells differ by less than that, so
+    ranking them individually is ranking noise.
+
+    A main effect is not: it averages 16 cells per level, dropping the noise to
+    roughly 0.0092/sqrt(16) = 0.0023 and resolving differences of about 0.005.
+    So the question Stage B can actually answer is "does separating H0 from H1
+    buy anything, averaged over range and weighting", not "which of these 32
+    cells wins".
+
+    Adding more seeds would not have helped -- 8 seeds already buys only 1.76x
+    against the 2.83x independence would give, because the nondeterminism has a
+    per-run component shared across seeds.
+    """
+    CELL_SE = 0.0092
+    print("\n=== MAIN EFFECTS (the contrasts this stage can resolve) ===")
+    print(f"    per-cell SE {CELL_SE:.4f}; a level mean over n cells has "
+          f"SE {CELL_SE:.4f}/sqrt(n)")
+    for axis in ("channels", "weight", "hi"):
+        levels = out.groupby(axis)["adj_r2"].agg(["mean", "count"])
+        if len(levels) < 2:
+            continue
+        print(f"\n  {axis}:")
+        for lvl, row in levels.iterrows():
+            se = CELL_SE / np.sqrt(row["count"])
+            print(f"    {str(lvl):10s} n={int(row['count']):2d}  "
+                  f"mean adjR2 {row['mean']:+.4f} +/- {se:.4f}")
+        top = levels["mean"].idxmax()
+        bot = levels["mean"].idxmin()
+        delta = levels.loc[top, "mean"] - levels.loc[bot, "mean"]
+        se_d = CELL_SE * np.sqrt(1 / levels.loc[top, "count"]
+                                 + 1 / levels.loc[bot, "count"])
+        k = delta / se_d if se_d > 0 else float("inf")
+        verdict = ("resolvable" if k >= 3 else
+                   "MARGINAL" if k >= 2 else "NOT RESOLVABLE")
+        print(f"    best-worst ({top} - {bot}): {delta:+.4f} "
+              f"+/- {se_d:.4f} = {k:.1f} sigma   {verdict}")
 
 
 def confirm(key: str, n_boot: int, min_seeds: int) -> int:
