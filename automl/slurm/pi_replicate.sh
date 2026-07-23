@@ -39,14 +39,14 @@ export PYTHONPATH="${REPO}:${PYTHONPATH:-}" PYTHONWARNINGS=ignore
 cd "${REPO}"
 
 # shipped anchor; Stage A's winner; a mid-range configuration.
-KEYS=(13c391a8bb1e3a40 9d6e4c93026dfa0c 6e229d2419e7c99b)
+KEYS=(${PI_REP_KEYS:-13c391a8bb1e3a40 9d6e4c93026dfa0c 6e229d2419e7c99b})
 SEEDS=(7 11 23 37 42 51 67 83)
 
 T=${SLURM_ARRAY_TASK_ID}
 KEY=${KEYS[$(( T / 3 ))]}
 REP=$(( T % 3 ))
 IMG="${REPO}/automl/artifacts/pi_sweep/images/img_${KEY}.npz"
-OUT="${REPO}/automl/artifacts/pi_replicate/rep${REP}"
+OUT="${REPO}/automl/artifacts/pi_replicate/${PI_REP_DIR:-rep}${REP}"
 mkdir -p "${OUT}"
 
 export PI_IMAGES_PATH="${IMG}"
