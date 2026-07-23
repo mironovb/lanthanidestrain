@@ -102,3 +102,48 @@ stages happened to share a cell — which is luck, not method.
 
 *Reproduce: `sbatch --array=0-8 automl/slurm/pi_replicate.sh`, then compare the
 three replicates per configuration.*
+
+---
+
+## 7. More seeds will not fix it — measured, not assumed
+
+The obvious response to a noise floor is to ensemble more seeds. That was tested
+directly, by taking the two complete replicates of the shipped anchor and
+comparing them using the *same* N seeds in both, for increasing N:
+
+| seeds ensembled | mean run-to-run difference | 1/√N would predict |
+|---|---|---|
+| 1 | 0.0162 | — |
+| 2 | 0.0115 | 0.0115 ✓ |
+| 4 | 0.0112 | 0.0081 |
+| 8 | **0.0092** | 0.0057 |
+
+Eight seeds buys a factor of **1.76** where independent noise would give 2.83.
+The nondeterminism therefore has a component **shared across every seed within a
+run** — consistent with cuDNN fixing its algorithm choices per process, so all
+eight trainings in one job inherit the same perturbation.
+
+**Consequence: seed count is not the lever.** Going from 8 to 32 seeds would
+reach roughly 0.007 rather than the 0.0046 that independence predicts, at four
+times the compute. That was the intervention I would have reached for, and it
+would have been largely wasted.
+
+## 8. What this means for Stage B — and why it is worth finishing
+
+Stage B is a **4 × 2 × 4 factorial** (birth–death range × channel layout ×
+weighting). Read cell-by-cell it is hopeless: individual configurations differ by
+less than the 0.0092 floor.
+
+Read as a factorial it is not. A **main effect** averages 16 cells per level, so
+its noise falls to roughly 0.0092 / √16 ≈ **0.0023**, resolving differences of
+about 0.005. The question that matters — *does separating H0 from H1 buy
+anything, averaged over range and weighting* — is comfortably inside that.
+
+So Stage B resumed, with its analysis changed from "pick the winning cell" to
+"estimate the three main effects". The factorial design was chosen for coverage;
+it turns out to be what rescues the stage from its own noise floor. The winning
+*cell* will still be reported, and still labelled unresolvable if it is.
+
+**The general form of this:** when per-measurement noise is irreducible, buy
+precision with design (pairing, factorial averaging) rather than with repetition.
+Repetition was the instinct and the measurement says it would not have worked.
