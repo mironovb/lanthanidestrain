@@ -45,13 +45,14 @@ Four honest limits, each measured rather than assumed:
    CNN did **not** add (−0.0041). When this was written I called that weak
    evidence, because the images had never been tuned. **They have now been —
    57 constructions** ([`PI_SWEEP_RESULTS.md`](PI_SWEEP_RESULTS.md)) — and the
-   verdict is no longer untested: resolution, Gaussian spread, birth–death window
-   and the H0/H1 channel split are all inert, and the single axis that matters
-   (feature weighting, where *equal* beats weighting-by-persistence) is worth
-   **+0.0120 ± 0.0031** and buys strength without buying independence. The tuned
-   arm is redundant with the fingerprints at 0.961 against S0's 0.928, earns
-   weight from **2 %** of extractants against S0's 41 %.
-   **The comparison is now a fair one, and it still fails** — which is a stronger
+   verdict is no longer untested. The pre-registered endpoint, scored on
+   extractants no selection decision touched and behind a passing positive
+   control, returns **+0.0171 [−0.0143, +0.0327]** — positive but spanning zero.
+   Resolution, Gaussian spread, birth–death window and the H0/H1 channel split
+   are inert; the one axis that matters is feature weighting, where *equal* beats
+   weighting-by-persistence (that ordering replicates out of selection at 3.3 σ,
+   though the gain over the shipped setting is only **+0.0080**, n.s.).
+   **The comparison is now a fair one, and it still fails** — a stronger
    statement than the one it replaces.
 2. **Not "topology beats the baseline."** Alone it does not: four attempts
    failed ([`CONTROL_RESULTS.md`](CONTROL_RESULTS.md),
@@ -82,12 +83,12 @@ P0 fails *both* conditions at once; CatBoost is the most decorrelated of all and
 still adds nothing to selectivity because it is far too weak. This tells you
 *what to look for* in a candidate representation.
 
-**Tuning has since been done** (57 constructions). It moves P0 on the *strength*
-axis only — **+0.0120 ± 0.0031**, measured on the same rows and compared like
-with like — and leaves the correlation axis essentially where it was
-(0.966 → 0.961). So the mechanism's diagnosis survives its own strongest test:
-P0's problem was never that it was untuned, it is that construction buys accuracy
-and cannot buy independence from the fingerprint baseline.
+**Tuning has since been done** (57 constructions, with a held-out confirmatory
+test). It moves P0 on the *strength* axis only, and by less than the selection
+half suggested — **+0.0080 out of selection, n.s.** — while leaving the
+correlation axis where it was. So the mechanism's diagnosis survives its own
+strongest test: P0's problem was never that it was untuned. Construction buys a
+little accuracy and cannot buy independence from the fingerprint baseline.
 
 ---
 

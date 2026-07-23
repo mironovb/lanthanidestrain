@@ -233,22 +233,26 @@ emphasised:
 | linear (persistence) — *what we used* | +0.148 |
 | persistence squared | +0.128 |
 
-Switching to equal weighting is worth **+0.012 ± 0.003**, which I replicated
-three times independently before believing it. On this dataset, long-lived
-topological features are not the informative ones.
+On this dataset, long-lived topological features are not the informative ones.
+That ordering holds up on extractants I had set aside and never used while
+choosing settings, so I am confident in it. The size of the gain over our
+original setting is more modest there — about **+0.008**, which on its own is
+within the noise — so I would describe it as a real effect of uncertain size
+rather than a reliable improvement.
 
 ### It does not change the conclusion
 
 The improvement makes the persistence-image model *more accurate* but **no less
 redundant** with the fingerprint models — its errors still correlate with theirs
 at 0.96, where the simplicial model sits at 0.93. Under the rule in §6 a model
-needs both, so the tuned version still contributes essentially nothing to the
-combination: it earns a share of the weighting for **2 %** of held-out
-extractants, against the simplicial model's **41 %**.
+needs both. Tested on the held-out extractants, with a check confirming the
+comparison had the power to detect an effect of this size, the tuned model adds
+**+0.017** to the combination with a 90 % interval of **[−0.014, +0.033]** — a
+positive central value that includes zero. I would not call that a contribution.
 
 For scale, the untuned persistence-image model scores **+0.210** against the
-simplicial model's **+0.238** (§3). The +0.012 that tuning buys is real, and it
-is not what stands between them.
+simplicial model's **+0.238** (§3), and tuning moves it to about +0.215. The
+difference between the two models is not a tuning gap.
 
 **So the honest revision of §8 is:** the persistence-image result was *not*
 materially handicapped by its settings. One setting was mildly wrong, fixing it

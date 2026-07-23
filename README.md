@@ -68,13 +68,17 @@ credible.
 1. **Demonstrated for one representation family, not for "3D topology" as a
    whole.** The effect replicates across filtration radii, so it is not a tuned
    radius. A persistence-image CNN did not add (−0.0041, n.s.), and that arm has
-   now been **tuned across 57 constructions**
-   ([`PI_SWEEP_RESULTS.md`](automl/reports/PI_SWEEP_RESULTS.md)): resolution,
-   spread, birth–death window and H0/H1 channel split are all inert, and the one
-   axis that matters — feature weighting — is worth **+0.0120 (3.9 σ)** and still
-   leaves the arm redundant with the fingerprints (err corr 0.961 vs S0's 0.928),
-   at **2 %** of extractants against S0's 41 %. **The limitation is not the
-   construction.**
+   now been **tuned across 57 constructions** and tested on held-out extractants
+   ([`PI_SWEEP_RESULTS.md`](automl/reports/PI_SWEEP_RESULTS.md)). The
+   pre-registered endpoint returns **+0.0171 [−0.0143, +0.0327]** — positive but
+   spanning zero — behind a passing positive control. Resolution, spread,
+   birth–death window and H0/H1 channel split are inert; the one axis that
+   matters is feature weighting, where *equal* weighting beats
+   weighting-by-persistence (ordering replicates out of selection at 3.3 σ;
+   the gain over the shipped setting is **+0.0080**, n.s.). **Tuning the
+   construction does not make persistence images contribute** — what disqualifies
+   them is redundancy with the fingerprints, which no construction choice
+   addressed.
 2. **Not "topology beats the baseline."** Alone it does not — **four**
    pre-registered attempts failed. It earns its place by *complementarity*.
 3. **Not a selectivity signal readable from the geometry.** The
