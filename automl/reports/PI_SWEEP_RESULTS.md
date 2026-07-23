@@ -219,3 +219,86 @@ Three of my four diagnoses (spread, birth–death range, H0/H1 channels) were no
 merely unhelpful but **wrong in sign or magnitude**: the shipped range is the
 best of four tested, and widening it — the "13.5 % of points discarded" defect I
 opened with — costs 3.0 σ.
+
+---
+
+## 9. The confirmatory endpoint, and three corrections it forces
+
+Stage C trained the selected configuration at 16 seeds on all 162 extractants;
+the endpoint scored it on the **confirm half**, which no selection decision ever
+touched.
+
+**Positive control passes**: S0 on the confirm half, **+0.0172 [+0.0089,
++0.0369]** — the harness can see an effect of the size in question.
+
+| pre-registered contrast | Δ | 90 % interval | corrected |
+|---|---|---|---|
+| **primary** — P\* added to the best no-topology stack | **+0.0171** | [−0.0143, +0.0327] | 8-look [−0.0186, +0.0527]; punitive 65-look [−0.0282, +0.0623] |
+| secondary — P\* vs the matched 2D control | +0.0199 | [−0.0083, +0.0335] | 8-look [−0.0118, +0.0516] |
+
+**Pre-registered outcome: the middle one.** Point estimate positive, interval
+spans zero, not demonstrable at this sample size. **The current scope stands.**
+
+### Correction 1 — the "14.3 σ gap to S0" was a tune-half artefact
+
+§3 quoted the gap from the best tuned arm to S0 as **+0.0759 (14.3 σ)**. That was
+measured on the tune half and does not describe the study. Measured properly:
+
+| | tune half | full data | confirm half |
+|---|---|---|---|
+| tuned arm (16 seeds) | +0.1686 | +0.2154 | +0.2360 |
+| published P0 (shipped) | +0.1546 | +0.2101 | +0.2345 |
+| **S0 simplicial** | **+0.2509** | **+0.2382** | **+0.2324** |
+
+On full data the gap is **+0.023**, not +0.076. On the **confirm half the
+persistence-image arm slightly exceeds S0** (+0.2360 vs +0.2324). The two halves
+disagree strongly about how good persistence images are, and every "σ" I quoted
+against a tune-half gap is withdrawn.
+
+This does **not** overturn the published result: S0 *adds to the stack* and P0
+does not, which is a statement about complementarity, not standalone accuracy.
+
+### Correction 2 — the weighting effect is real but smaller than reported
+
+Scored on both halves (all 32 Stage B cells are full-data trained, so this is a
+fair out-of-selection test):
+
+| weighting contrast | tune half | **confirm half** |
+|---|---|---|
+| constant − squared | +0.0337 (7.3 σ) | **+0.0152 (3.3 σ)** — replicates |
+| constant − linear (shipped) | +0.0135 (2.9 σ) | **+0.0080 (1.7 σ)** — same sign, not resolvable |
+
+The **ordering replicates on held-out extractants** — constant best, squared
+worst, 3.3 σ — so *weighting by persistence hurts* is a genuine and transferable
+finding. But the specific improvement over the shipped linear weighting is
+**+0.0080 on held-out data, not the +0.0120 I reported**, and it is no longer
+individually significant. §8 overstated it by measuring only where selection
+happened.
+
+### Correction 3 — the birth–death range effect does not transfer
+
+| range contrast | tune half | confirm half |
+|---|---|---|
+| best − worst | +0.0137 (3.0 σ), shipped (0, 2.5) best | +0.0060 (1.3 σ), and the ordering **changes** |
+
+**Withdrawn.** The claim that the shipped window is optimal and widening it hurts
+was tune-half noise. The honest statement is that the birth–death window does not
+measurably matter.
+
+Channel layout was null on both halves (1.0 σ, 0.4 σ) and needs no correction.
+
+### Where this leaves the sweep
+
+| claim | status |
+|---|---|
+| weighting by persistence hurts; equal weighting is better | **holds** — replicates out of selection at 3.3 σ |
+| the improvement over shipped is +0.0120 | **reduced to +0.0080, not significant** |
+| the shipped birth–death window is optimal | **withdrawn** |
+| resolution, spread, channel layout are inert | holds |
+| tuned persistence images contribute to the stack | **not demonstrable** (+0.0171, spans 0) |
+| the arm is far behind S0 | **withdrawn** — +0.023 on full data, and ahead on the confirm half |
+
+The pre-registered conclusion is unchanged and now rests on a fair test: **tuning
+persistence-image construction does not make them contribute.** What tuning buys
+is real but small, and the reason the arm does not enter the stack is redundancy
+with the fingerprint baseline, which no construction choice addressed.
