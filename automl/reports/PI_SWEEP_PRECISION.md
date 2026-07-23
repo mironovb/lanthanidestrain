@@ -235,3 +235,56 @@ is both more specific and more useful:
 
 That is a stronger claim than the one it replaces, and it closes the gap the PI
 email listed as the first thing to do next — just not in the direction expected.
+
+---
+
+## 11. Final: the tuning gain was entirely winner's curse
+
+Replication complete — three configurations, three independent replicates each,
+eight seeds per replicate, 72 runs. Pooled within-configuration
+**SD = 0.0038 (6 d.o.f.)**, so a difference between two independently-run
+configurations has **SE = 0.0053**.
+
+Comparing configurations by their *replicated means* rather than by single draws:
+
+| configuration | replicated adj R² |
+|---|---|
+| Stage A "winner" — 96 px, 0.5 px spread | +0.1596 ± 0.0019 |
+| **shipped anchor — 20 px, 0.61 px spread** | **+0.1593 ± 0.0029** |
+| mid-range — 20 px, 1.0 px spread | +0.1484 ± 0.0016 |
+
+| contrast | Δ | σ | verdict |
+|---|---|---|---|
+| **winner − shipped anchor** | **+0.0003 ± 0.0034** | **+0.1** | **not resolvable** |
+| anchor − mid-range | +0.0110 ± 0.0033 | +3.4 | resolvable |
+| winner − mid-range | +0.0112 ± 0.0024 | +4.6 | resolvable |
+
+### The mechanism, exactly
+
+| | Stage A single draw | replicated mean | |
+|---|---|---|---|
+| winner | +0.1696 | +0.1596 | drew **high** |
+| anchor | +0.1517 | +0.1593 | drew **low** |
+| gap | **+0.0179** | **+0.0003** | |
+
+The entire apparent tuning gain was the maximum of 25 noisy measurements meeting
+an unlucky draw for the baseline. This is winner's curse in its purest form, and
+it is worth noting that the number survived my first two attempts to discount it
+— at 1.9 σ and then 2.9 σ against progressively better floor estimates — before
+replication showed it to be **0.1 σ**. Comparing a *selected* maximum against a
+*single* baseline measurement is not conservative even when the noise floor is
+known; both sides have to be replicated.
+
+### The sweep is not measuring nothing
+
+Mid-range (20 px, 1.0 px spread) is genuinely worse than both others, at 3.4 σ
+and 4.6 σ. Constructions do differ measurably. The specific claim that fails is
+that **tuning found something better than the shipped defaults**.
+
+### Final answer to the construction question
+
+> Persistence images were tuned across 57 constructions. The best construction
+> found is **indistinguishable from the shipped defaults** (+0.0003, 0.1 σ), and
+> the arm remains **+0.0759 (14.3 σ)** short of the simplicial encoder. The
+> limitation is not the construction, and the untuned P0 result in the published
+> study was not disadvantaged by its settings.
