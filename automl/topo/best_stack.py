@@ -53,20 +53,26 @@ def _simplex(n: int, step: float = STEP):
 
 
 def nested_stack(frames: dict[str, pd.DataFrame], names: list[str],
-                 metric: str = "adjacent"):
+                 metric: str = "adjacent",
+                 key_col: str = "composition_key"):
     """Nested per-extractant weights over ``names``.
 
     Like ``stack_test.nested_blend`` this exploits linearity: the stacked
     prediction is a convex combination, and ``adjacent_pair_arrays`` is linear,
     so each extractant's pair vectors are computed once per component and every
     candidate weight is then vector arithmetic.
+
+    ``key_col`` selects the blocking column; the weights are *fitted* under the
+    same key they are scored under, which is the only self-consistent choice --
+    a stack tuned on one definition of "identical conditions" and scored on
+    another is testing two things at once.
     """
     idx = None
     for n in names:
         idx = frames[n].index if idx is None else idx.intersection(frames[n].index)
     ref = frames[names[0]].loc[idx]
     y = ref["y"].to_numpy(float)
-    comp = ref["composition_key"].to_numpy()
+    comp = ref[key_col].to_numpy()
     li = ref["lanthanide_index"].to_numpy()
     g = ref["extractant_group"].to_numpy()
     P = {n: frames[n].loc[idx, "oof"].to_numpy(float) for n in names}
@@ -108,9 +114,9 @@ def nested_stack(frames: dict[str, pd.DataFrame], names: list[str],
     return frame, np.asarray(chosen)
 
 
-def _score(d):
+def _score(d, key_col: str = "composition_key"):
     y = d["y"].to_numpy(float); p = d["oof"].to_numpy(float)
-    return (adj_r2(y, p, d["composition_key"].to_numpy(),
+    return (adj_r2(y, p, d[key_col].to_numpy(),
                    d["lanthanide_index"].to_numpy()), ev._r2(y, p))
 
 

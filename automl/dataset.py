@@ -403,6 +403,17 @@ def build_matrix(require_3d: bool = True,
         geom = geom.merge(cnfree, on="geometry_key", how="left")
         df = df.merge(geom, on="geometry_key", how="left")
 
+    # Reference xTB energetics (block gE).  Merged only if the artifact exists,
+    # so a checkout without the campaign's output builds exactly the matrix it
+    # always did.  Adding columns cannot change any existing preset either:
+    # BLOCK_PRESETS selects by name, and no existing preset names "gE".
+    energy_path = (Path(__file__).resolve().parents[1]
+                   / "automl/artifacts/xtb_reference/energy_features.parquet")
+    if energy_path.exists():
+        en = pd.read_parquet(energy_path).drop_duplicates("geometry_key")
+        df = df.merge(en, on="geometry_key", how="left")
+        info["energy_geometries"] = int(len(en))
+
     if include_pi:
         pi = load_pi_images(df)
         if len(pi.columns):
@@ -446,6 +457,12 @@ def build_matrix(require_3d: bool = True,
                         and (c.startswith("g15__intensive__")
                              or any(f"__{k}__" in c for k in core))])
     blocks.add("qc", [c for c in cols if c.startswith("qc__")])
+    # Reference xTB energetics.  gE_abs is largely a ligand property, which
+    # ECFP already states; gE_rel is the same quantity against its own
+    # lanthanide-series family, which is what the adjacent-pair metric scores.
+    blocks.add("gE_abs", [c for c in cols if c.startswith("gE__abs__")])
+    blocks.add("gE_rel", [c for c in cols if c.startswith("gE__rel")])
+    blocks.add("gE", [c for c in cols if c.startswith("gE__")])
     # Curated micro-block.  Chosen by grouped-CV permutation importance on the
     # full 3D set (automl/artifacts/selection/importance_lgbm_has3d.csv), not by
     # inspection: these are the only 3D columns whose permutation drop exceeded
@@ -513,6 +530,12 @@ ALL_3D_BLOCKS = ("p3d_phys", "p3d_poly") + NEW_3D_BLOCKS + ("g11",)
 BLOCK_PRESETS: dict[str, tuple[str, ...]] = {
     # --- reference points ---------------------------------------------------
     "baseline_2d":      BASE_2D,
+    # --- reference xTB energetics (ENERGY_PREREGISTRATION.md) ---------------
+    # baseline_2d is untouched, so the A/B is exact: same rows, same folds,
+    # same seeds, one block added.
+    "baseline_2d_energy":     BASE_2D + ("gE",),
+    "baseline_2d_energy_abs": BASE_2D + ("gE_abs",),
+    "baseline_2d_energy_rel": BASE_2D + ("gE_rel",),
     "baseline_no_ecfp": ("rdkit", "metal", "cond", "plan"),
     "baseline_2d_qc":   BASE_2D + ("qc",),
     # --- shipped 3D blocks --------------------------------------------------

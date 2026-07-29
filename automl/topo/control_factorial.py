@@ -98,6 +98,14 @@ def _matches(cfg: dict, spec: dict) -> bool:
         return False
     if (cfg.get("select_on") or "mse") != spec["obj"]["select_on"]:
         return False
+    # The published factorial predates the decomposed objective and the strict
+    # block key.  A run using either is a different arm, not another seed of an
+    # existing cell, and must never be swept into one -- ``.get`` returns None
+    # for the runs made before these flags existed, which is the published value.
+    if cfg.get("level_weight") is not None:
+        return False
+    if cfg.get("block_key") not in (None, "composition_key"):
+        return False
     # Default encoder geometry only; the wide-SNN and filtration sweeps are
     # separate configurations and are not part of this factorial.
     if spec["arch"] == "snn" and (int(cfg.get("dim", 96)) != 96
@@ -159,7 +167,8 @@ def ensemble(members: dict[int, pd.DataFrame]) -> pd.DataFrame | None:
 
 
 # ---------------------------------------------------------------------------
-def pairs_by_cluster(d: pd.DataFrame, groups: np.ndarray
+def pairs_by_cluster(d: pd.DataFrame, groups: np.ndarray,
+                     key_col: str = "composition_key"
                      ) -> list[tuple[np.ndarray, np.ndarray]]:
     """Adjacent-pair (true, predicted) separations, precomputed per extractant.
 
@@ -179,10 +188,17 @@ def pairs_by_cluster(d: pd.DataFrame, groups: np.ndarray
     distinct drawn clusters reproduces the same number while doing the groupby
     once per arm instead of once per bootstrap draw.  ``_assert_fast_matches``
     checks that claim against the shared metric before any result uses it.
+
+    ``key_col`` names the blocking column.  It defaults to ``composition_key``,
+    which is what every published number used.  ``strict_composition_key`` is
+    the other admissible choice: it also begins with the extractant, so the
+    nesting argument above holds for it unchanged -- and ``_assert_fast_matches``
+    re-checks the equivalence for whichever key is passed rather than trusting
+    that argument.
     """
     y = d["y"].to_numpy(float)
     p = d["oof"].to_numpy(float)
-    comp = d["composition_key"].to_numpy()
+    comp = d[key_col].to_numpy()
     li = d["lanthanide_index"].to_numpy()
     gcodes, guniq = pd.factorize(groups)
     out = []
@@ -197,7 +213,8 @@ def _r2_pairs(dy: np.ndarray, dp: np.ndarray) -> float:
 
 
 def _assert_fast_matches(d: pd.DataFrame, groups: np.ndarray, n_checks: int = 25,
-                         seed: int = 12345) -> None:
+                         seed: int = 12345,
+                         key_col: str = "composition_key") -> None:
     """The fast path must agree with the shared metric on random draws.
 
     A speedup that silently disagreed with ``adjacent_pair_metrics`` would
@@ -205,9 +222,9 @@ def _assert_fast_matches(d: pd.DataFrame, groups: np.ndarray, n_checks: int = 25
     quantity two different ways -- so the equivalence is tested, at full
     precision, before it is used.
     """
-    per = pairs_by_cluster(d, groups)
+    per = pairs_by_cluster(d, groups, key_col)
     y = d["y"].to_numpy(float); p = d["oof"].to_numpy(float)
-    comp = d["composition_key"].to_numpy(); li = d["lanthanide_index"].to_numpy()
+    comp = d[key_col].to_numpy(); li = d["lanthanide_index"].to_numpy()
     gcodes, guniq = pd.factorize(groups)
     rows_by_g = [np.flatnonzero(gcodes == i) for i in range(len(guniq))]
     rng = np.random.default_rng(seed)
@@ -228,7 +245,8 @@ def _assert_fast_matches(d: pd.DataFrame, groups: np.ndarray, n_checks: int = 25
 
 
 def paired_adjacent_fast(a: pd.DataFrame, b: pd.DataFrame, n_boot: int,
-                         seed: int = 0) -> dict | None:
+                         seed: int = 0,
+                         key_col: str = "composition_key") -> dict | None:
     """Same statistic and same resampling as ``paired_adjacent``, precomputed.
 
     Returns the identical dictionary shape so callers cannot tell them apart.
@@ -238,7 +256,8 @@ def paired_adjacent_fast(a: pd.DataFrame, b: pd.DataFrame, n_boot: int,
         return None
     a, b = a.loc[common], b.loc[common]
     groups = a["extractant_group"].to_numpy()
-    pa, pb = pairs_by_cluster(a, groups), pairs_by_cluster(b, groups)
+    pa = pairs_by_cluster(a, groups, key_col)
+    pb = pairs_by_cluster(b, groups, key_col)
     n = len(pa)
 
     def stat(per, sel):
