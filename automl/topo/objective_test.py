@@ -75,7 +75,8 @@ def load_split() -> tuple[set[str], set[str]]:
     return tune, conf
 
 
-def load_cells(verbose: bool = True) -> dict[tuple[float, str], pd.DataFrame]:
+def load_cells(verbose: bool = True) -> tuple[
+        dict[tuple[float, str], pd.DataFrame], dict[tuple[float, str], int]]:
     """Seed-ensembled out-of-fold predictions, one per (level_weight, block_key).
 
     Membership comes from the recorded configuration, never from the tag -- the
@@ -84,7 +85,7 @@ def load_cells(verbose: bool = True) -> dict[tuple[float, str], pd.DataFrame]:
     """
     found: dict[tuple[float, str], dict[int, Path]] = {}
     if not ART.exists():
-        return {}
+        return {}, {}
     for j in sorted(ART.glob("run_*.json")):
         cfg = json.loads(j.read_text()).get("config", {})
         lw, bk = cfg.get("level_weight"), cfg.get("block_key")
@@ -102,6 +103,7 @@ def load_cells(verbose: bool = True) -> dict[tuple[float, str], pd.DataFrame]:
         found[cell][seed] = p
 
     out: dict[tuple[float, str], pd.DataFrame] = {}
+    counts: dict[tuple[float, str], int] = {}
     for cell, per in sorted(found.items()):
         frames = {s: pd.read_parquet(p).drop_duplicates("safe_exp_id")
                   .set_index("safe_exp_id") for s, p in sorted(per.items())}
@@ -113,11 +115,15 @@ def load_cells(verbose: bool = True) -> dict[tuple[float, str], pd.DataFrame]:
         ens = frames[sorted(frames)[0]].loc[idx].copy()
         ens["oof"] = stack.mean(axis=0)      # every seed, never a subset
         out[cell] = attach_strict(attach_meta(ens))
+        counts[cell] = len(per)
         if verbose:
             missing = sorted(set(SEEDS) - set(per))
             print(f"  level_weight={cell[0]:<4} block_key={cell[1]:24s} "
                   f"seeds={len(per)}/8" + (f"  MISSING {missing}" if missing else ""))
-    return out
+    # Seed counts travel separately: cells[cell] is a DataFrame of ROWS, so
+    # len() on it reports 4,746 where the caller means 8.  That printed
+    # "n=4746 runs" in the main-effects table before it was caught.
+    return out, counts
 
 
 def restrict(d: pd.DataFrame, keep: set[str]) -> pd.DataFrame:
@@ -135,7 +141,7 @@ def main() -> int:
           f"extractants")
 
     print("\n=== cells ===")
-    cells = load_cells()
+    cells, seed_counts = load_cells()
     if not cells:
         print("\nNo decomposed-objective runs on disk yet.")
         return 1
@@ -161,7 +167,7 @@ def main() -> int:
         fb, fr2 = _score(fr, BINNED)
         print(f"  {lw:8.1f} {bk:>24s} {tb:+12.4f} {ts:+12.4f} {fb:+12.4f}")
         rows.append({"level_weight": lw, "block_key": bk,
-                     "n_seeds": len(cells[cell]),
+                     "n_seeds": seed_counts[cell],
                      "tune_adj_binned": tb, "tune_adj_strict": ts,
                      "full_adj_binned": fb, "full_r2_overall": fr2})
 
@@ -180,7 +186,8 @@ def main() -> int:
                 continue
             print(f"    {str(lv):24s} mean tune adj (binned) = "
                   f"{sub['tune_adj_binned'].mean():+.4f}  "
-                  f"(n={int(sub['n_seeds'].sum())} runs)")
+                  f"({int(sub['n_seeds'].sum())} runs across "
+                  f"{len(sub)} cell(s))")
 
     # ---- selection, then ONE confirmatory look -----------------------------
     best = cf.loc[cf["tune_adj_binned"].idxmax()]
