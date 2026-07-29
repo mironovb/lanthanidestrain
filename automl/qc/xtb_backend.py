@@ -256,7 +256,8 @@ def optimize(symbols, coords, *, charge: int,
              uhf: int = DEFAULT_UHF, solvent: str | None = None,
              opt_level: str = "tight", maxcycle: int = 750,
              binary: Path | None = None, threads: int = 1,
-             timeout: int = 21600, etemp: float | None = None) -> dict[str, Any]:
+             timeout: int = 21600, etemp: float | None = None,
+             method: str = "gfn2") -> dict[str, Any]:
     """GFN2-xTB geometry optimisation (ANCopt).
 
     Returns the relaxed coordinates plus an explicit convergence record: the
@@ -274,7 +275,13 @@ def optimize(symbols, coords, *, charge: int,
         wd = Path(td)
         write_plain_xyz(symbols, coords, wd / "in.xyz")
         (wd / "xtb.inp").write_text(f"$opt\n   maxcycle={maxcycle}\n$end\n")
-        args = ["in.xyz", "--gfn", "2", "--chrg", str(charge), "--uhf", str(uhf),
+        # ``method`` defaults to gfn2, which is what every published
+        # re-optimisation used, so nothing existing changes.  "gfnff" exists
+        # for conformer *sampling*, where a GFN2 relaxation of every snapshot
+        # costs ~15 minutes on a 300-atom complex and the ensemble needs tens
+        # of them per structure.
+        level = ["--gfnff"] if method == "gfnff" else ["--gfn", "2"]
+        args = ["in.xyz"] + level + ["--chrg", str(charge), "--uhf", str(uhf),
                 "--opt", opt_level, "--input", "xtb.inp", "--norestart"]
         if solvent:
             args += ["--alpb", solvent]
@@ -329,6 +336,7 @@ def optimize(symbols, coords, *, charge: int,
                              and grad["force_max_ev_ang"] <= target_ev_ang * 1.5),
             "rmsd_from_input_ang": rmsd,
             "opt_level": opt_level,
+            "method": method,
             "solvent": solvent,
             "charge": charge,
             "uhf": uhf,

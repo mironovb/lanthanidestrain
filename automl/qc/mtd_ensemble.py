@@ -31,20 +31,34 @@ search is built from xtb's own metadynamics:
                    than GFN2 because sampling needs 10^4 steps and GFN2 would
                    make the pilot cost more than the campaign it is testing.
 2. **snapshot** -- take frames at a fixed stride.
-3. **relax**    -- GFN2 ANCopt each snapshot in ALPB water, the same level the
-                   dataset's own geometries use.
-4. **dedup**    -- drop duplicates by heavy-atom RMSD and by energy.
-5. **weight**   -- Boltzmann weights at 298 K.
+3. **relax**    -- GFN-FF ANCopt each snapshot in ALPB water.
+4. **score**    -- GFN2 single point on each relaxed structure; that is the
+                   energy the Boltzmann weight uses.
+5. **dedup**    -- drop duplicates by heavy-atom RMSD and by energy.
+6. **weight**   -- Boltzmann weights at 298 K.
+
+Steps 3 and 4 were originally one GFN2 relaxation per snapshot.  Measured on
+this cluster that costs **15+ minutes for a single 300-atom structure** (job
+5278267), i.e. ~340 CPU-hours for an 80-complex pilot against a two-node cap --
+for a pilot whose whole purpose is to decide whether a larger campaign is worth
+running.  Splitting it puts the expensive method where it decides the answer
+(relative energies) and the cheap one where it does not (which local minimum a
+snapshot falls into).
 
 The metal is never substituted, no ligand is ever re-perceived, and nothing is
 written to `data/`.  Output goes to `automl/artifacts/mtd_ensemble/`.
 
 Honest limits, stated before any result
 ---------------------------------------
-* GFN-FF sampling with GFN2 re-optimisation is what CREST does in outline, not
-  in detail; there is no RMSD-based structure-space clustering, no
-  torsional-mode pre-screening and no z-matrix sorting.  Calling this "a CREST
-  ensemble" would be an overclaim, and it is called CREST-lite everywhere.
+* GFN-FF sampling with GFN2 reranking is what CREST does in outline, not in
+  detail; there is no RMSD-based structure-space clustering, no torsional-mode
+  pre-screening and no z-matrix sorting, and CREST relaxes at the working level
+  where this relaxes at GFN-FF.  Calling this "a CREST ensemble" would be an
+  overclaim, and it is called CREST-lite everywhere.
+* Relaxing at GFN-FF means the *geometries* are GFN-FF minima, not GFN2 minima.
+  For the pilot's question -- can the conformer scatter in a GFN2 energy be cut
+  ~4x -- that is acceptable, because the energies are GFN2.  It would not be
+  acceptable if the geometries themselves were the deliverable.
 * A metadynamics run that fails to escape its starting basin returns the
   starting structure back.  That is recorded per complex (`n_unique`), because
   an ensemble of one dressed up as an ensemble is exactly how this could produce
@@ -150,7 +164,9 @@ def _heavy_rmsd(a: np.ndarray, b: np.ndarray, symbols: list[str]) -> float:
 def ensemble_one(row, *, time_ps: float, dump_fs: float, temp_k: float,
                  kpush: float, alp: float, max_snapshots: int,
                  rmsd_tol: float, e_tol_ev: float, threads: int,
-                 timeout: int, overwrite: bool = False) -> dict[str, Any]:
+                 timeout: int, overwrite: bool = False,
+                 opt_method: str = "gfnff", opt_level: str = "loose",
+                 maxcycle: int = 200) -> dict[str, Any]:
     """Sample, relax, dedup and Boltzmann-weight one complex."""
     key = str(row["geometry_key"])
     safe = key.replace("/", "_").replace("|", "_")
@@ -222,18 +238,44 @@ def ensemble_one(row, *, time_ps: float, dump_fs: float, temp_k: float,
     picks = [(symbols, coords)] + [frames[i] for i in
                                    range(0, len(frames), stride)][:max_snapshots]
 
+    # Relax cheaply, score properly.
+    #
+    # Measured, not assumed: a GFN2 ANCopt of one 300-atom snapshot runs 15+
+    # minutes on this cluster (observed in job 5278267, four workers each at
+    # 99.9% CPU for a quarter of an hour on a single structure).  At 16
+    # snapshots x 80 complexes that is ~340 CPU-hours for the pilot alone,
+    # against a GrpTRES cap of two nodes -- and the pilot exists to decide
+    # whether a much larger campaign is worth running.
+    #
+    # So: relax at GFN-FF, then take a GFN2 single point on the relaxed
+    # structure for the energy that enters the Boltzmann weight.  This is
+    # closer to what CREST actually does than a full GFN2 relaxation of every
+    # snapshot would be, and it puts the expensive method where it decides the
+    # answer (relative energies) rather than where it does not (which local
+    # minimum a snapshot falls into).
     relaxed: list[tuple[float, np.ndarray]] = []
     for sy, xyz in picks:
         r = xb.optimize(sy, xyz, charge=charge, solvent="water",
-                        opt_level="normal", maxcycle=300, binary=binary,
-                        threads=threads, timeout=timeout)
+                        opt_level=opt_level, maxcycle=maxcycle, binary=binary,
+                        threads=threads, timeout=timeout, method=opt_method)
         # xb.optimize returns the relaxed geometry under "coords" (not
         # "coordinates" -- read_extxyz uses that name, optimize does not).
-        if r.get("ok") and r.get("energy_ev") is not None:
-            relaxed.append((float(r["energy_ev"]),
-                            np.asarray(r["coords"], dtype=float)
-                            if r.get("coords") is not None else xyz))
+        if not r.get("ok"):
+            continue
+        geo = (np.asarray(r["coords"], dtype=float)
+               if r.get("coords") is not None else xyz)
+        if opt_method == "gfnff":
+            sp = xb.single_point(sy, geo, charge=charge, solvent="water",
+                                 binary=binary, threads=threads,
+                                 timeout=timeout)
+            e = sp.get("energy_ev") if sp.get("ok") else None
+        else:
+            e = r.get("energy_ev")
+        if e is not None:
+            relaxed.append((float(e), geo))
     rec["relaxed"] = len(relaxed)
+    rec["opt_method"] = opt_method
+    rec["opt_level"] = opt_level
     if not relaxed:
         rec["status"] = "no_relaxed"
         rec["n_unique"] = 0
@@ -316,6 +358,12 @@ def main() -> int:
     ap.add_argument("--workers", type=int,
                     default=int(os.environ.get("SLURM_CPUS_PER_TASK", 8)))
     ap.add_argument("--threads", type=int, default=1)
+    ap.add_argument("--opt-method", default="gfnff",
+                    choices=("gfnff", "gfn2"),
+                    help="relaxation level for snapshots; energies "
+                         "are always a GFN2 single point")
+    ap.add_argument("--opt-level", default="loose")
+    ap.add_argument("--maxcycle", type=int, default=200)
     ap.add_argument("--timeout", type=int, default=3600)
     ap.add_argument("--overwrite", action="store_true")
     ap.add_argument("--collect", action="store_true")
@@ -367,7 +415,10 @@ def main() -> int:
                           max_snapshots=args.max_snapshots,
                           rmsd_tol=args.rmsd_tol, e_tol_ev=args.e_tol_ev,
                           threads=args.threads, timeout=args.timeout,
-                          overwrite=args.overwrite)
+                          overwrite=args.overwrite,
+                          opt_method=args.opt_method,
+                          opt_level=args.opt_level,
+                          maxcycle=args.maxcycle)
                 for _, r in mine.iterrows()]
         for f in as_completed(futs):
             res = f.result()
