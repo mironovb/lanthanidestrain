@@ -280,6 +280,20 @@ def ensemble_one(row, *, time_ps: float, dump_fs: float, temp_k: float,
         rec["status"] = "no_relaxed"
         rec["n_unique"] = 0
     else:
+        # picks[0] is the SHIPPED geometry, so relaxed[0] -- before sorting --
+        # is what the dataset actually used, relaxed to the same level as every
+        # search structure.  Recording it is what makes the surviving hypothesis
+        # testable at all:
+        #
+        #   e_shipped - e_min  =  how far the dataset's arbitrary local minimum
+        #                         sits above the global one
+        #
+        # If that gap VARIES across the members of a ligand family, that
+        # variation is precisely the contamination in E_int that
+        # energy_diagnostic measured at SNR 0.25 -- and a consistent global
+        # minimisation would remove it.  Without this number the pilot can count
+        # conformers but cannot test the thing it exists to test.
+        rec["e_shipped_relaxed_ev"] = float(relaxed[0][0])
         relaxed.sort(key=lambda t: t[0])
         uniq: list[tuple[float, np.ndarray]] = []
         for e, c in relaxed:
@@ -299,6 +313,8 @@ def ensemble_one(row, *, time_ps: float, dump_fs: float, temp_k: float,
         rec["e_min_ev"] = float(energies.min())
         rec["e_mean_ev"] = float(energies.mean())
         rec["e_spread_ev"] = float(energies.max() - energies.min())
+        rec["gap_shipped_above_min_ev"] = float(
+            rec["e_shipped_relaxed_ev"] - energies.min())
         # Boltzmann weighting was the assumed remedy and the smoke falsified it:
         # conformer energy gaps here are 0.8-1.9 eV against kT = 0.026 eV, so
         # exp(-dE/kT) puts ~99% of the weight on one structure and n_effective
