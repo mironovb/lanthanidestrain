@@ -49,7 +49,11 @@ from automl.topo.best_stack import nested_stack
 from automl.topo.dualkey_test import BINNED, STRICT, load_frames, COMBOS
 
 REPO = Path(__file__).resolve().parents[2]
-OUT = REPO / "automl/reports/calibration_test.csv"
+# Key-specific: the two keys are two different analyses and the first run
+# was silently overwritten by the second.
+def _out(key: str) -> Path:
+    tag = "binned" if key == BINNED else "strict"
+    return REPO / f"automl/reports/calibration_test_{tag}.csv"
 
 
 def _per_group(d: pd.DataFrame, key_col: str):
@@ -108,9 +112,50 @@ def _summary(dy, dp):
             "n_pairs": int(len(dy))}
 
 
+def gain_interval(per: dict, kind: str, n_boot: int = 400, seed: int = 0):
+    """Cluster-bootstrap interval on (calibrated R2 - raw R2).
+
+    Without this the gain is a point estimate selected as the best of three
+    transforms, which is exactly the shape of claim this study has been caught
+    by before: a +0.0178 persistence-image "tuning gain" that replication
+    reduced to +0.0003.  A gain smaller than its own interval is not a gain.
+
+    Resamples whole extractants with repetition, the multiplicity-respecting
+    form, and applies the *same* draw to both the raw and the calibrated vectors
+    so the comparison is paired.
+    """
+    groups = [g for g in per if len(per[g][0])]
+    # Calibrate once, nested, then carry per-extractant vectors into the draws:
+    # refitting the transform inside every bootstrap draw would be measuring the
+    # transform's own variance, not the gain's.
+    cal = {}
+    for g in groups:
+        others = [o for o in groups if o != g]
+        dy_tr = np.concatenate([per[o][0] for o in others])
+        dp_tr = np.concatenate([per[o][1] for o in others])
+        cal[g] = _fit_apply(kind, dy_tr, dp_tr, per[g][1])[0]
+
+    def stat(pick):
+        dy = np.concatenate([per[groups[i]][0] for i in pick])
+        raw = np.concatenate([per[groups[i]][1] for i in pick])
+        cl = np.concatenate([cal[groups[i]] for i in pick])
+        return ev._r2(dy, cl) - ev._r2(dy, raw)
+
+    n = len(groups)
+    obs = stat(np.arange(n))
+    rng = np.random.default_rng(seed)
+    draws = [stat(rng.integers(0, n, n)) for _ in range(n_boot)]
+    draws = np.asarray([d for d in draws if np.isfinite(d)])
+    return {"gain": float(obs),
+            "lo": float(np.percentile(draws, 5)),
+            "hi": float(np.percentile(draws, 95)),
+            "p_positive": float((draws > 0).mean())}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--key", default=BINNED, choices=(BINNED, STRICT))
+    ap.add_argument("--n-boot", type=int, default=400)
     args = ap.parse_args()
 
     frames = load_frames()
@@ -144,30 +189,52 @@ def main() -> int:
                          **s})
 
     out = pd.DataFrame(rows)
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    out.to_csv(OUT, index=False)
+    dest = _out(args.key)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    out.to_csv(dest, index=False)
 
-    # The verdict is computed from the numbers, not asserted.
-    best = out[out["model"] == "full (CatBoost+repaired+S0)"]
+    # The verdict is computed from the numbers, and from their INTERVAL.  The
+    # point estimate here is the best of three transforms, which is the same
+    # shape of claim as the +0.0178 persistence-image tuning gain that
+    # replication reduced to +0.0003.
+    key_label = "full (CatBoost+repaired+S0)"
+    best = out[out["model"] == key_label]
     if len(best):
         raw = float(best[best["transform"] == "raw"]["r2"].iloc[0])
-        gain = float(best[best["transform"] != "raw"]["r2"].max()) - raw
         span = float(best[best["transform"] == "raw"]["span_ratio"].iloc[0])
-        print(f"\n=== verdict ===")
-        print(f"  best model raw R2 = {raw:+.4f}; best nested recalibration "
-              f"buys {gain:+.4f}")
-        print(f"  predictions span {span:.2f}x the true spread before "
-              f"recalibration")
-        if gain <= 0.002:
-            print("  ==> the compression is OPTIMAL SHRINKAGE, not "
-                  "miscalibration: rescaling buys nothing out of sample, so "
-                  "the models are already as sharp as the noise permits. "
-                  "Report the compression as a property of the problem.")
+        cand = best[best["transform"] != "raw"]
+        pick = str(cand.loc[cand["r2"].idxmax(), "transform"])
+        per = _per_group(targets[key_label], args.key)
+        gi = gain_interval(per, pick, n_boot=args.n_boot)
+        print("\n=== verdict ===")
+        print(f"  best model raw R2 = {raw:+.4f}; best of three transforms is "
+              f"'{pick}'")
+        print(f"  gain = {gi['gain']:+.4f} [{gi['lo']:+.4f}, {gi['hi']:+.4f}] "
+              f"P(>0)={gi['p_positive']:.2f}   (cluster bootstrap over "
+              f"extractants, {args.n_boot} draws)")
+        print(f"  predictions span {span:.2f}x the true spread raw, "
+              f"{float(cand.loc[cand['r2'].idxmax(), 'span_ratio']):.2f}x after")
+        rows.append({"key": args.key, "model": key_label,
+                     "transform": f"{pick}_gain", "r2": gi["gain"],
+                     "lo": gi["lo"], "hi": gi["hi"],
+                     "p_positive": gi["p_positive"]})
+        pd.DataFrame(rows).to_csv(dest, index=False)
+        if gi["lo"] > 0:
+            print("  ==> MISCALIBRATION: a nested rescale improves out-of-sample "
+                  "R2 by more than\n      its own interval, so the calibrated "
+                  "number is the one to report.")
         else:
-            print("  ==> the compression is partly MISCALIBRATION: a nested "
-                  "rescale improves out-of-sample R2, so the calibrated number "
-                  "is the one to report.")
-    print(f"\n[calibration] wrote {OUT}")
+            print("  ==> OPTIMAL SHRINKAGE, not miscalibration. The gain does "
+                  "not clear its own\n      interval, so rescaling buys nothing "
+                  "reliable: the models are already as\n      sharp as the noise "
+                  "permits, and the compression is a property of the\n      "
+                  "problem rather than a defect to be fixed.")
+        print(f"  Recalibration recovers only part of the span "
+              f"({span:.2f}x -> "
+              f"{float(cand.loc[cand['r2'].idxmax(), 'span_ratio']):.2f}x of the "
+              f"true spread),\n  so magnitude compression remains real either "
+              f"way and must stay in the paper.")
+    print(f"\n[calibration] wrote {dest}")
     return 0
 
 
