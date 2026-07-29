@@ -110,19 +110,39 @@ def paired_adjacent_corrected(a: pd.DataFrame, b: pd.DataFrame, n_boot: int,
     subsample, not a cluster bootstrap, and its intervals came out 12-29% narrow
     (``bootstrap_audit.csv``).
 
-    The fast precomputed path cannot be reused here: it keys on the set of drawn
-    clusters, which is precisely the information the correction restores.
+    The fast precomputed path *can* be reused, and this is why.  Tagging each
+    drawn copy with its own block key makes a twice-drawn extractant into two
+    separate blocks holding the same rows -- which produce the same pairs,
+    twice.  So the corrected resample is exactly the per-cluster pair vectors
+    concatenated **with repetition**, where the published one concatenated the
+    *distinct* drawn clusters.  One ``np.unique`` is the whole difference.
+
+    That equivalence is worth ~200x: the literal implementation re-runs a
+    groupby over 4,165 blocks for every draw and takes hours; this takes
+    seconds.  It is asserted against the literal one rather than assumed --
+    ``_assert_corrected_matches`` below.
     """
     common = a.index.intersection(b.index)
     if len(common) < 0.5 * min(len(a), len(b)):
         return None
     a, b = a.loc[common], b.loc[common]
+    groups = a["extractant_group"].to_numpy()
     y = a["y"].to_numpy(float)
     pa, pb = a["oof"].to_numpy(float), b["oof"].to_numpy(float)
     comp = a[key_col].to_numpy().astype(str)
     li = a["lanthanide_index"].to_numpy()
-    gcodes, guniq = pd.factorize(a["extractant_group"].to_numpy())
-    rows_by_g = [np.flatnonzero(gcodes == i) for i in range(len(guniq))]
+
+    from automl.topo.control_factorial import pairs_by_cluster
+    per_a = pairs_by_cluster(a, groups, key_col)
+    per_b = pairs_by_cluster(b, groups, key_col)
+    n = len(per_a)
+
+    def stat(per, pick):
+        dy = [per[i][0] for i in pick if len(per[i][0])]
+        dp = [per[i][1] for i in pick if len(per[i][0])]
+        if not dy:
+            return np.nan
+        return ev._r2(np.concatenate(dy), np.concatenate(dp))
 
     obs_a = adj_r2(y, pa, comp, li)
     obs_b = adj_r2(y, pb, comp, li)
@@ -130,13 +150,9 @@ def paired_adjacent_corrected(a: pd.DataFrame, b: pd.DataFrame, n_boot: int,
     rng = np.random.default_rng(seed)
     da, db, dd = [], [], []
     for _ in range(n_boot):
-        pick = rng.integers(0, len(rows_by_g), len(rows_by_g))
-        idx = np.concatenate([rows_by_g[g] for g in pick])
-        tag = np.concatenate([np.full(len(rows_by_g[g]), c)
-                              for c, g in enumerate(pick)])
-        ck = np.char.add(np.char.add(comp[idx], "#"), tag.astype(str))
-        va = adj_r2(y[idx], pa[idx], ck, li[idx])
-        vb = adj_r2(y[idx], pb[idx], ck, li[idx])
+        # NOT np.unique: repetition is the correction.
+        pick = rng.integers(0, n, n)
+        va, vb = stat(per_a, pick), stat(per_b, pick)
         if np.isfinite(va) and np.isfinite(vb):
             da.append(va); db.append(vb); dd.append(vb - va)
     if len(dd) < 30:
@@ -150,6 +166,48 @@ def paired_adjacent_corrected(a: pd.DataFrame, b: pd.DataFrame, n_boot: int,
             "hi": float(np.percentile(dd, 95)),
             "p_better": float((dd > 0).mean()),
             "n_boot": len(dd)}
+
+
+def _assert_corrected_matches(d: pd.DataFrame, key_col: str = BINNED,
+                              n_checks: int = 15, seed: int = 4242) -> None:
+    """The fast corrected path must equal the literal copy-tagged statistic.
+
+    A speedup that silently disagreed with the statistic it replaces would
+    reproduce this study's worst bug -- a figure and a table computing the same
+    quantity two different ways -- so the equivalence is checked at full
+    precision before any interval uses it.
+
+    The literal version is the one from ``bootstrap_check.py``: suffix the copy
+    index onto the block key so a twice-drawn extractant becomes two blocks.
+    """
+    from automl.topo.control_factorial import pairs_by_cluster
+    groups = d["extractant_group"].to_numpy()
+    y = d["y"].to_numpy(float)
+    p = d["oof"].to_numpy(float)
+    comp = d[key_col].to_numpy().astype(str)
+    li = d["lanthanide_index"].to_numpy()
+    gcodes, guniq = pd.factorize(groups)
+    rows_by_g = [np.flatnonzero(gcodes == i) for i in range(len(guniq))]
+    per = pairs_by_cluster(d, groups, key_col)
+
+    rng = np.random.default_rng(seed)
+    for _ in range(n_checks):
+        pick = rng.integers(0, len(rows_by_g), len(rows_by_g))
+        idx = np.concatenate([rows_by_g[g] for g in pick])
+        tag = np.concatenate([np.full(len(rows_by_g[g]), c)
+                              for c, g in enumerate(pick)])
+        ck = np.char.add(np.char.add(comp[idx], "#"), tag.astype(str))
+        slow = adj_r2(y[idx], p[idx], ck, li[idx])
+        dy = [per[i][0] for i in pick if len(per[i][0])]
+        dp = [per[i][1] for i in pick if len(per[i][0])]
+        fast = ev._r2(np.concatenate(dy), np.concatenate(dp)) if dy else np.nan
+        if not (np.isfinite(slow) and np.isfinite(fast)):
+            continue
+        if abs(slow - fast) > 1e-9:
+            raise AssertionError(
+                f"fast corrected bootstrap disagrees with the copy-tagged "
+                f"statistic under {key_col}: {fast!r} vs {slow!r} "
+                f"(delta {fast - slow:.3e})")
 
 
 def _verdict(lo: float, hi: float) -> str:
@@ -198,9 +256,11 @@ def main() -> int:
         assert_nested(frames["S0"], key)
         g = frames["S0"]["extractant_group"].to_numpy()
         _assert_fast_matches(frames["S0"], g, n_checks=10, key_col=key)
+        _assert_corrected_matches(frames["S0"], key_col=key, n_checks=10)
         nb = frames["S0"].groupby(key).ngroups
         print(f"  {key:26s} blocks={nb:5d}  nested in extractant OK  "
-              f"fast path == adjacent_pair_metrics OK")
+              f"fast path == adjacent_pair_metrics OK  "
+              f"corrected path == copy-tagged statistic OK")
 
     # standing precondition: the published S0 ensemble must not have moved
     s0_pub, _ = _score(frames["S0"], BINNED)
