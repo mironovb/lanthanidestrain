@@ -195,8 +195,73 @@ def fig_calibration() -> None:
     _save(fig, "re_fig4_calibration")
 
 
+def fig_encoder() -> None:
+    """Simplicial, graph and distance encoders on the two axes of the rule."""
+    arms = _read("encoder_arms.csv")
+    con = _read("encoder_test.csv")
+    if arms is None or arms.empty:
+        print("skip encoder: no encoder_arms.csv"); return
+
+    _style()
+    fig, (ax, ax2) = plt.subplots(1, 2, figsize=(10.6, 4.0),
+                                  gridspec_kw={"width_ratios": [1.15, 1]})
+
+    # -- left: the mechanism plane (accurate AND decorrelated) --------------
+    role = {"S0": (TOPO, "o", "simplicial (published)"),
+            "G0": (TOPO, "s", "graph, no triangles"),
+            "D0": (TOPO, "^", "distance net, no simplices"),
+            "T0w": (WARN, "X", "tabular control"),
+            "CatBoost": (CAT, "D", "CatBoost"),
+            "repaired": (FCNN, "P", "repaired FCNN")}
+    for _, r in arms.iterrows():
+        a = str(r["arm"])
+        if a not in role or not np.isfinite(r.get("err_corr_with_repaired", np.nan)):
+            continue
+        col, mk, lab = role[a]
+        ax.scatter(r["err_corr_with_repaired"], r["adj_r2_binned"], s=110,
+                   marker=mk, color=col, edgecolor="white", linewidth=0.9,
+                   zorder=3, label=lab)
+        ax.annotate(a, (r["err_corr_with_repaired"], r["adj_r2_binned"]),
+                    textcoords="offset points", xytext=(8, -3), fontsize=9,
+                    color=INK2)
+    ax.set_xlabel("error correlation with the repaired baseline  (lower = more complementary)")
+    ax.set_ylabel("adjacent-pair R²  (higher = more accurate)")
+    ax.set_title("All three 3D encoders sit in the useful corner", loc="left")
+    # Outside the axes: CatBoost sits at (0.88, 0.14), which is exactly where a
+    # lower-left legend lands, and the marker was being covered by its own key.
+    ax.legend(loc="upper left", bbox_to_anchor=(0.0, -0.16), ncol=3,
+              fontsize=8, columnspacing=1.1, handletextpad=0.4)
+    ax.margins(x=0.10, y=0.12)
+
+    # -- right: the pre-registered contrasts --------------------------------
+    if con is not None and not con.empty:
+        lo_c = [c for c in con.columns if c.startswith("lo_")][0]
+        hi_c = [c for c in con.columns if c.startswith("hi_")][0]
+        sub = con[con["key"] == "composition_key"]
+        labels = []
+        for i, (_, r) in enumerate(sub.iterrows()):
+            y = -i
+            col = TOPO if r["base"] == "no topology" else WARN
+            ax2.plot([r["lo"], r["hi"]], [y, y], color=col, lw=3.2,
+                     solid_capstyle="round")
+            ax2.plot([r[lo_c], r[hi_c]], [y, y], color=col, lw=1.1, alpha=0.75)
+            ax2.plot([r["delta"]], [y], "o", color=col, ms=6.5,
+                     markeredgecolor="white", markeredgewidth=0.8)
+            labels.append(f"{r['arm']}\nvs {r['base']}")
+        ax2.axvline(0, color=INK, lw=1.0)
+        ax2.set_yticks([-i for i in range(len(sub))])
+        ax2.set_yticklabels(labels, fontsize=8)
+        dec = sub[sub["base"] == "with D0"]
+        note = (f"decisive contrast {float(dec['delta'].iloc[0]):+.4f}, "
+                f"spans zero" if len(dec) else "")
+        ax2.set_title(f"Both add; neither is better\n{note}", loc="left")
+        ax2.set_xlabel("Δ adjacent-pair R² (binned key)")
+    _save(fig, "re_fig5_encoder")
+
+
 FIGS = {"ceiling": fig_ceiling, "dualkey": fig_dualkey,
-        "energy": fig_energy_snr, "calibration": fig_calibration}
+        "energy": fig_energy_snr, "calibration": fig_calibration,
+        "encoder": fig_encoder}
 
 
 def main() -> int:
