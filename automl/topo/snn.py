@@ -51,20 +51,81 @@ import torch
 import torch.nn as nn
 
 
+# Deterministic reductions, off by default.
+#
+# ``index_add_`` and ``index_reduce_`` on CUDA accumulate with atomics, so the
+# summation order changes between runs and the result changes in the last bits.
+# On this model that is not a rounding curiosity: ``PI_SWEEP_PRECISION.md``
+# measured an 8-seed ensemble moving by 0.0092 between identical re-runs, which
+# is larger than most of the differences the study argues about, and it is the
+# reason a 25-cell sweep could not pick a winner.
+#
+# This network has no convolutions, so ``cudnn.benchmark`` is not the culprit
+# here the way it is for the persistence-image CNN -- the scatter is.  Enabling
+# the flag below swaps both reductions for sort-based versions whose summation
+# order is fixed by the index, not by which thread arrives first.
+#
+# Default OFF so every published run stays byte-reproducible from this file.
+_DETERMINISTIC = False
+
+
+def set_deterministic(flag: bool) -> None:
+    """Switch the scatter reductions to their order-independent versions."""
+    global _DETERMINISTIC
+    _DETERMINISTIC = bool(flag)
+
+
+def _sorted_segments(index: torch.Tensor):
+    """Stable sort of ``index``, plus the last position of each run."""
+    order = torch.argsort(index, stable=True)
+    s_idx = index[order]
+    last = torch.ones_like(s_idx, dtype=torch.bool)
+    if s_idx.numel() > 1:
+        last[:-1] = s_idx[:-1] != s_idx[1:]
+    ends = torch.nonzero(last, as_tuple=True)[0]
+    return order, s_idx, ends
+
+
 def scatter_sum(src: torch.Tensor, index: torch.Tensor, dim_size: int) -> torch.Tensor:
     out = src.new_zeros((dim_size, src.shape[-1]))
-    out.index_add_(0, index, src)
+    if not _DETERMINISTIC:
+        out.index_add_(0, index, src)
+        return out
+    if src.shape[0] == 0:
+        return out
+    # Sort by segment, prefix-sum, then difference at the segment ends: the
+    # additions inside a segment now happen in a fixed order.  Done in float64
+    # because a prefix sum over ~10^6 triangles in float32 loses more precision
+    # than the atomics it is replacing, which would trade one error for another.
+    order, s_idx, ends = _sorted_segments(index)
+    cs = torch.cumsum(src[order].to(torch.float64), dim=0)
+    tot = cs[ends]
+    prev = torch.cat([tot.new_zeros((1, tot.shape[-1])), tot[:-1]], dim=0)
+    out[s_idx[ends]] = (tot - prev).to(src.dtype)
     return out
 
 
 def scatter_mean(src: torch.Tensor, index: torch.Tensor, dim_size: int) -> torch.Tensor:
     total = scatter_sum(src, index, dim_size)
+    # The denominator is left on the original path in both modes: it accumulates
+    # 1.0 into segments of at most ~10^6 elements, which float32 represents
+    # exactly, so its value cannot depend on the order the atomics land in.
     count = src.new_zeros(dim_size).index_add_(
         0, index, src.new_ones(src.shape[0]))
     return total / count.clamp(min=1.0).unsqueeze(-1)
 
 
 def scatter_max(src: torch.Tensor, index: torch.Tensor, dim_size: int) -> torch.Tensor:
+    """Segment maximum.
+
+    Deliberately **not** given a deterministic variant, because it does not need
+    one: a maximum is exact and associative, so ``index_reduce_`` returns the
+    same value whichever order the atomics land in.  Only the *sum* reductions
+    above are order-sensitive.  ``index_reduce_`` still has no deterministic
+    CUDA kernel registered, so it warns rather than raising under
+    ``use_deterministic_algorithms(True, warn_only=True)``; that warning is
+    expected here and is not evidence of nondeterminism.
+    """
     out = src.new_full((dim_size, src.shape[-1]), float("-inf"))
     out = out.index_reduce_(0, index, src, "amax", include_self=True)
     return torch.nan_to_num(out, neginf=0.0)
@@ -142,9 +203,17 @@ class SimplicialNet(nn.Module):
                  tabular_dim: int = 0, head_hidden: int = 256,
                  n_z: int = 32, node_feat_dim: int = 5,
                  radial_bins: int = 32, radial_max: float = 8.0,
-                 head_embed_mult: int = 1):
+                 head_embed_mult: int = 1, use_triangles: bool = True):
         super().__init__()
         self.dim = dim
+        # ``use_triangles=False`` drops the 2-simplex level, leaving message
+        # passing over the *graph* of the Vietoris-Rips complex.  This is the
+        # cheapest half of the study's oldest open question -- "is 'simplicial'
+        # or merely '3D message passing' the operative ingredient?"
+        # (PI_EMAIL.md sec 9, STACK_RESULTS.md sec 8) -- because everything else
+        # is held fixed: same node features, same readout, same head, same
+        # edges, same folds.  The triangles are the only difference.
+        self.use_triangles = bool(use_triangles)
         self.z_emb = nn.Embedding(n_z, dim)
         self.node_in = _mlp(node_feat_dim, dim, dim, dropout)
         self.edge_in = _mlp(1, dim, dim, dropout)
@@ -196,8 +265,19 @@ class SimplicialNet(nn.Module):
     def encode(self, batch: dict[str, Any]) -> torch.Tensor:
         hn = self.z_emb(batch["z_idx"]) + self.node_in(batch["node_feat"])
         he = self.edge_in(batch["edge_filt"])
-        ht = self.tri_in(batch["tri_filt"])
-        ei, te = batch["edge_index"], batch["tri_edges"]
+        ei = batch["edge_index"]
+        if self.use_triangles:
+            ht = self.tri_in(batch["tri_filt"])
+            te = batch["tri_edges"]
+        else:
+            # Width-zero rather than zero-valued: MPSNLayer already has an exact
+            # no-triangle branch keyed on ``n_tris == 0``, and the readout below
+            # substitutes zeros for the two triangle pooling blocks.  Feeding
+            # zero *filtration values* instead would leave the triangle pathway
+            # present and trainable on a constant, which is a different and much
+            # weaker ablation than the one being claimed.
+            ht = he.new_zeros((0, self.dim))
+            te = ei.new_zeros((3, 0))
         for layer in self.layers:
             hn, he, ht = layer(hn, he, ht, ei, te)
 

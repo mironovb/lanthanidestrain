@@ -40,6 +40,7 @@ from automl.topo.simplicial_data import (ConformerComplexes,
 from automl.topo.snn import SimplicialNet, MaskedChargeHead, count_parameters
 from automl.topo.pi_cnn import PersistenceImages, PersistenceCNN, PI_PATH
 from automl.topo.tabular_net import TabularNet, NullCache
+from automl.topo.dist_gnn import DistanceNet
 
 REPO = Path(__file__).resolve().parents[2]
 OUT_DIR = REPO / "automl/artifacts/topo_runs"
@@ -68,7 +69,11 @@ def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
     which arm's eligibility to reproduce.
     """
     df, blocks, _ = load_cache()
-    key_arch = match_rows if arch == "tabular" else arch
+    # 'dist' reads the same Vietoris-Rips asset as 'snn' -- same edges, same
+    # node features -- so it must select the same rows or the paired bootstrap
+    # would compare two different datasets.
+    key_arch = match_rows if arch == "tabular" else (
+        "snn" if arch == "dist" else arch)
     asset = (SimplicialComplexes(verbose=False) if key_arch == "snn"
              else PersistenceImages())
     key = df["geometry_feature_build_id"].astype(str)
@@ -80,6 +85,27 @@ def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
     # median-impute + standardise; statistics are refit per fold in run_fold to
     # avoid leaking test-fold statistics into training.
     return df, X, cols
+
+
+def block_means(pred: torch.Tensor, tgt: torch.Tensor, bidx: torch.Tensor,
+                n_blocks: int) -> tuple[torch.Tensor, torch.Tensor]:
+    """Per-block means of the prediction and the target.
+
+    The level term of the decomposed objective.  Returns one value per block,
+    not one per row: a composition block is a single nuisance parameter however
+    many measurements happen to sit in it, and weighting it by row count would
+    hand the largest blocks the same dominance the plain MSE already gives them.
+
+    Kept at module level so the arithmetic can be tested without standing up a
+    fold, a cache and a GPU.
+    """
+    cnt = torch.zeros(n_blocks, device=pred.device, dtype=pred.dtype).index_add_(
+        0, bidx, torch.ones_like(pred)).clamp(min=1.0)
+    pm = torch.zeros(n_blocks, device=pred.device,
+                     dtype=pred.dtype).index_add_(0, bidx, pred) / cnt
+    tm = torch.zeros(n_blocks, device=tgt.device,
+                     dtype=tgt.dtype).index_add_(0, bidx, tgt) / cnt
+    return pm, tm
 
 
 def _standardise(train_X, *others):
@@ -250,11 +276,22 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                                tabular_dim=X.shape[1],
                                head_hidden=cfg["head_hidden"],
                                in_channels=cfg.get("in_channels", 1)).to(device)
+    elif cfg.get("arch", "snn") == "dist":
+        # Same edges, same node inputs, same readout, same head width -- the
+        # only difference from the SNN is that there is no simplicial structure.
+        # That is what makes it a control for "is it simplicial, or just 3D?".
+        model = DistanceNet(dim=cfg["dim"], layers=cfg["layers"],
+                            dropout=cfg["dropout"], tabular_dim=X.shape[1],
+                            head_hidden=cfg["head_hidden"],
+                            rbf_max=float(cfg.get("filtration_max", 3.5)),
+                            head_embed_mult=2 if cfg.get("block_centre") else 1
+                            ).to(device)
     else:
         model = SimplicialNet(dim=cfg["dim"], layers=cfg["layers"],
                               dropout=cfg["dropout"], tabular_dim=X.shape[1],
                               head_hidden=cfg["head_hidden"],
-                              head_embed_mult=2 if cfg.get("block_centre") else 1
+                              head_embed_mult=2 if cfg.get("block_centre") else 1,
+                              use_triangles=not cfg.get("no_triangles", False)
                               ).to(device)
     if pretrained_state is not None:
         # Encoder weights only.  Pretraining has no tabular block, so its head
@@ -288,13 +325,24 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
     # composition_key, which is experimental metadata, not the target.
     comp_all = df["composition_key"].to_numpy()
     lidx_all = df["lanthanide_index"].to_numpy()
+    # Which blocking to train and early-stop against.  ``composition_key`` bins
+    # the conditions; ``strict_composition_key`` does not, and dataset.py:387
+    # argues the binned one "turns a real log D difference into label noise on a
+    # zero-difference feature vector".  Default is the published key, so nothing
+    # existing moves.
+    blk_all = (df[cfg["block_key"]].to_numpy()
+               if cfg.get("block_key") else comp_all)
     pair_w = float(cfg.get("pair_loss_weight", 0.0))
+    # None = the published objective (Huber on the raw target).  A number turns
+    # on the decomposed objective and is the weight on the block-mean term.
+    level_w = cfg.get("level_weight")
+    level_w = None if level_w is None else float(level_w)
     fit_blocks: list[np.ndarray] = []
     if pair_w > 0:
         pos = {int(r): i for i, r in enumerate(fit_idx)}
         by_block: dict[Any, list[int]] = {}
         for r in fit_idx:
-            by_block.setdefault(comp_all[r], []).append(int(r))
+            by_block.setdefault(blk_all[r], []).append(int(r))
         fit_blocks = [np.array(v) for v in by_block.values() if len(v) >= 2]
 
     # --- conformer ensembling and block-centred embeddings -------------------
@@ -371,8 +419,8 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                     for s in range(0, len(idx), step)]
         budget = max(cfg["eval_batch"], 1)
         chunks, buf = [], []
-        for _key, positions in pd.Series(comp_all[idx]).groupby(
-                comp_all[idx], sort=False).groups.items():
+        for _key, positions in pd.Series(blk_all[idx]).groupby(
+                blk_all[idx], sort=False).groups.items():
             pos = np.asarray(positions, dtype=int)
             if buf and len(buf) + len(pos) > budget:
                 chunks.append(np.concatenate(buf)); buf = []
@@ -392,7 +440,7 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                 emb = _encode(ids)
                 gather = torch.as_tensor([remap[c] for c in cplx[rows]],
                                          device=device)
-                e = _centre(emb[gather], comp_all[rows])
+                e = _centre(emb[gather], blk_all[rows])
                 tab = torch.as_tensor(Xs[take], device=device)
                 outs[take] = (model.head(torch.cat([e, tab], -1))
                               .squeeze(-1).cpu().numpy())
@@ -437,17 +485,43 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
             gather = torch.as_tensor([remap[c] for c in cplx[rows]], device=device)
             xpos = np.array([fit_pos[int(r)] for r in rows])
             tab = torch.as_tensor(Xtr[xpos], device=device)
-            e = _centre(emb[gather], comp_all[rows])
+            e = _centre(emb[gather], blk_all[rows])
             pred = model.head(torch.cat([e, tab], -1)).squeeze(-1)
             tgt = torch.as_tensor((y[rows] - ymu) / ysd, device=device)
-            loss = nn.functional.huber_loss(pred, tgt, delta=1.0)
+
+            if level_w is None:
+                loss = nn.functional.huber_loss(pred, tgt, delta=1.0)
+            else:
+                # Decomposed objective.
+                #
+                # The scored quantity is a *difference* between two lanthanides
+                # inside a block; the block mean is nuisance.  Measured on this
+                # dataset, the block mean carries Var 2.41 and the within-block
+                # contrast Var 0.25 under the strict key -- so a plain MSE spends
+                # **91% of its gradient** on a quantity the metric never looks at,
+                # and which CatBoost already predicts better than any net here
+                # (overall R2 +0.4987 against the stack's +0.4369).
+                #
+                # Splitting the loss lets the level and the contrast be weighted
+                # independently instead of by whatever ratio their variances
+                # happen to have.  ``--pair-loss-weight`` only ever *added* a
+                # contrast term on top of the full MSE; it could not take the
+                # level term away.
+                codes, _ = pd.factorize(blk_all[rows])
+                bidx = torch.as_tensor(codes, device=device, dtype=torch.long)
+                nB = int(codes.max()) + 1 if len(codes) else 0
+                pm, tm = block_means(pred, tgt, bidx, nB)
+                # One term per block, not per row: a block with ten measurements
+                # is one nuisance parameter, not ten, and row-weighting it would
+                # hand the biggest blocks the loss all over again.
+                loss = level_w * nn.functional.huber_loss(pm, tm, delta=1.0)
 
             if pair_w > 0:
                 # All within-block pairs, weighted towards *adjacent* metals:
                 # neighbouring lanthanides are the hardest and the ones the
                 # claim is about, but restricting to them alone leaves too few
                 # pairs per batch to give a stable gradient.
-                cb = comp_all[rows]
+                cb = blk_all[rows]
                 li = lidx_all[rows]
                 same = torch.as_tensor(cb[:, None] == cb[None, :], device=device)
                 iu = torch.triu(same, diagonal=1)
@@ -472,7 +546,7 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                 # validation split only -- those extractants are held out of
                 # this fold's training, so no test information is involved.
                 m = ev.adjacent_pair_metrics(
-                    y[val_idx], vp, comp_all[val_idx], lidx_all[val_idx])
+                    y[val_idx], vp, blk_all[val_idx], lidx_all[val_idx])
                 r2adj = m.get("sel_adj_logSF_r2", float("nan"))
                 n_adj = m.get("sel_adj_n_pairs", 0)
                 # Fall back to MSE when a fold's validation split happens to
@@ -504,7 +578,7 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                 remap = {c: i for i, c in enumerate(ids)}
                 e = _centre(_encode(ids)[torch.as_tensor(
                     [remap[c] for c in cplx[rows]], device=device)],
-                    comp_all[rows])
+                    blk_all[rows])
                 emb_out[rows] = e.cpu().numpy()
     return _predict(te_idx, Xte)
 
@@ -512,9 +586,12 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
 # ---------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--arch", choices=("snn", "picnn", "tabular"), default="snn",
+    ap.add_argument("--arch", choices=("snn", "picnn", "tabular", "dist"),
+                    default="snn",
                     help="'tabular' is the no-topology control: identical loop,\n"
-                         "loss, folds and seeds with a width-zero embedding")
+                         "loss, folds and seeds with a width-zero embedding.\n"
+                         "'dist' is the no-SIMPLEX control: same edges and\n"
+                         "readout, continuous-filter messages, no triangles")
     ap.add_argument("--match-rows", choices=("snn", "picnn"), default="snn",
                     help="for --arch tabular, whose row eligibility to reproduce\n"
                          "so the paired bootstrap compares the same rows")
@@ -559,14 +636,65 @@ def main() -> int:
     ap.add_argument("--pair-loss-weight", type=float, default=0.0,
                     help="weight on the within-composition pairwise-difference "
                          "loss; 0 reproduces the plain regression objective")
+    ap.add_argument("--level-weight", type=float, default=None,
+                    help="turn on the DECOMPOSED objective and set the weight "
+                         "on its block-mean (level) term. Unset = the published "
+                         "objective: Huber on the raw target, which spends ~91%% "
+                         "of its gradient on the block mean the metric never "
+                         "looks at. Use with --pair-loss-weight for the contrast "
+                         "term, e.g. --level-weight 0.2 --pair-loss-weight 2.0")
+    ap.add_argument("--no-triangles", action="store_true",
+                    help="drop the 2-simplex level from the SNN, leaving\n                          message passing over the GRAPH of the same complex.\n                          The other half of 'is it simplicial, or just 3D?'")
+    ap.add_argument("--block-key", default=None,
+                    choices=("composition_key", "strict_composition_key"),
+                    help="which blocking the contrast loss, the block-centred "
+                         "embedding and adjacent-pair checkpoint selection use. "
+                         "Unset = composition_key, the published choice")
     ap.add_argument("--restrict-groups", default=None,
                     help="file of extractant names, one per line; the run sees "
                          "only those. Used to keep a hyperparameter sweep off "
                          "the confirmation half of the frozen split.")
     ap.add_argument("--smoke", action="store_true",
                     help="overfit a tiny subset; sanity check that it can learn")
+    ap.add_argument("--deterministic", action="store_true",
+                    help="fix the reduction order so a re-run reproduces "
+                         "bit-for-bit; see the note below on why this matters")
     ap.add_argument("--out-dir", default=str(OUT_DIR))
     args = ap.parse_args()
+
+    if args.deterministic:
+        # Why this exists.
+        #
+        # PI_SWEEP_PRECISION.md measured an 8-seed ensemble moving by 0.0092
+        # between two runs of the *identical* configuration, and showed that
+        # more seeds does not fix it (8 seeds bought a factor of 1.76 where
+        # independence would give 2.83) because part of the noise is shared
+        # across every seed within a process.  That floor is larger than most of
+        # the differences this study argues about: it is why re-running one cell
+        # of 25 changed Stage A's winner, and why a sweep could not select.
+        #
+        # Three separate sources, all switched off here:
+        #   * scatter atomics -- the dominant one for the SNN, which has no
+        #     convolutions at all;  snn.set_deterministic swaps the sum
+        #     reductions for sort-based ones.
+        #   * cuDNN autotuning -- picks a different algorithm per process, which
+        #     is the shared-across-seeds component for the persistence-image CNN.
+        #   * cuBLAS workspace reuse -- needs an environment variable, and it is
+        #     only read when the cuBLAS handle is created, so setting it after
+        #     CUDA is up is too late.  The SLURM scripts export it; setting it
+        #     here as well is a belt-and-braces fallback for interactive runs.
+        import os
+        os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+        from automl.topo import snn as _snn
+        _snn.set_deterministic(True)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        # warn_only: index_reduce_ (segment max) has no deterministic CUDA
+        # kernel, but a maximum is order-independent anyway, so raising on it
+        # would block a run that is in fact reproducible.  See snn.scatter_max.
+        torch.use_deterministic_algorithms(True, warn_only=True)
+        print("[topo] deterministic mode: sorted scatter, cudnn.deterministic, "
+              "benchmark off", flush=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[topo] device={device} torch={torch.__version__}", flush=True)
@@ -648,6 +776,9 @@ def main() -> int:
     cfg["arch"] = args.arch
     cfg["pair_loss_weight"] = args.pair_loss_weight
     cfg["select_on"] = args.select_on
+    cfg["level_weight"] = args.level_weight
+    cfg["block_key"] = args.block_key
+    cfg["no_triangles"] = args.no_triangles
     cfg["n_conformers"] = args.conformers
     cfg["block_centre"] = args.block_centre
     if args.arch == "picnn":
@@ -771,7 +902,9 @@ def main() -> int:
     # it had used one.
     stem = (f"{args.tag}_{args.arch}_{args.preset}"
             + ("" if args.arch == "tabular"
-               else f"_f{args.filtration_max}_h{int(args.heavy_only)}"))
+               else f"_f{args.filtration_max}_h{int(args.heavy_only)}")
+            # the ablation must not overwrite the full model's OOF file
+            + ("_notri" if args.no_triangles else ""))
     pd.DataFrame({
         "safe_exp_id": df["safe_exp_id"].to_numpy(), "y": y, "oof": oof,
         "extractant_group": groups,
@@ -787,7 +920,9 @@ def main() -> int:
     rec = {"tag": args.tag, "preset": args.preset, "config": vars(args),
            "resolved": {k: v for k, v in cfg.items()
                         if k in ("arch", "in_channels", "pi_images",
-                                 "pair_loss_weight", "select_on")},
+                                 "pair_loss_weight", "select_on",
+                                 "level_weight", "block_key",
+                                 "no_triangles")},
            "n_rows": int(len(df)), "n_complexes": int(df["_cplx"].nunique()),
            "metrics": {k: (None if not np.isfinite(v) else float(v))
                        for k, v in metrics.items()},

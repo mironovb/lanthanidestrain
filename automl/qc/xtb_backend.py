@@ -190,8 +190,14 @@ def _run(binary: Path, args: list[str], workdir: Path, threads: int,
 def single_point(symbols, coords, *, charge: int,
                  uhf: int = DEFAULT_UHF, solvent: str | None = None,
                  binary: Path | None = None, threads: int = 1,
-                 timeout: int = 3600) -> dict[str, Any]:
-    """GFN2-xTB single point.  Returns energy in Eh and eV."""
+                 timeout: int = 3600, keep_log: bool = False) -> dict[str, Any]:
+    """GFN2-xTB single point.  Returns energy in Eh and eV.
+
+    ``keep_log`` returns the full stdout under ``"log"``.  Off by default so
+    nothing existing changes its memory profile; the reference-energy campaign
+    needs it to read frontier orbital levels, which are printed but not parsed
+    here.
+    """
     binary = binary or find_xtb()
     if binary is None:
         raise RuntimeError("no xtb binary found; set XTB_BIN")
@@ -208,6 +214,8 @@ def single_point(symbols, coords, *, charge: int,
                "energy_eh": e, "energy_ev": None if e is None else e * HARTREE_EV,
                "gradient_norm_eh_bohr": _grep_gradient_norm(out),
                "log_tail": out[-3000:] if rc != 0 else ""}
+        if keep_log:
+            res["log"] = out
         # Mulliken charges, read inside the temp directory before it is removed.
         # The shipped Vietoris-Rips asset carries a per-atom partial charge on
         # every node, so a re-optimised conformer without them is not a drop-in
