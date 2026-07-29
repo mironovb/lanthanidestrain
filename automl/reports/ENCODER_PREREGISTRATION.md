@@ -106,3 +106,28 @@ swept into a published cell. Existing reports append-only.
 ---
 
 **Bogdan Mironov · 29 July 2026**
+
+---
+
+## Amendment 1 — `--deterministic` is not used for these arms
+
+**Written 29 July 2026, before the first run was submitted.**
+
+§2 specified `--deterministic`. That is withdrawn, for a reason that only became
+clear once the arms were about to be launched: **the published 16-seed S0
+ensemble these arms are compared against was trained without it.** An arm trained
+under a different reduction order is not matched to S0, and the whole design here
+rests on matching — same seeds, so the same inner-validation split and the same
+batch order, so the paired bootstrap compares arms rather than splits.
+
+Using determinism on the new arms only would have introduced exactly the kind of
+asymmetry `CONTROL_RESULTS.md` was written to remove.
+
+The determinism question is measured separately (`automl/slurm/determinism.sh`,
+`DETERMINISM_RESULTS.md`). The two are kept apart rather than confounded.
+
+**Consequence for reading the result:** these arms carry the same ~0.009
+run-to-run floor every published arm carries. That is already accounted for —
+the endpoints are 16-seed ensembles compared by a paired cluster bootstrap, not
+single runs — but it is the reason no contrast smaller than about 0.01 will be
+called a difference here.
