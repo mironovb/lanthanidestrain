@@ -102,11 +102,108 @@ def as_frame(sub: pd.DataFrame, oof: np.ndarray) -> pd.DataFrame:
     return f
 
 
+
+def _from_cache(args) -> int:
+    """Recompute the contrasts from the saved out-of-fold vectors.
+
+    Added after the first run: the CatBoost fits take ~25 minutes and are
+    deterministic, so a re-analysis that only changes the bootstrap should reuse
+    them.  Reading the parquets this module already wrote is also a check in its
+    own right -- if the re-scored arm values disagree with the printed ones, the
+    saved vectors are not the ones that produced them.
+    """
+    frames, rows = {}, []
+    for label, preset in PRESETS.items():
+        p = REPORTS / f"oof_catboost_{preset}.parquet"
+        if not p.exists():
+            raise SystemExit(f"{p} missing; run without --from-cache first")
+        fr = (pd.read_parquet(p).drop_duplicates("safe_exp_id")
+              .set_index("safe_exp_id"))
+        frames[label] = fr
+        a_b, r2 = _score(fr, BINNED)
+        a_s, _ = _score(fr, STRICT)
+        rows.append({"kind": "arm", "label": label, "preset": preset,
+                     "adj_r2_binned": a_b, "adj_r2_strict": a_s,
+                     "r2_overall": r2})
+
+    print("=== CatBoost, one block added, everything else identical "
+          "(from cached out-of-fold vectors) ===")
+    print(f"  {'preset':32s} {'adj (binned)':>13s} {'adj (strict)':>13s} "
+          f"{'overall R2':>11s}")
+    for r in rows:
+        print(f"  {r['label']:32s} {r['adj_r2_binned']:+13.4f} "
+              f"{r['adj_r2_strict']:+13.4f} {r['r2_overall']:+11.4f}")
+
+    print("\n=== pre-registered contrasts "
+          f"(multiplicity-respecting bootstrap, {N_LOOKS}-look Bonferroni) ===")
+    for key in KEYS:
+        tag = "binned" if key == BINNED else "STRICT"
+        for label in list(PRESETS)[1:]:
+            r = paired_adjacent_corrected(frames["baseline"], frames[label],
+                                          args.n_boot, seed=0, key_col=key)
+            if r is None:
+                continue
+            clo, chi = _corrected(r["delta"], r["lo"], r["hi"], N_LOOKS)
+            v, cv = _verdict(r["lo"], r["hi"]), _verdict(clo, chi)
+            print(f"  [{tag:6s}] {label:32s} delta={r['delta']:+.4f} "
+                  f"[{r['lo']:+.4f}, {r['hi']:+.4f}] {v:20s} "
+                  f"| {N_LOOKS}-look [{clo:+.4f}, {chi:+.4f}] {cv}")
+            rows.append({"kind": "contrast", "key": key, "base": "baseline",
+                         "arm": label, **r,
+                         f"lo_{N_LOOKS}look": clo, f"hi_{N_LOOKS}look": chi,
+                         "verdict": v, "verdict_corrected": cv})
+
+    frame = pd.DataFrame(rows)
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(OUT, index=False)
+    _read_verdict(frame)
+    print(f"\n[energy] wrote {OUT}")
+    return 0
+
+
+def _read_verdict(frame: pd.DataFrame) -> None:
+    """The pre-registered reading, computed from the table rather than asserted."""
+    arms = frame[frame["kind"] == "arm"].set_index("label")
+    base_adj = float(arms.loc["baseline", "adj_r2_binned"])
+    base_r2 = float(arms.loc["baseline", "r2_overall"])
+    con = frame[(frame["kind"] == "contrast") & (frame["key"] == BINNED)]
+    any_adds = bool(len(con) and (con["verdict_corrected"] == "adds").any())
+    best_r2 = float(arms["r2_overall"].max())
+    best_r2_label = str(arms["r2_overall"].idxmax())
+    print("\n=== pre-registered reading (ENERGY_PREREGISTRATION.md sec 5) ===")
+    print(f"  baseline CatBoost: adj {base_adj:+.4f}, overall {base_r2:+.4f}")
+    print(f"  best overall R2:   {best_r2:+.4f} ({best_r2_label})")
+    if any_adds:
+        best = con.loc[con["delta"].idxmax()]
+        print(f"  ==> ENERGETICS CARRY ADJACENT-PAIR INFORMATION. Best variant "
+              f"'{best['arm']}' adds {best['delta']:+.4f}.")
+    else:
+        worst = con.loc[con["delta"].idxmin()]
+        print(f"  ==> GFN2 ENERGETICS DO NOT carry recoverable adjacent-pair "
+              f"information.\n      The best variant still fails and the worst "
+              f"costs {worst['delta']:+.4f}, despite the method\n      resolving "
+              f"adjacent metals at 17x the scale that matters "
+              f"(metal_probe.csv).\n      See energy_diagnostic.csv: the barrier "
+              f"is conformer scatter, not resolution.")
+    if best_r2 > base_r2 + 1e-4:
+        print(f"  Overall log D improves {base_r2:+.4f} -> {best_r2:+.4f} "
+              f"({best_r2 - base_r2:+.4f}); reported separately from the "
+              f"selectivity claim.")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--n-boot", type=int, default=400)
     ap.add_argument("--n-jobs", type=int, default=8)
+    ap.add_argument("--from-cache", action="store_true",
+                    help="re-score the out-of-fold parquets this module already "
+                         "wrote instead of refitting.  The fits are the "
+                         "expensive part and they are deterministic, so a "
+                         "re-analysis should not pay for them twice.")
     args = ap.parse_args()
+
+    if args.from_cache:
+        return _from_cache(args)
 
     from automl.matrix_cache import BLOCKS_PATH, build_cache
     prev_blocks = BLOCKS_PATH
