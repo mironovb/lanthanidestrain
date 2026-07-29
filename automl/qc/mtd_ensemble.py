@@ -297,7 +297,20 @@ def ensemble_one(row, *, time_ps: float, dump_fs: float, temp_k: float,
         rec["weights"] = w.tolist()
         rec["e_boltzmann_ev"] = float(np.sum(w * energies))
         rec["e_min_ev"] = float(energies.min())
+        rec["e_mean_ev"] = float(energies.mean())
         rec["e_spread_ev"] = float(energies.max() - energies.min())
+        # Boltzmann weighting was the assumed remedy and the smoke falsified it:
+        # conformer energy gaps here are 0.8-1.9 eV against kT = 0.026 eV, so
+        # exp(-dE/kT) puts ~99% of the weight on one structure and n_effective
+        # comes out at 1.0-1.8.  A Boltzmann average of this ensemble IS its
+        # minimum, so it cannot reduce scatter by sqrt(n).
+        #
+        # The surviving hypothesis is different and better posed: the dataset's
+        # scatter comes from every complex being an ARBITRARY local minimum from
+        # Architector, so taking each complex's *global* minimum from a common
+        # search should reduce the within-family scatter by making the members
+        # comparable.  e_min_ev is what tests that; e_mean_ev is the unweighted
+        # average, kept as the contrast.
         # Effective sample size: an ensemble whose weight sits on one structure
         # is one structure, and reporting it as N would be the false-null route
         # this module's docstring warns about.
@@ -314,28 +327,34 @@ def ensemble_one(row, *, time_ps: float, dump_fs: float, temp_k: float,
 
 # ---------------------------------------------------------------------------
 def pilot_selection(jobs: pd.DataFrame, n: int) -> pd.DataFrame:
-    """Complexes spanning families that actually have a lanthanide series.
+    """WHOLE ligand families, so a within-family SNR can be computed at all.
 
-    A pilot drawn at random would mostly hit one-member families, where a
-    per-family SNR is undefined and the pilot could not answer its own question.
+    The first version of this cycled through families taking one complex from
+    each, and produced 80 complexes spread over 80 families -- one member
+    apiece.  The pilot's entire question is whether the *within-family* scatter
+    falls, and a family of one has no within-family scatter, so that selection
+    could not have answered it however many structures it ran.
+
+    Whole families it is: take the largest series-bearing families until the
+    budget is spent, so every selected complex has partners to be compared with.
     """
     parts = jobs["geometry_key"].astype(str).str.split("|", n=2, expand=True)
     jobs = jobs.assign(fam=parts[1].fillna("") + "|" + parts[2].fillna(""))
     size = jobs.groupby("fam")["geometry_key"].transform("size")
-    rich = jobs[size >= 5]
-    fams = list(pd.unique(rich["fam"]))
-    take, i = [], 0
-    while len(take) < n and fams:
-        f = fams[i % len(fams)]
-        rows = rich[rich["fam"] == f]
-        used = sum(1 for t in take if t[1] == f)
-        if used < len(rows):
-            take.append((rows.iloc[used]["geometry_key"], f))
-        elif len(take) and i > 4 * len(fams):
+    rich = jobs[size >= 5].copy()
+    order = (rich.groupby("fam").size().sort_values(ascending=False).index)
+    take, total = [], 0
+    for f in order:
+        members = rich[rich["fam"] == f]
+        if total + len(members) > n and take:
+            continue
+        take.append(members)
+        total += len(members)
+        if total >= n:
             break
-        i += 1
-    keys = [k for k, _ in take]
-    return rich[rich["geometry_key"].isin(keys)].reset_index(drop=True)
+    if not take:
+        return rich.head(0)
+    return pd.concat(take).reset_index(drop=True)
 
 
 def main() -> int:
