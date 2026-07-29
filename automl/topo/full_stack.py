@@ -143,14 +143,29 @@ def nested_forward(arms: dict[str, pd.DataFrame], key: str, max_arms: int = 5,
     gs = [g for g in pd.unique(groups)
           if len(per[names[0]][g][0])]
 
+    # Concatenate once, in a fixed extractant order, and leave one out with a
+    # boolean mask.  The obvious implementation rebuilds a 161-array
+    # concatenation for every candidate arm at every greedy step -- 46 rebuilds
+    # per held-out extractant, times 162 extractants, times two block keys --
+    # which is the same "recompute inside the loop" mistake the corrected
+    # bootstrap made this morning.
+    order = list(gs)
+    dy_full = np.concatenate([per[names[0]][g][0] for g in order])
+    dp_full = {n: np.concatenate([per[n][g][1] for g in order]) for n in names}
+    owner = np.concatenate([np.full(len(per[names[0]][g][0]), i)
+                            for i, g in enumerate(order)])
+
     chosen_log = []
     dy_all, dp_all = [], []
-    for held in gs:
-        others = [o for o in gs if o != held]
-        dy_tr = np.concatenate([per[names[0]][o][0] for o in others])
+    for hi, held in enumerate(order):
+        keep = owner != hi
+        dy_tr = dy_full[keep]
         ss = float(np.sum((dy_tr - dy_tr.mean()) ** 2))
+        if ss <= 0:
+            continue
+        Dtr = {n: dp_full[n][keep] for n in names}
         cur: list[str] = []
-        cur_w: np.ndarray = np.array([])
+        cur_w: np.ndarray = np.array([1.0])
         best_v = -np.inf
         while len(cur) < max_arms:
             gain, pick, pick_w = None, None, None
@@ -158,16 +173,17 @@ def nested_forward(arms: dict[str, pd.DataFrame], key: str, max_arms: int = 5,
                 if cand in cur:
                     continue
                 trial = cur + [cand]
-                D = {n: np.concatenate([per[n][o][1] for o in others])
-                     for n in trial}
+                cols = np.vstack([Dtr[n] for n in trial])
                 for w in _simplex(len(trial), step):
-                    dp = sum(w[i] * D[n] for i, n in enumerate(trial))
+                    dp = w @ cols
                     v = 1.0 - float(np.sum((dy_tr - dp) ** 2)) / ss
                     if gain is None or v > gain:
                         gain, pick, pick_w = v, cand, w
             if gain is None or gain <= best_v + 1e-6:
                 break
             best_v, cur, cur_w = gain, cur + [pick], pick_w
+        if not cur:
+            continue
         chosen_log.append(tuple(cur))
         dy_te = per[names[0]][held][0]
         dp_te = sum(cur_w[i] * per[n][held][1] for i, n in enumerate(cur))
