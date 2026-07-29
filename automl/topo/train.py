@@ -338,12 +338,18 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
     level_w = cfg.get("level_weight")
     level_w = None if level_w is None else float(level_w)
     fit_blocks: list[np.ndarray] = []
+    singleton_rows = np.array([], dtype=int)
     if pair_w > 0:
         pos = {int(r): i for i, r in enumerate(fit_idx)}
         by_block: dict[Any, list[int]] = {}
         for r in fit_idx:
             by_block.setdefault(blk_all[r], []).append(int(r))
         fit_blocks = [np.array(v) for v in by_block.values() if len(v) >= 2]
+        # Only the decomposed objective has a term these rows can contribute to.
+        singleton_rows = (np.array([v[0] for v in by_block.values()
+                                    if len(v) == 1], dtype=int)
+                          if cfg.get("level_weight") is not None
+                          else np.array([], dtype=int))
 
     # --- conformer ensembling and block-centred embeddings -------------------
     n_conf = int(cfg.get("n_conformers", 1))
@@ -465,6 +471,20 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                 yield np.array(buf); buf = []
         if len(buf) >= 2:
             yield np.array(buf)
+        if singleton_rows.size:
+            # Rows in single-member blocks contribute no pair, so the published
+            # contrast objective never batches them -- it has no term they could
+            # enter.  The DECOMPOSED objective does: they carry the block-mean
+            # (level) term.  Dropping them there would confound the blocking
+            # with the training-set size, which matters because the strict key
+            # has 1,573 singleton blocks against the binned key's 202 -- 67% of
+            # rows usable versus 96%.  A strict-vs-binned comparison that also
+            # varied the row count by a third would be measuring two things.
+            #
+            # Gated on level_w so the published path is byte-unchanged.
+            order = epoch_rng.permutation(len(singleton_rows))
+            for s0 in range(0, len(order), cfg["batch_rows"]):
+                yield singleton_rows[order[s0:s0 + cfg["batch_rows"]]]
 
     for ep in range(cfg["epochs"]):
         model.train()

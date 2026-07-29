@@ -1,0 +1,3 @@
+key,kind,adj_r2,n_pairs,max_arms,step,modal_set
+composition_key,full_stack,0.26039060013190785,904,4,0.1,G0 + repaired + CatBoost + D0
+strict_composition_key,full_stack,0.18399988503155817,1416,4,0.1,S2 + repaired + D0

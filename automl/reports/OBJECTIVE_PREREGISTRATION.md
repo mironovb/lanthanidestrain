@@ -127,3 +127,40 @@ a test. No writes to `data/`. Existing reports append-only.
 ---
 
 **Bogdan Mironov · 29 July 2026**
+
+---
+
+## Amendment 1 — singleton blocks, and a confound in my own design
+
+**Written 29 July 2026, before the first sweep run started (array queued, 0/48
+complete).**
+
+Measured while the sweep was queued: `train.py:_batches` yields only blocks with
+**≥ 2 rows** when `--pair-loss-weight > 0`, because a single-member block
+contributes no pair. Rows the contrast objective can therefore see:
+
+| block key | blocks | usable rows | singleton blocks |
+|---|---|---|---|
+| `composition_key` | 552 | **4,544 / 4,746 (96 %)** | 202 |
+| `strict_composition_key` | 2,109 | **3,173 / 4,746 (67 %)** | 1,573 |
+
+So as designed, the strict-key cells of this factorial would have trained on a
+**third less data** than the binned-key cells, and the `block_key` main effect
+would have confounded the blocking definition with the training-set size. That
+is not a defensible comparison and it was my error, not the data's.
+
+**The fix**, applied before any run: under the **decomposed** objective a
+singleton block *does* have a term it can enter — the block-mean (level) term —
+so those rows are now batched. Gated on `level_weight is not None`, so the
+published contrast path is byte-unchanged and every existing arm is unaffected.
+The regression tests covering the published objective still pass.
+
+**Consequence for the endpoints:** none are withdrawn. The `block_key` main
+effect now measures the blocking definition rather than the blocking definition
+plus a 33 % data cut, which is what §5 said it was measuring.
+
+**What is *not* fixed:** the published `--pair-loss-weight` arms — including S0
+itself — still never see their 202 singleton-block rows under the binned key.
+That is a 4 % omission in every topological arm in this study, discovered here
+and left in place rather than silently corrected, because changing it would move
+published numbers. It is recorded as a known limitation.

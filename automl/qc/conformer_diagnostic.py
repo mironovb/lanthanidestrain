@@ -59,6 +59,9 @@ OUT = REPO / "automl/reports/conformer_diagnostic.csv"
 EINT_SCATTER_EV = 0.7313          # median within-family residual SD of e_int
 EINT_STEP_EV = 0.1695             # median per-lanthanide-step trend
 KT_298 = 0.025693
+# Conformational energy differences in these complexes span ~0.1-3 eV.
+# Anything past this is a failed calculation, not a conformer.
+MAX_PHYSICAL_GAP_EV = 20.0
 
 
 def load() -> pd.DataFrame:
@@ -86,6 +89,26 @@ def main() -> int:
               "gap_shipped_above_min_ev"):
         if c in ok.columns:
             ok[c] = pd.to_numeric(ok[c], errors="coerce")
+
+    # Discard diverged calculations before they reach any statistic.
+    #
+    # A "conformer" 1340 eV above the minimum is not a conformer; it is an SCF
+    # divergence or a dissociated structure.  Conformational energy differences
+    # in these complexes are ~0.1-3 eV, so anything past 20 eV is a failure of
+    # the calculation rather than a property of the molecule.  Reported, not
+    # silently dropped -- a filter that removes data without saying how much is
+    # how a null gets manufactured.
+    n_before = len(ok)
+    diverged = ok[ok["gap_shipped_above_min_ev"] > MAX_PHYSICAL_GAP_EV]
+    ok = ok[ok["gap_shipped_above_min_ev"] <= MAX_PHYSICAL_GAP_EV]
+    if len(diverged):
+        print(f"\n[conf] discarded {len(diverged)} of {n_before} complexes with "
+              f"a gap above {MAX_PHYSICAL_GAP_EV:.0f} eV (diverged, not "
+              f"conformational):")
+        for _, r in diverged.iterrows():
+            print(f"        {str(r['geometry_key'])[:52]:54s} "
+                  f"n_unique={r['n_unique']:.0f} "
+                  f"gap={r['gap_shipped_above_min_ev']:.1f} eV")
 
     if "gap_shipped_above_min_ev" not in ok.columns:
         raise SystemExit("the pilot did not record gap_shipped_above_min_ev; "
