@@ -148,9 +148,7 @@ def main() -> int:
 
     # Refuse to report the pre-registered endpoint on a partial ensemble, the
     # same standing rule control_factorial applies.
-    partial = [a for a, f in have.items()
-               if len(sorted(ART.glob(f"run_*.json"))) and len(f) and
-               _n_seeds(a) < len(SEEDS)]
+    partial = [a for a in have if _n_seeds(a) < len(SEEDS)]
     if partial and not args.allow_partial:
         print(f"\n[encoder] arms {partial} are incomplete. The pre-registered "
               f"endpoint needs all 16 seeds; rerun with --allow-partial for an "
