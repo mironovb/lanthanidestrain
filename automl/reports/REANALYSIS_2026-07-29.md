@@ -1,206 +1,217 @@
-# Re-analysis, 29 July 2026: five measurements that change what this study is about
+# Re-analysis, 29 July 2026: eight measurements, and what is left of the claim
 
 **Bogdan Mironov**
-Interim synthesis. Two campaigns (encoder generality, decomposed objective) are
-still on the cluster; this covers what is finished. Every result below has a
-pre-registration committed before its data existed.
+Every result below has a pre-registration committed **before its data existed**.
+The decomposed-objective sweep is still on the cluster; everything else is
+finished.
 
 ---
 
 ## The short version
 
 The study's headline — *message passing over a Vietoris–Rips complex adds
-**+0.0409** adjacent-pair R² to the best no-topology stack* — **survives its own
-bootstrap correction and does not survive a stricter definition of "identical
-conditions"**. Alongside that, four other measurements were made that nobody had
-made, and together they reframe the problem:
+adjacent-lanthanide selectivity that 2D fingerprints lack* — survives its own
+bootstrap correction, and **two of its three load-bearing words do not survive
+scrutiny**. It is not specific to a *simplicial* representation, and it is
+specific to a *binned* definition of "identical conditions" that the codebase
+itself flags as defective.
 
-| # | measurement | value | what it changes |
+| # | measurement | result | what it changes |
 |---|---|---|---|
-| 1 | **Ceiling** on adjacent-pair R² | **+0.679** | the best model is at **39 %** of attainable; +0.412 of headroom exists |
-| 2 | **Block-key robustness** | +0.0375 **adds** / +0.0177 **n.s.** | the effect is a *binned-key* effect; claim downgraded |
-| 3 | **Reference energetics** (957 complexes, finally computed) | −0.2993, significant | energetics *hurt* selectivity; the barrier is conformer scatter, **not** theory level |
-| 4 | **Magnitude compression** | recalibration gain +0.0087 [+0.0003, +0.0200], not replicated | compression is **shrinkage**, not miscalibration, and is not fixable post hoc |
-| 5 | **Run-to-run noise floor** | **0.0000** (bit-identical) | the "irreducible noise" premise was false; sweeps can now select |
+| 1 | **Ceiling** on the metric | **+0.679** | best model is at **39 %**; +0.412 headroom exists |
+| 2 | **Block-key robustness** | +0.0375 **adds** / +0.0177 **n.s.** | the effect is a *binned-key* effect |
+| 3 | **Third encoder** | S0 vs D0 = **+0.0091, n.s.** | **it is 3D message passing, not simplicial** |
+| 4 | **Reference energetics** (957 complexes) | **−0.2993**, significant | energetics *hurt*; barrier is conformer scatter, not theory |
+| 5 | **Conformer ensembles** | SNR **0.29** even if perfect | the last physics lever is **closed** |
+| 6 | **Magnitude compression** | gain +0.0087, not replicated | **shrinkage**, not miscalibration |
+| 7 | **Run-to-run noise floor** | **0.0000** | the "irreducible" premise was false |
+| 8 | **Recombination** of all 15 arms | **+0.2604** vs +0.2672 | stacking is exhausted |
 
-The through-line: **this dataset's adjacent-pair signal is small relative to its
-measurement noise, and most apparent gains are artefacts of how the metric,
-the features or the training loop were measured.** The contribution of the paper
-is as much the method for telling those apart as any single effect.
+**The through-line.** This dataset's adjacent-pair signal is small relative to
+its measurement noise, and most apparent gains are artefacts of how the metric,
+the features, or the training loop were measured. Four of the eight results above
+are falsifications of things I or the study believed at the start of the day. The
+method for telling those apart is at least as much the contribution as any single
+effect.
 
 ---
 
-## 1. How much of this metric is attainable at all
+## 1. How much of this metric is attainable
 
-Nobody had asked. Against a ceiling of 1.0 the best model (+0.2672) is poor;
-against 0.35 it is near-optimal. Those imply opposite next steps.
+Nobody had asked. Against a ceiling of 1.0 the best model is poor; against 0.35
+it is near-optimal, and those imply opposite next steps.
 
-A **model-free** estimate: take the same adjacent pair, same extractant, same
-binned block, measured at two or more genuinely different *exact* condition sets.
-Under the binned key those rows collapse into one cell sharing one feature
-vector, so their disagreement is irreducible.
+A **model-free** estimate — the same adjacent pair, same extractant, same binned
+block, measured at two or more genuinely different *exact* condition sets, whose
+disagreement is irreducible because they share one feature vector:
 
-> **Ceiling: adjacent-pair R² ≤ +0.679.** The best published model reaches
-> **39 %** of it. Headroom: **+0.412**.
+> **Ceiling: adjacent-pair R² ≤ +0.679.** The best model reaches **39 %** of it.
 
-Under the strict key the same rows are separate blocks with different feature
-vectors, so part of that disagreement is condition dependence a model can in
-principle predict — making **+0.530 a floor rather than a cap** there.
-
-**A data-quality finding fell out of it.** Two other estimators returned negative
-"ceilings" and are reported as failures with their cause: a (block, metal) cell
-acquires a duplicate row *precisely when two sources report the same system and
-disagree*, so replicated cells are the worst case rather than a sample — their
-pooled scatter (Var 0.15 on the difference) exceeds the entire observed spread of
-the quantity being predicted (Var 0.073). They measure source conflict, not
-measurement precision. [`ceiling_test.csv`]
+Two other estimators returned negative "ceilings" and are reported as failures
+with their cause, which is a data-quality finding: a cell acquires a duplicate
+row *precisely when two sources report the same system and disagree*, so
+replicated cells are the worst case rather than a sample. Their pooled scatter
+exceeds the entire observed spread of the predicted quantity.
+[`ceiling_test.csv`]
 
 ## 2. The headline is a binned-key result
 
 `adjacent_pair_metrics` blocks by `composition_key`, built from **binned**
-condition columns. `strict_composition_key` — every numeric condition matched —
-has been in `dataset.py` since the beginning, with a comment saying the binned
-key *"turns a real log D difference into label noise"*. The metric had never been
-computed with it.
-
-Pre-registered decision rule, committed before the contrasts existed:
+condition columns. `strict_composition_key` has been in `dataset.py` since the
+beginning with a comment saying the binned key *"turns a real log D difference
+into label noise"*. The metric had never been computed with it.
 
 | contrast | binned | strict |
 |---|---|---|
-| drop-in (add S0 to the best no-topology stack) | **+0.0375** [+0.0173, +0.0510] · 10-look [+0.0111, +0.0639] **adds** | +0.0177 [−0.0023, +0.0367] **n.s.** |
-| swap (S0 vs matched control, same slot) | **+0.0438** [+0.0253, +0.0554] · 10-look [+0.0203, +0.0673] **adds** | +0.0177 [−0.0023, +0.0367] **n.s.** |
+| drop-in | **+0.0375** [+0.0173, +0.0510] · 10-look **adds** | +0.0177 [−0.0023, +0.0367] **n.s.** |
+| swap | **+0.0438** [+0.0253, +0.0554] · 10-look **adds** | +0.0177 [−0.0023, +0.0367] **n.s.** |
 
-Three things that stop this being over-read, all in
-[`DUALKEY_RESULTS.md`](DUALKEY_RESULTS.md):
+A weakening, not a reversal (P = 0.93, half the size). The bootstrap correction
+*survives* — these are the multiplicity-respecting intervals — so what breaks the
+result is the block definition, not the resampling. And it cuts both ways: under
+the strict key the matched control takes stack weight **0.00**, and the
+single-arm encoder comparison S0 − T0w *strengthens*, +0.0376 → +0.0716.
+[`DUALKEY_RESULTS.md`](DUALKEY_RESULTS.md)
 
-- **A weakening, not a reversal.** The strict estimate is positive at P = 0.93 and
-  about half the size.
-- **The bootstrap correction survives.** These *are* the multiplicity-respecting
-  intervals — the ones the published draw made 12–29 % too narrow. What breaks
-  the result is the block definition, not the resampling.
-- **It cuts both ways.** Under the strict key the matched control T0w takes stack
-  weight **0.00** (which is why the two contrasts collapse onto one number), and
-  the *single-arm* encoder comparison S0 − T0w **strengthens**: +0.0376 → +0.0716.
+## 3. It is not "simplicial" — the oldest open question, answered
 
-Neither key is clean. The binned one mixes conditions; the strict one turns 552
-blocks into 2,109 and discards the replicate averaging, so every arm drops. **Both
-columns get reported from here on.**
+Two new encoders over the **same** VR edges, same node inputs, same readout, same
+16 seeds: **G0** with the triangles removed, **D0** a continuous-filter distance
+network with no simplices, no boundary maps, no filtration.
 
-## 3. The energetics were computed, and they make selectivity worse
+| contrast (binned) | Δ | 13-look Bonferroni |
+|---|---|---|
+| add **G0** | **+0.0343** | [+0.0117, +0.0569] **adds** |
+| add **D0** | **+0.0284** | [+0.0025, +0.0543] **adds** |
+| **S0 vs D0, same slot** | +0.0091 | [−0.0292, +0.0474] **not distinguishable** |
 
-957 rows of reference xTB calculations had sat queued and uncomputed for the whole
-study; `FINDINGS.md` called them "the most promising untested feature available".
-There was **not one energetic descriptor in the design matrix**, though a
-separation factor *is* a difference of complexation free energies.
+As single arms both *outscore* the published simplicial one: D0 **+0.2474**,
+G0 **+0.2459**, S0 +0.2382.
 
-They are now computed for **953 of 956** geometries.
+**The mechanism rule survives; the claim about the complex does not.** An arm
+earns a slot only if it is both accurate and decorrelated — all three 3D encoders
+satisfy it (err-corr 0.892–0.904), the persistence-image CNN (0.933) and the
+tabular control (0.929) do not. Consequences: the model can drop a 9.3 M-triangle
+level and a 46 MB cache; the persistence-image null reads better as "fixed loses
+to learned"; and the 3.0/3.5/4.0 Å filtration replication worked because those
+define the same neighbourhood graph.
+[`ENCODER_RESULTS.md`](ENCODER_RESULTS.md)
 
-| | adj R² binned | adj R² strict | overall log D R² |
+## 4. The energetics were computed, and they make selectivity worse
+
+957 rows had sat queued and uncomputed for the whole study; there was **not one
+energetic descriptor in the design matrix**, though a separation factor *is* a
+difference of complexation free energies. Now computed for **953 of 956**.
+
+| | adj binned | adj strict | overall log D |
 |---|---|---|---|
 | baseline CatBoost | +0.1422 | +0.0819 | +0.4987 |
 | + energy block | **−0.0350** | **−0.1994** | **+0.5068** |
 
-Strict-key contrast **−0.2993 [−0.4566, −0.1792]**, surviving Bonferroni for all
-16 looks. Overall accuracy improves to the best value in the study, reported
-separately because the pre-registration fixed that split in advance.
+Strict contrast **−0.2993**, surviving Bonferroni for all 16 looks. Overall
+accuracy improves to the study's best, reported separately because the
+pre-registration fixed that split in advance.
 
-**The mechanism is measured, not narrated.** A gate run *before* the campaign
-substituted all 14 lanthanides into one **frozen cage** and found adjacent members
-separated by 0.306 eV — 17.2× the 0.0178 eV a separation factor of 2 corresponds
-to. The pre-registration said what that did and did not establish: *"it rules out
-a specific failure mode; it is not evidence for the hypothesis."*
-
-It held the geometry fixed. The dataset does not — every complex is one stochastic
-conformer. Within a ligand family:
-
-| feature | trend per series step | conformer scatter | SNR |
-|---|---|---|---|
-| `e_int_octanol` | 0.201 eV | 0.756 eV | **0.25** |
-| `e_int_water` | 0.170 eV | 0.731 eV | **0.25** |
-| `dg_transfer` | 0.014 eV | 0.099 eV | **0.17** |
-
-98–100 % of families sit below SNR 1. The incumbent these must displace,
-`Ionic Radius_metal`, is a **lookup table with zero scatter by construction**. A
-tree only compares values, so it takes the noisy proxy and selectivity collapses.
-
-**The useful consequence: the barrier is not the level of theory.** Nothing here
-says GFN2's energies are wrong — only that one draw from a 0.73 eV distribution
-cannot resolve a 0.20 eV step. DFT on single conformers would inherit the same
-problem. *"Use DFT"* is the expensive conclusion and it is **not** the one the
-data supports. Conformer averaging is, and it now has a target: **3.9× scatter
-reduction, ≈16 effectively independent conformers**.
+**The mechanism is measured.** A gate run *before* the campaign found GFN2
+separating adjacent lanthanides by 0.306 eV in a **frozen cage** — 17× the
+relevant scale. But the dataset's geometries are not frozen: within a ligand
+family every energy feature carries the trend at **SNR ≈ 0.25**, against an
+incumbent (`Ionic Radius_metal`) that is a lookup table with zero scatter. A tree
+takes the noisy proxy and selectivity collapses.
 [`ENERGY_RESULTS.md`](ENERGY_RESULTS.md)
 
-## 4. The compression is shrinkage, and cannot be rescaled away
+## 5. The conformer lever is closed
 
-Predictions span ~0.42× the true spread of adjacent-pair separations. A nested
-per-extractant recalibration (scale / affine / isotonic) buys:
+Named in three reports as the untested physics lever, always qualitatively. A
+CREST-lite metadynamics pilot over 120 complexes in 9 whole ligand families:
 
-| key | gain | interval | verdict |
-|---|---|---|---|
-| binned | +0.0087 | [+0.0003, +0.0200] | clears zero by 3×10⁻⁴, best of three transforms, uncorrected |
-| strict | −0.0004 | [−0.0137, +0.0119] | coin flip |
+1. **The search works** — median 16 unique conformers, none degenerate.
+2. **Boltzmann weighting cannot use it** — effective ensemble size **1.17**,
+   because gaps are ~40× kT. A Boltzmann average of this ensemble *is* its
+   minimum. That falsified the remedy the pilot was designed around.
+3. **The surviving hypothesis is confirmed** — 79 % of shipped geometries are not
+   the global minimum, and the within-family SD of the gap is **0.434 eV**, 59 %
+   of the scatter.
+4. **And it is still not enough** — removing that entirely leaves 0.588 eV
+   against a 0.170 eV signal: **SNR 0.29**.
 
-**Not established.** A best-of-three maximum at P = 0.95 that fails to replicate on
-a second metric definition is the same object as the persistence-image "+0.0178
-tuning gain" that replication reduced to +0.0003.
+So a full campaign, succeeding completely, cannot rescue these features. **DFT on
+single conformers inherits the same problem**, because the problem is the
+conformer, not the Hamiltonian — evidence against the expensive next step.
+[`CONFORMER_RESULTS.md`](CONFORMER_RESULTS.md)
 
-The real result is that recalibration **cannot** repair the compression even when
-free to: span goes 0.42× → 0.53×, and isotonic — free to fit any monotone map —
-makes R² *worse* on five of six models. With the ceiling, that is one sentence
-instead of two findings:
+## 6. The compression is shrinkage
 
-> The models recover ~39 % of the attainable variance in adjacent-lanthanide
-> separation and predict ~40–50 % of its true spread. Both follow from the signal
-> being small relative to measurement noise, and neither is repaired post hoc.
+Nested per-extractant recalibration of the predicted difference:
 
-[`CALIBRATION_RESULTS.md`](CALIBRATION_RESULTS.md)
+| key | gain | interval |
+|---|---|---|
+| binned | +0.0087 | [+0.0003, +0.0200] — clears zero by 3×10⁻⁴, best of three transforms, uncorrected |
+| strict | −0.0004 | [−0.0137, +0.0119] — coin flip |
 
-## 5. The noise floor was not irreducible
+**Not established.** The real result is that recalibration *cannot* repair the
+compression even when free to: span 0.42× → 0.53×, and isotonic makes R² worse on
+five of six models. [`CALIBRATION_RESULTS.md`](CALIBRATION_RESULTS.md)
 
-`PI_SWEEP_PRECISION.md` measured an 8-seed ensemble moving by **0.0092** between
-identical re-runs, showed more seeds does not fix it, and drew the design lesson
-*"when per-measurement noise is irreducible, buy precision with design rather than
-repetition"*.
+## 7. The noise floor was not irreducible
 
-The premise was false. Two runs of the identical S0 configuration now return
-**byte-identical** out-of-fold vectors, `max |diff| = 0.000e+00`.
+`PI_SWEEP_PRECISION.md` measured an 8-seed ensemble moving 0.0092 between
+identical re-runs and drew the lesson *"buy precision with design, because the
+noise is irreducible"*. The premise was false: `--deterministic` now returns
+**byte-identical** out-of-fold vectors.
 
-The published diagnosis blamed cuDNN autotuning — correct for the persistence-image
+The published diagnosis blamed cuDNN autotuning — right for the persistence-image
 CNN, wrong for the simplicial network, **which has no convolutions at all**. Its
-nondeterminism was `index_add_` atomics, so the fix had to be a reduction, not a
-backend flag. Cost: ~7× slower, against a `GrpTRES` cap of one GPU node — so it is
-for confirmatory runs, not exploratory sweeps.
+nondeterminism was `index_add_` atomics. Cost ~7×, so it is for confirmatory runs.
 [`DETERMINISM_RESULTS.md`](DETERMINISM_RESULTS.md)
+
+## 8. Recombination is exhausted
+
+Nested forward selection — arms, order and weights all chosen per held-out
+extractant — over all **15** arms on disk gives **+0.2604**, against the published
+three-arm **+0.2672**. Worse.
+
+So the +0.412 of headroom is **not reachable by recombining what exists**. It
+needs a model that is right about something none of these are. [`full_stack.csv`]
 
 ---
 
-## What is still running
+## What a paper should now claim
 
-| campaign | question | status |
-|---|---|---|
-| **encoder** (G0 `--no-triangles`, D0 `--arch dist`) | is *simplicial* or merely *3D message passing* the operative ingredient? — the study's oldest open question | 32 GPU runs, in flight |
-| **objective** (level-weight × block-key) | the loss spends 68–91 % of its gradient on the block mean the metric never reads; does splitting it help? | 48 GPU runs, queued |
-| **conformer pilot** | can metadynamics cut the 0.73 eV conformer scatter 3.9×? | CREST-lite smoke running |
+1. **A learned 3D representation supplies adjacent-lanthanide selectivity that 2D
+   fingerprints do not**, worth ~+0.03 to +0.04 R² in the best stack **under the
+   binned metric**, and not distinguishable from zero under the strict one.
+2. **The representation family is broad, not narrow.** Simplicial complexes,
+   their underlying graphs, and continuous-filter distance networks all work
+   equally; fixed persistence images do not. The transferable object is the
+   **rule** — accurate *and* decorrelated — not the complex.
+3. **The problem is measurement-limited, and by how much is now known.** Ceiling
+   +0.679, best model 39 % of it, predictions at 40–50 % of the true spread,
+   neither repairable post hoc.
+4. **Three routes to the headroom are closed with numbers**: recombination,
+   energetics, and conformer search.
 
-## Two corrections to my own work, recorded
+## Two corrections to my own work
 
-- **The compute plan was wrong.** It assumed 40 concurrent GPU jobs from
-  `MaxSubmitJobs`; `GrpTRES` caps this account at **one node** on
-  `xeon-g6-volta` (two concurrent) and two on `xeon-p8`. A 648-cell factorial was
-  planned and abandoned for a 6-cell one sized to the real limit.
-- **I wrote the corrected bootstrap the slow way.** 75 minutes without finishing,
-  because it redid a groupby over 2,109 blocks 3,200 times. It did not need to: a
-  twice-drawn extractant becomes two blocks holding the same rows, producing the
-  same pairs twice — so **a single `np.unique` is the entire difference between an
-  m-out-of-n subsample and a cluster bootstrap.** ~200× faster, and asserted
-  against the literal statistic at 1e-9 rather than argued.
+- **The compute plan misread the cluster.** It assumed 40 concurrent GPU jobs from
+  `MaxSubmitJobs`; `GrpTRES` caps this account at **one node** (two concurrent). A
+  648-cell factorial was planned and abandoned for a 6-cell one.
+- **I wrote the corrected bootstrap the slow way** — 75 minutes without finishing.
+  A twice-drawn extractant becomes two blocks holding the same rows, so **a single
+  `np.unique` is the entire difference between an m-out-of-n subsample and a
+  cluster bootstrap**. ~200× faster, asserted at 1e-9 rather than argued.
+
+And one confound in my own design, caught before it ran: the contrast objective
+only batches blocks with ≥2 rows, which would have given the strict-key cells 67 %
+of the rows against the binned cells' 96 %. Fixed for the decomposed objective and
+recorded as Amendment 1 — including the part *not* fixed, that every published
+topological arm still never sees its 202 singleton-block rows.
 
 ## Integrity
 
-`control_guard --verify` passes on all 324 frozen artefacts after every change.
-The standing precondition holds throughout: the published S0 ensemble re-scores to
-exactly **+0.2382**. Nothing in `data/` was written. Existing reports received
-appended errata rather than edits. Five pre-registrations
-(`DUALKEY`, `ENCODER`, `ENERGY`, `OBJECTIVE`, plus the amendment) were committed
-before their data existed.
+`control_guard --verify` passes on all **324** frozen artefacts after every
+change. 145 tests pass. The frozen tune/confirm split still hashes to
+`6070dc55…`. The standing precondition holds throughout: published S0 re-scores
+to exactly **+0.2382**. Nothing in `data/` was written. Existing reports received
+appended errata rather than edits. Six pre-registrations plus two amendments were
+committed before their data existed.
