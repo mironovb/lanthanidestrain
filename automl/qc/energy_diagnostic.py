@@ -151,14 +151,22 @@ def main() -> int:
               "proxy for the exact ionic-radius lookup\n      and the "
               "selectivity metric collapses -- the same failure the geometric\n"
               "      blocks showed, now replicated for energetics with numbers.")
-        need = float(out["median_residual_sd"].min()
-                     / max(out["median_step_per_index"].max(), 1e-12))
+        # The reduction needed is per-feature: a ratio built from one feature's
+        # scatter and another's step is not a ratio of anything.  Take the
+        # best-behaved feature, which is the easiest case and therefore the
+        # weakest demand the remedy has to meet.
+        need = 1.0 / float(best["median_snr"])
         print(f"\n  ==> The remedy is a smaller denominator, not a bigger "
               f"feature set: the\n      scatter is conformer noise, so an "
               f"energy-weighted conformer ENSEMBLE\n      would have to cut it "
-              f"by about {need:.0f}x to make the trend dominate.\n"
-              f"      That is a quantitative target for the metadynamics pilot, "
-              f"which until\n      now had only a qualitative motivation.")
+              f"by at least {need:.1f}x -- on {best['feature']}, the most\n"
+              f"      favourable feature -- before the series trend dominates. "
+              f"Averaging n\n      independent conformers cuts scatter by "
+              f"sqrt(n), so that is roughly {need ** 2:.0f}\n      conformers "
+              f"per complex if they were independent, and more if they are not."
+              f"\n      That is a quantitative target for the metadynamics "
+              f"pilot, which until\n      now had only a qualitative "
+              f"motivation.")
     else:
         print("\n  ==> NOT confirmed at this threshold; the substitution "
               "hypothesis does not\n      explain the collapse and another "
