@@ -253,8 +253,9 @@ def ensemble_one(row, *, time_ps: float, dump_fs: float, temp_k: float,
     # snapshot would be, and it puts the expensive method where it decides the
     # answer (relative energies) rather than where it does not (which local
     # minimum a snapshot falls into).
-    relaxed: list[tuple[float, np.ndarray]] = []
-    for sy, xyz in picks:
+    # (energy, geometry, is_shipped) -- the flag is what makes the gap correct.
+    relaxed: list[tuple[float, np.ndarray, bool]] = []
+    for pi, (sy, xyz) in enumerate(picks):
         r = xb.optimize(sy, xyz, charge=charge, solvent="water",
                         opt_level=opt_level, maxcycle=maxcycle, binary=binary,
                         threads=threads, timeout=timeout, method=opt_method)
@@ -272,7 +273,7 @@ def ensemble_one(row, *, time_ps: float, dump_fs: float, temp_k: float,
         else:
             e = r.get("energy_ev")
         if e is not None:
-            relaxed.append((float(e), geo))
+            relaxed.append((float(e), geo, pi == 0))
     rec["relaxed"] = len(relaxed)
     rec["opt_method"] = opt_method
     rec["opt_level"] = opt_level
@@ -280,10 +281,13 @@ def ensemble_one(row, *, time_ps: float, dump_fs: float, temp_k: float,
         rec["status"] = "no_relaxed"
         rec["n_unique"] = 0
     else:
-        # picks[0] is the SHIPPED geometry, so relaxed[0] -- before sorting --
-        # is what the dataset actually used, relaxed to the same level as every
-        # search structure.  Recording it is what makes the surviving hypothesis
-        # testable at all:
+        # picks[0] is the SHIPPED geometry.  It must be found by its FLAG, not by
+        # position: `relaxed` only receives entries whose optimisation succeeded,
+        # so if the shipped geometry's own relaxation failed, relaxed[0] is a
+        # metadynamics snapshot and the gap below is meaningless.  That was a live
+        # bug -- 6 of 120 complexes returned fewer than 17 successes (audit E2,
+        # AUDIT_2026-07-30.md).  When the shipped structure failed, the gap is
+        # recorded as None rather than silently wrong.
         #
         #   e_shipped - e_min  =  how far the dataset's arbitrary local minimum
         #                         sits above the global one
@@ -293,10 +297,12 @@ def ensemble_one(row, *, time_ps: float, dump_fs: float, temp_k: float,
         # energy_diagnostic measured at SNR 0.25 -- and a consistent global
         # minimisation would remove it.  Without this number the pilot can count
         # conformers but cannot test the thing it exists to test.
-        rec["e_shipped_relaxed_ev"] = float(relaxed[0][0])
+        shipped = [e for e, _g, is_ship in relaxed if is_ship]
+        rec["e_shipped_relaxed_ev"] = float(shipped[0]) if shipped else None
+        rec["shipped_relaxation_ok"] = bool(shipped)
         relaxed.sort(key=lambda t: t[0])
         uniq: list[tuple[float, np.ndarray]] = []
-        for e, c in relaxed:
+        for e, c, _is_ship in relaxed:
             if any(abs(e - e2) < e_tol_ev
                    and _heavy_rmsd(c, c2, symbols) < rmsd_tol
                    for e2, c2 in uniq):
@@ -313,8 +319,9 @@ def ensemble_one(row, *, time_ps: float, dump_fs: float, temp_k: float,
         rec["e_min_ev"] = float(energies.min())
         rec["e_mean_ev"] = float(energies.mean())
         rec["e_spread_ev"] = float(energies.max() - energies.min())
-        rec["gap_shipped_above_min_ev"] = float(
-            rec["e_shipped_relaxed_ev"] - energies.min())
+        rec["gap_shipped_above_min_ev"] = (
+            float(rec["e_shipped_relaxed_ev"] - energies.min())
+            if rec["e_shipped_relaxed_ev"] is not None else None)
         # Boltzmann weighting was the assumed remedy and the smoke falsified it:
         # conformer energy gaps here are 0.8-1.9 eV against kT = 0.026 eV, so
         # exp(-dE/kT) puts ~99% of the weight on one structure and n_effective

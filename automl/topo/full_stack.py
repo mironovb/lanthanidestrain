@@ -10,9 +10,13 @@ obtainable from what is on disk.  Eleven-odd arms exist: the published cells, th
 filtration replications, the conformer arm, the extended-seed ensemble, and the
 two new encoders.
 
-With the ceiling now measured at **+0.679** and the best stack at **+0.2672**,
-there is +0.412 of headroom, and the cheapest place to look for some of it is a
-better combination of models that already exist.  This costs no GPU at all.
+The cheapest place to look for a better model is a better combination of ones that
+already exist, and it costs no GPU at all.
+
+(This module originally motivated itself with a "+0.412 of headroom" against a
+measured ceiling of +0.679.  That ceiling was withdrawn on 30 July 2026 --
+AUDIT_2026-07-30.md -- and no ceiling is currently identifiable, so the motivation
+stands on cost alone rather than on a known gap.)
 
 Selection discipline
 --------------------
@@ -248,11 +252,14 @@ def main() -> int:
               "nested selection reduces the winner's\n      curse but does not "
               "abolish it.")
     else:
-        print("  ==> stacking more arms buys essentially nothing. The three-arm "
-              "stack was\n      already at the combination ceiling for these "
-              "models, so the remaining\n      headroom to +0.679 is NOT "
-              "reachable by recombining what exists -- it needs\n      a model "
-              "that is right about something none of these are.")
+        print("  ==> GREEDY NESTED FORWARD SELECTION over these arms does not "
+              "beat a\n      hand-chosen three-arm stack. Note the comparison is "
+              "not symmetric:\n      this procedure nests the ARM CHOICE as well "
+              "as the weights, whereas the\n      published stack's arm set was "
+              "picked by a human who had seen the\n      results and nests only "
+              "the weights. So part of the gap is selection\n      bias in the "
+              "published number's favour, and this does NOT establish\n      that "
+              "no better combination exists (audit E4, AUDIT_2026-07-30.md).")
     print(f"\n[full-stack] wrote {OUT}")
     return 0
 

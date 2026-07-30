@@ -17,7 +17,7 @@ itself flags as defective.
 
 | # | measurement | result | what it changes |
 |---|---|---|---|
-| 1 | **Ceiling** on the metric | **+0.679** | best model is at **39 %**; +0.412 headroom exists |
+| 1 | ~~**Ceiling** on the metric~~ | ~~+0.679~~ **WITHDRAWN 30 Jul** | not identifiable; see the erratum and `AUDIT_2026-07-30.md` |
 | 2 | **Block-key robustness** | +0.0375 **adds** / +0.0177 **n.s.** | the effect is a *binned-key* effect |
 | 3 | **Third encoder** | S0 vs D0 = **+0.0091, n.s.** | **it is 3D message passing, not simplicial** |
 | 4 | **Reference energetics** (957 complexes) | **−0.2993**, significant | energetics *hurt*; barrier is conformer scatter, not theory |
@@ -34,10 +34,12 @@ are falsifications of things I or the study believed at the start of the day**,
 four of them mine. The method for telling those apart is at least as much the
 contribution as any single effect.
 
-**Four routes to the remaining headroom are now closed with numbers**: a better
-combination (§8), better features (§4), better geometries (§5), and a better
-objective (§9). What is left is the data itself -- 953 distinct complexes, 905
-adjacent pairs, and a ceiling of +0.679 that nothing here reaches half of.
+**Four routes are now closed with numbers**: a better combination (§8), better
+features (§4), better geometries (§5), and a better objective (§9). Each failed on
+its own terms; *how much room* they were failing to reach is **unknown** (erratum
+below). What is left is the data itself — 953 distinct complexes, 905 adjacent
+pairs, and rows with identical model features disagreeing by a median 0.23 log
+units for reasons the feature set cannot express.
 
 ---
 
@@ -50,7 +52,11 @@ A **model-free** estimate — the same adjacent pair, same extractant, same binn
 block, measured at two or more genuinely different *exact* condition sets, whose
 disagreement is irreducible because they share one feature vector:
 
-> **Ceiling: adjacent-pair R² ≤ +0.679.** The best model reaches **39 %** of it.
+> ~~**Ceiling: adjacent-pair R² ≤ +0.679.** The best model reaches **39 %** of it.~~
+>
+> **WITHDRAWN 30 July 2026** — the estimator measured a predictable quantity, not
+> irreducible noise. See the erratum below and `AUDIT_2026-07-30.md`. The ceiling
+> is **not identifiable** from these data.
 
 Two other estimators returned negative "ceilings" and are reported as failures
 with their cause, which is a data-quality finding: a cell acquires a duplicate
@@ -176,8 +182,13 @@ Nested forward selection — arms, order and weights all chosen per held-out
 extractant — over all **15** arms on disk gives **+0.2604**, against the published
 three-arm **+0.2672**. Worse.
 
-So the +0.412 of headroom is **not reachable by recombining what exists**. It
-needs a model that is right about something none of these are. [`full_stack.csv`]
+So **greedy nested forward selection over these arms does not beat a hand-chosen
+three-arm stack.** The comparison is not symmetric and the stronger reading is
+withdrawn (audit E4): this procedure nests the *arm choice* as well as the weights,
+while the published stack's arm set was picked with hindsight and nests only the
+weights. Part of the gap is therefore selection bias in the published number's
+favour, and it does **not** establish that no better combination exists.
+[`full_stack.csv`]
 
 ---
 
@@ -190,9 +201,10 @@ needs a model that is right about something none of these are. [`full_stack.csv`
    their underlying graphs, and continuous-filter distance networks all work
    equally; fixed persistence images do not. The transferable object is the
    **rule** — accurate *and* decorrelated — not the complex.
-3. **The problem is measurement-limited, and by how much is now known.** Ceiling
-   +0.679, best model 39 % of it, predictions at 40–50 % of the true spread,
-   neither repairable post hoc.
+3. **The problem is measurement-limited, but by how much is NOT known.** ~~Ceiling
+   +0.679, best model 39 % of it~~ — withdrawn. What stands: predictions reach
+   40–50 % of the true spread and that is not repairable post hoc, and rows with
+   identical model features disagree by a median 0.23 log units.
 4. **Three routes to the headroom are closed with numbers**: recombination,
    energetics, and conformer search.
 
@@ -255,12 +267,14 @@ under the strict key that survives 19-look Bonferroni — **+0.0150 [+0.0011,
 look on 78 extractants and the direct OBJ-vs-S0 comparison is a null, so it is
 reported as narrow and in need of replication, not as a win.
 
-**This closes the fourth route to the headroom.** Recombination, features,
-geometries and the objective are all now measured and closed. The
-pre-registration said a negative here points at *the representation or the data*;
-`ENCODER_RESULTS.md` has since shown the representation family is broad and
-interchangeable, which leaves **the data** — 953 complexes, 905 adjacent pairs,
-and a ceiling of +0.679 that nothing here reaches half of.
+**This closes the fourth route.** Recombination, features, geometries and the
+objective are all now measured and closed — each on its own terms. (~~the fourth
+route *to the headroom*~~: how much room they were failing to reach is unknown, see
+the erratum below.) The pre-registration said a negative here points at *the
+representation or the data*; `ENCODER_RESULTS.md` has since shown the
+representation family is broad and interchangeable, which leaves **the data** —
+953 complexes, 905 adjacent pairs, and rows with identical model features
+disagreeing by a median 0.23 log units for reasons the feature set cannot express.
 
 **Five of the nine results in this document are falsifications of things believed
 at the start of the day**, four of them mine.

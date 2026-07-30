@@ -36,7 +36,9 @@ The `level_weight` main effect is **monotone in the wrong direction**:
 | 0.3 | +0.2351 |
 | **1.0** | **+0.2412** |
 
-**More weight on the block mean is better, not worse.** The level term is not
+**The ordering suggests more weight on the block mean is better, not worse** —
+but see the correction at the foot of this document: the span is 1.4 σ and is
+**not established**. If real, the reading is that the level term is not
 wasted gradient — it anchors the representation. A network told only to get
 within-block contrasts right has no reason to place the blocks anywhere sensible,
 and evidently learns a worse encoder for it. The same ordering appears in overall
@@ -111,16 +113,19 @@ be replicated before it is leaned on.
 [`full_stack.csv`](full_stack.csv) (recombination exhausted),
 [`ENERGY_RESULTS.md`](ENERGY_RESULTS.md) (energetics hurt) and
 [`CONFORMER_RESULTS.md`](CONFORMER_RESULTS.md) (conformer search cannot help),
-**four routes to the +0.412 of headroom are now measured and closed**: a better
-combination, better features, better geometries, and a better objective.
+**four routes are now measured and closed**: a better combination, better features,
+better geometries, and a better objective. (Each failed on its own terms. How much
+room they were failing to reach is *unknown* — the ceiling that supplied "+0.412 of
+headroom" was withdrawn on 30 July, `AUDIT_2026-07-30.md`.)
 
 **Left open.** The pre-registration named where a negative here points: *the
 representation or the data*. [`ENCODER_RESULTS.md`](ENCODER_RESULTS.md) already
 showed the representation family is broad and interchangeable — simplicial,
 graph and distance encoders are indistinguishable — which makes the
 representation an unpromising place to look next. That leaves **the data**: 953
-distinct complexes, 905 adjacent pairs, and a measured ceiling of +0.679 that no
-model here reaches half of.
+distinct complexes and 905 adjacent pairs, in which rows with identical model
+features disagree by a median 0.23 log units for reasons the feature set cannot
+express (`ceiling_v2.py`).
 
 ## Limits
 
@@ -146,3 +151,23 @@ model here reaches half of.
 automl/slurm/campaign_driver.sh automl/slurm/topo_objective.sh 48 8 34
 python3 -m automl.topo.objective_test --n-boot 400
 ```
+
+
+---
+
+## Correction, 30 July 2026 — the main effect is 1.4 σ, not established
+
+`AUDIT_2026-07-30.md` E3. The `level_weight` span from 0.1 to 1.0 is **0.0126**,
+against an SE of the difference of **~0.0092** derived from the measured 8-seed
+ensemble run-to-run spread — **1.4 σ**. A monotone ordering across three levels at
+1.4 σ is *suggestive*, not established, and this study has a documented history of
+a 2.9 σ claim collapsing to 0.1 σ on replication (`PI_SWEEP_PRECISION.md`).
+
+Every sentence above that treats the ordering as fact is downgraded to a
+suggestion. The same applies to the `block_key` main effect (+0.2400 vs +0.2298,
+span 0.0102 — under 1.2 σ).
+
+**The conclusion is unaffected**, because it never rested on the main effect. It
+rests on the confirmatory contrast **OBJ − S0 = −0.0233 [−0.0325, −0.0044]** on the
+held-out confirm half, a separate and better-powered test. The decomposed objective
+does not beat S0; *why* it does not is now open rather than answered.

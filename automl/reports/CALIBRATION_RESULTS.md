@@ -79,14 +79,17 @@ Even the isotonic transform — free to apply any monotone map — makes R² *wo
 on five of the six models. So the predictions are compressed because the models
 are genuinely uncertain, not because their scale is wrong.
 
-That combines with the ceiling measurement ([`CEILING_RESULTS`](ceiling_test.csv),
-adjacent-pair R² ≤ **+0.679**) into one coherent statement for the paper:
+~~That combines with the ceiling measurement into one coherent statement for the
+paper: the models recover about 39 % of the attainable variance and predict roughly
+40–50 % of its true spread.~~
 
-> The models recover about 39 % of the attainable variance in adjacent-lanthanide
-> separation and predict roughly 40–50 % of its true spread. Both numbers are
-> consequences of the same thing — the signal is small relative to the
-> measurement noise in this dataset — and neither is repaired by post-hoc
-> rescaling.
+**WITHDRAWN 30 July 2026** — the ceiling half of that sentence is gone (erratum
+below). What survives, and needs no ceiling:
+
+> The models predict roughly **40–50 % of the true spread** of adjacent-lanthanide
+> separation, and post-hoc rescaling does not repair it — even a free monotone map
+> makes R² worse on five of six models. The compression is a property of the
+> problem, not of the models' calibration.
 
 That is a better sentence than the current "both versions compress toward zero",
 because it says *why*, and it says what would and would not fix it.

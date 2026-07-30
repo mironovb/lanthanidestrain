@@ -22,7 +22,8 @@ It is now settled.
 
 Both reuse the shipped Vietoris–Rips asset, so the neighbourhood definition is
 identical and only the algebra over it differs. Same node inputs, same
-metal-centred readout, same radial shell histogram, same embedding width, same
+metal-centred readout, same radial shell histogram, same embedding width (see
+the capacity correction below), same
 16 seeds, same folds. Asserted in `automl/tests/test_encoders.py`, including
 permutation and edge-direction invariance.
 
@@ -128,3 +129,18 @@ ARM=D0 sbatch --array=0-15 automl/slurm/topo_encoder.sh
 python3 -m automl.topo.encoder_test --n-boot 400
 python3 -m pytest automl/tests/test_encoders.py -q
 ```
+
+
+---
+
+## Correction, 30 July 2026 — equal width is not equal information
+
+`AUDIT_2026-07-30.md` E5. This document said the arms share an embedding width so
+that "no capacity difference is smuggled in". Equal *width* is not equal
+*information*: `DistanceNet` holds **2 of its 9 readout blocks at exactly zero** —
+the slots `SimplicialNet` fills from the triangle level — so **D0 carries strictly
+less than S0 at the same width**.
+
+That makes D0 matching S0 a **conservative** comparison and *strengthens* the
+conclusion of this document. The original phrasing was nonetheless inaccurate and
+is corrected here rather than left to be found.

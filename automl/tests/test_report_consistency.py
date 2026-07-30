@@ -79,19 +79,33 @@ def test_reports_quote_their_own_csv(label, csv, query, col, docs):
             f"(tried {forms}); the document has drifted from {csv}")
 
 
-def test_ceiling_is_a_ceiling():
-    """A 'ceiling' outside (0, 1] is not a ceiling, and must be marked invalid."""
+def test_ceiling_is_withdrawn():
+    """Every ceiling_test estimator must be marked invalid, with a reason.
+
+    Withdrawn 30 July 2026 (audit E1): E2 measured a quantity the model predicts
+    and the metric averages out; E1/E3 measured a non-representative subset.  This
+    pins the withdrawal so a future edit cannot quietly restore a number.
+    """
     path = REPORTS / "ceiling_test.csv"
     if not path.exists():
         pytest.skip("ceiling_test.csv not present")
     d = pd.read_csv(path)
     assert "valid" in d.columns, "ceiling_test.csv must carry a validity column"
-    good = d[d["valid"]]
-    assert len(good), "no estimator produced a usable ceiling"
-    assert (good["ceiling_r2"] > 0).all() and (good["ceiling_r2"] <= 1).all()
-    # and the ones marked invalid really are outside the range
-    bad = d[~d["valid"]]
-    assert ((bad["ceiling_r2"] <= 0) | (bad["ceiling_r2"] > 1)).all()
+    assert not d["valid"].any(), (
+        "ceiling_test marked an estimator valid; all three were withdrawn "
+        "(AUDIT_2026-07-30.md E1)")
+    assert "withdrawn_reason" in d.columns and d["withdrawn_reason"].notna().all()
+
+
+def test_ceiling_v2_reports_identifiability():
+    """The replacement must say whether a ceiling is identifiable at all."""
+    path = REPORTS / "ceiling_v2.csv"
+    if not path.exists():
+        pytest.skip("ceiling_v2.csv not present")
+    d = pd.read_csv(path).set_index("quantity")
+    assert "implied ceiling if sigma transfers" in d.index
+    # 94% within one DOI is the finding that refuted the source-conflict premise
+    assert float(d.loc["frac within one DOI", "value"]) > 0.5
 
 
 def test_published_headline_still_matches_stack_test():
@@ -110,3 +124,62 @@ def test_published_headline_still_matches_stack_test():
         "re-run `python3 -m automl.topo.stack_test --n-boot 400`")
     assert d.loc["1_primary", "delta"] == pytest.approx(0.0351, abs=5e-4)
     assert d.loc["3_decisive", "delta"] == pytest.approx(0.0296, abs=5e-4)
+
+
+# ---------------------------------------------------------------------------
+# Withdrawn numbers.  A claim that has been retracted must not survive anywhere
+# except in the documents that retract it.  This is the guard that would have
+# caught PI_SWEEP_RESULTS asserting a "+0.064 gap" its own section 9 withdrew.
+WITHDRAWN = [
+    ("+0.679", "the ceiling estimate withdrawn 30 July 2026 (audit E1)"),
+    ("+0.412", "the 'headroom' derived from that ceiling"),
+    ("39 %", "'39% of attainable', derived from that ceiling"),
+    ("39% of", "'39% of attainable', derived from that ceiling"),
+]
+# Documents whose job is to discuss the withdrawal.
+ALLOWED = {"AUDIT_2026-07-30.md", "ceiling_test.csv", "ceiling_v2.csv"}
+
+
+def _is_marked(lines: list[str], i: int) -> bool:
+    """Is the occurrence on line ``i`` explicitly marked as withdrawn?
+
+    Line-aware rather than document-aware, because this project's convention is
+    to strike a retracted claim through **in place** and leave it visible.  So an
+    occurrence is acceptable if it is struck through, or sits on/near a
+    withdrawal marker, or falls after the document's erratum heading.
+    """
+    markers = ("WITHDRAWN", "Withdrawn", "withdrawn", "Erratum", "erratum",
+               "Correction,", "~~")
+    window = " ".join(lines[max(0, i - 2): i + 3])
+    return any(m in window for m in markers)
+
+
+def _offending_lines(text: str, token: str) -> list[int]:
+    """1-indexed lines asserting ``token`` without a withdrawal marker."""
+    lines = text.splitlines()
+    # everything after an erratum/withdrawal heading is discussion of the
+    # retraction and is allowed to quote the number
+    cut = len(lines)
+    for i, ln in enumerate(lines):
+        if ln.startswith("##") and any(
+                m in ln for m in ("Erratum", "erratum", "WITHDRAWN",
+                                  "Withdrawn", "withdrawn", "Correction,")):
+            cut = i
+            break
+    return [i + 1 for i in range(cut)
+            if token in lines[i] and not _is_marked(lines, i)]
+
+
+@pytest.mark.parametrize("token,why", WITHDRAWN, ids=[w[0] for w in WITHDRAWN])
+def test_withdrawn_numbers_are_not_asserted(token, why):
+    offenders = {}
+    for p in sorted(REPORTS.glob("*.md")):
+        if p.name in ALLOWED:
+            continue
+        bad = _offending_lines(p.read_text(), token)
+        if bad:
+            offenders[p.name] = bad
+    assert not offenders, (
+        f"{token} ({why}) is asserted without a withdrawal marker at "
+        f"{offenders}. Strike it through in place, or move it below the "
+        f"erratum heading.")
