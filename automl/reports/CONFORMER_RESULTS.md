@@ -130,3 +130,36 @@ sbatch --array=0-3 automl/slurm/... mtd_ensemble --pilot 120 --time-ps 10 --max-
 python3 -m automl.qc.mtd_ensemble --collect
 python3 -m automl.qc.conformer_diagnostic
 ```
+
+---
+
+## Correction, 30 July 2026 — the shipped-geometry index bug, and the corrected numbers
+
+`AUDIT_2026-07-30.md` E2. `mtd_ensemble.py` recorded `relaxed[0]` as the shipped
+geometry's relaxed energy, but `relaxed` receives an entry **only when an
+optimisation succeeds**. When the shipped structure's own relaxation failed,
+`relaxed[0]` was a metadynamics snapshot and the gap for that complex was
+meaningless.
+
+Fixed by carrying an explicit `is_shipped` flag and recording `None` when it
+failed. The pilot was re-run with `--overwrite` so every complex carries it.
+**4 of 120 complexes had the shipped relaxation fail** and had a wrong gap.
+
+| | as published | corrected |
+|---|---|---|
+| shipped geometry is not the global minimum | 79 % | **82 %** |
+| median gap | 0.321 eV | **0.305 eV** |
+| max gap | 3.73 eV | **2.01 eV** |
+| **median within-family SD of the gap** | 0.434 eV | **0.503 eV** |
+| share of the 0.731 eV scatter it accounts for | 59 % | **69 %** |
+| residual scatter after removing it | 0.588 eV | **0.531 eV** |
+| **SNR a perfect conformer campaign would reach** | **0.29** | **0.32** |
+
+The audit predicted the verdict would survive because it is a median over nine
+families, and it does: **SNR 0.32 is still far below 1**, so a full CREST campaign
+over all 953 complexes, succeeding completely at what it is for, still cannot
+rescue these features. **Not worth running** stands.
+
+The bug made the study's own case *understated*: arbitrary local minimisation
+explains more of the scatter than reported (69 % rather than 59 %), and the
+irreducible remainder is correspondingly smaller. Neither is enough.
