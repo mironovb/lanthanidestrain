@@ -1,0 +1,13 @@
+cell,quantity,value,unit,note
+A1,added columns,119.0,count,baseline_2d_shape minus baseline_2d
+A1,median coverage,1.0,fraction of modelled rows,
+A1,mean coverage,0.8876045993618685,fraction of modelled rows,
+A1,fully populated columns,88.0,count,
+A1,entirely empty columns,4.0,count,"imputed to 0 by _standardise, hence inert"
+A1,median coverage [feat3d],1.0,fraction,58 columns
+A1,median coverage [g3],0.9858828487147071,fraction,30 columns
+A1,median coverage [g4],1.0,fraction,18 columns
+A1,median coverage [g8],1.0,fraction,13 columns
+B1,aux target 'cshm' usable rows,1.0,fraction of modelled rows,"4746 rows, 1 target column(s)"
+B2,aux target 'eint' usable rows,0.999157184997893,fraction of modelled rows,"4742 rows, 2 target column(s)"
+B3,aux target 'qtransfer' usable rows,0.999157184997893,fraction of modelled rows,"4742 rows, 2 target column(s)"
