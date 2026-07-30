@@ -133,6 +133,20 @@ def load_cells(verbose: bool = True):
             idx = f.index if idx is None else idx.intersection(f.index)
         stack = np.vstack([frames[s].loc[idx, "oof"].to_numpy(float)
                            for s in sorted(frames)])
+        # A run whose predictions contain NaN must stop the analysis, not be
+        # quietly averaged into a cell.  The cell smoke reported A1 as "OK"
+        # while it returned R2 = nan, because it checked the exit code and
+        # nothing else -- an all-NaN feature column had poisoned every
+        # prediction.  Averaging such a run would turn one broken seed into a
+        # broken cell and a NaN contrast, which reads as "no effect".
+        bad = ~np.isfinite(stack)
+        if bad.any():
+            rows = bad.any(axis=0).sum()
+            seeds = [sorted(frames)[i] for i in np.where(bad.any(axis=1))[0]]
+            raise SystemExit(
+                f"[sweep2] cell {name}: {int(bad.sum())} non-finite predictions "
+                f"over {rows} rows in seed(s) {seeds}. Refusing to ensemble. "
+                f"Re-run those seeds; do not analyse a partly-NaN cell.")
         ens = frames[sorted(frames)[0]].loc[idx].copy()
         ens["oof"] = stack.mean(axis=0)      # every seed present, never a subset
         out[name] = attach_strict(attach_meta(ens))

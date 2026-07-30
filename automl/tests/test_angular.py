@@ -317,3 +317,35 @@ def test_standardise_applies_train_statistics_to_held_out_rows():
     np.testing.assert_allclose(a.mean(0), 0, atol=1e-8)
     np.testing.assert_allclose(a.std(0), 1, atol=1e-8)
     assert abs(b.mean()) > 1.0, "held-out rows must NOT be re-centred on themselves"
+
+
+def test_the_two_angular_blocks_are_independently_selectable():
+    """A2 and A3 must each change exactly one thing, or neither is attributable.
+
+    Both blocks originally hung off one `angular` switch, so `--angular-readout`
+    silently also widened node_feat by eight columns.  It surfaced as a crash
+    (the node encoder was still sized for five), but the real damage would have
+    been a cell carrying two axis-A changes at once -- an unattributable result
+    rather than a loud failure.
+    """
+    from automl.topo.simplicial_data import (SimplicialComplexes, collate,
+                                             N_ANGULAR_BINS)
+    S = SimplicialComplexes(verbose=False)
+    ids = list(range(4))
+
+    base = collate([S.get(i) for i in ids])
+    node = collate([S.get(i, node_angular=True) for i in ids])
+    metal = collate([S.get(i, metal_angular=True) for i in ids])
+
+    assert base["node_feat"].shape[1] == 5 and "metal_ang" not in base
+    # --node-angular widens node_feat and adds no readout key
+    assert node["node_feat"].shape[1] == 5 + N_ANGULAR_BINS
+    assert "metal_ang" not in node
+    # --angular-readout adds the readout key and leaves node_feat untouched
+    assert metal["node_feat"].shape[1] == 5
+    assert "metal_ang" in metal
+    np.testing.assert_array_equal(base["node_feat"].numpy(),
+                                  metal["node_feat"].numpy())
+    # the five published columns survive unchanged under either switch
+    np.testing.assert_array_equal(base["node_feat"].numpy(),
+                                  node["node_feat"][:, :5].numpy())

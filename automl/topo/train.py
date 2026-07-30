@@ -203,12 +203,18 @@ class ComplexCache:
     """Pre-loads and caches collated complexes on the target device."""
 
     def __init__(self, S: SimplicialComplexes, filtration_max, heavy_only,
-                 device, angular: bool = False):
+                 device, angular: bool = False,
+                 node_angular: bool | None = None,
+                 metal_angular: bool | None = None):
         self.S, self.device = S, device
         self.filtration_max, self.heavy_only = filtration_max, heavy_only
         # SWEEP2 axis A: build the angular features once per complex here, where
-        # the cache pays for them once instead of once per batch.
-        self.angular = bool(angular)
+        # the cache pays for them once instead of once per batch.  The two
+        # blocks are separate switches because they are separate experiments:
+        # node_ang widens node_feat and so changes the node encoder, whereas
+        # metal_ang only adds a readout key and leaves node_feat alone.
+        self.node_angular = bool(angular if node_angular is None else node_angular)
+        self.metal_angular = bool(angular if metal_angular is None else metal_angular)
         self._c: dict[Any, Any] = {}
 
     def get(self, k: int, conformer: int = 0):
@@ -221,7 +227,8 @@ class ComplexCache:
             else:
                 self._c[key] = self.S.get(k, filtration_max=self.filtration_max,
                                           heavy_only=self.heavy_only,
-                                          angular=self.angular)
+                                          node_angular=self.node_angular,
+                                          metal_angular=self.metal_angular)
         return self._c[key]
 
     def n_conformers(self, k: int) -> int:
@@ -908,9 +915,10 @@ def main() -> int:
         # the row set is identical whichever is loaded.
         S = (ConformerComplexes(verbose=False) if args.conformers > 1
              else SimplicialComplexes(verbose=False))
+        # Independently, so each axis-A cell changes exactly one thing.
         cache = ComplexCache(S, args.filtration_max, args.heavy_only, device,
-                             angular=bool(args.node_angular
-                                          or args.angular_readout))
+                             node_angular=bool(args.node_angular),
+                             metal_angular=bool(args.angular_readout))
         n_assets = len(S)
         if args.conformers > 1:
             tot = sum(S.n_conformers(k) for k in range(len(S)))

@@ -265,7 +265,17 @@ class SimplicialComplexes:
         return self._index.get(str(build_id))
 
     def get(self, k: int, filtration_max: float | None = None,
-            heavy_only: bool = False, angular: bool = False) -> Complex:
+            heavy_only: bool = False, angular: bool = False,
+            node_angular: bool | None = None,
+            metal_angular: bool | None = None) -> Complex:
+        """``angular`` turns on both angular blocks; the two overrides select one.
+
+        They have to be selectable independently, because they are two different
+        experiments.  ``node_ang`` widens ``node_feat`` and so changes the node
+        encoder; ``metal_ang`` is a separate batch key read only at readout.
+        Tying them to one switch made the readout cell silently also carry node
+        features -- two axis-A changes in one cell, which cannot be attributed.
+        """
         z = self.z
         n0, n1 = int(self.node_ptr[k]), int(self.node_ptr[k + 1])
         e0, e1 = int(self.edge_ptr[k]), int(self.edge_ptr[k + 1])
@@ -327,9 +337,12 @@ class SimplicialComplexes:
         # Angular features are built here rather than in ``collate`` so the
         # per-complex cache in ``train.ComplexCache`` pays for them once instead
         # of once per batch.
+        want_node = angular if node_angular is None else node_angular
+        want_metal = angular if metal_angular is None else metal_angular
         node_ang = metal_ang = None
-        if angular:
+        if want_node:
             node_ang = node_angular_features(coords, ei, len(zi))
+        if want_metal:
             metal_ang = metal_angular_histogram(coords, donor, mi)
 
         return Complex(build_id=self.build_ids[k], z_idx=z_index(zi),
