@@ -46,6 +46,13 @@ OUT_CELLS = REPORTS / "sweep2_cells.csv"
 OUT_TEST = REPORTS / "sweep2_test.csv"
 
 SEEDS = [7, 11, 23, 37]
+# The confirmatory stage adds twelve seeds to the winner and to A0, giving
+# sixteen a side.  The four screening seeds are reused rather than re-run:
+# selection happened on the 84 tune extractants alone, so scoring an existing
+# run on the 78 confirm extractants is still a first look at those rows, and
+# the runs are deterministic -- re-running would return identical predictions
+# for eight GPU runs of nothing.
+CONFIRM_SEEDS = [101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157]
 MIN_GAIN = 0.005          # pre-registered screening threshold
 N_LOOKS = 21              # >= 20 before this, plus one confirmatory look
 
@@ -95,8 +102,16 @@ def _matches(cfg: dict, want: dict) -> bool:
     return True
 
 
-def load_cells(verbose: bool = True):
-    """Seed-ensembled out-of-fold predictions per cell, plus the seed counts."""
+def load_cells(verbose: bool = True, seeds: list[int] | None = None):
+    """Seed-ensembled out-of-fold predictions per cell, plus the seed counts.
+
+    ``seeds`` selects which runs are admitted.  The screen uses the four
+    screening seeds; the confirmatory stage passes SEEDS + CONFIRM_SEEDS so the
+    winner and the anchor are each ensembled over sixteen.  It is an explicit
+    argument rather than a module constant so a confirmatory analysis cannot
+    silently pick up screening-only runs, or vice versa.
+    """
+    seeds = list(SEEDS) if seeds is None else list(seeds)
     out: dict[str, pd.DataFrame] = {}
     counts: dict[str, int] = {}
     if not ART.exists():
@@ -113,16 +128,16 @@ def load_cells(verbose: bool = True):
             if not _matches(cfg, want):
                 continue
             s = int(cfg.get("seed", -1))
-            if s not in SEEDS:
+            if s not in seeds:
                 continue
             if s in found:
                 raise RuntimeError(f"cell {name} seed {s} matched twice: "
                                    f"{found[s].name} and {p.name}")
             found[s] = p
         if verbose:
-            missing = sorted(set(SEEDS) - set(found))
+            missing = sorted(set(seeds) - set(found))
             print(f"  {name:3s} {str(want) or '(anchor)':44s} "
-                  f"seeds={len(found)}/{len(SEEDS)}"
+                  f"seeds={len(found)}/{len(seeds)}"
                   + (f"  MISSING {missing}" if missing else ""))
         if not found:
             continue
@@ -158,15 +173,36 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--n-boot", type=int, default=400)
     ap.add_argument("--allow-partial", action="store_true")
+    ap.add_argument("--confirm", metavar="CELL", default=None,
+                    help="run the CONFIRMATORY stage for CELL at 16 seeds a "
+                         "side. Only legitimate for the cell the screen "
+                         "selected, and only once.")
     args = ap.parse_args()
 
     tune, conf = load_split()
     print(f"[sweep2] frozen split: {len(tune)} tune / {len(conf)} confirm")
     print("\n=== cells ===")
-    cells, counts = load_cells()
+    seed_set = (SEEDS + CONFIRM_SEEDS) if args.confirm else SEEDS
+    cells, counts = load_cells(seeds=seed_set)
     if "A0" not in cells:
         print("\nThe A0 anchor has no runs; nothing can be screened against it.")
         return 1
+    if args.confirm:
+        # Only the anchor and the named cell need the full sixteen; every other
+        # cell is irrelevant to this stage and is simply not consulted.
+        need = ("A0", args.confirm)
+        short = [c for c in need if counts.get(c, 0) < len(seed_set)]
+        if short and not args.allow_partial:
+            print(f"\n[sweep2] {short} have fewer than {len(seed_set)} seeds. "
+                  f"The confirmatory contrast is pre-registered at 16 a side, "
+                  f"BOTH sides replicated -- that rule cost 25 runs to learn "
+                  f"(PI_SWEEP_PRECISION.md). Submit:\n"
+                  f"  automl/slurm/campaign_driver.sh automl/slurm/sweep2.sh "
+                  f"24 8 34 MODE=confirm CELL={args.confirm}")
+            return 1
+        return confirmatory(args.confirm, cells, conf, args.n_boot,
+                            len(seed_set))
+
     incomplete = [c for c, n in counts.items() if n < len(SEEDS)]
     if incomplete and not args.allow_partial:
         print(f"\n[sweep2] incomplete cells {incomplete}. The screen needs all "
@@ -187,9 +223,10 @@ def main() -> int:
         ts, _ = _score(t, STRICT)
         gain = tb - a0_tune
         mark = "  <-- beats threshold" if gain > MIN_GAIN else ""
-        print(f"  {name:4s} {AXIS.get(name[0], ''):22s} {tb:+12.4f} "
+        axis = "(anchor)" if name == "A0" else AXIS.get(name[0], "")
+        print(f"  {name:4s} {axis:22s} {tb:+12.4f} "
               f"{gain:+9.4f} {ts:+12.4f} {r2:+9.4f}{mark}")
-        rows.append({"cell": name, "axis": AXIS.get(name[0], ""),
+        rows.append({"cell": name, "axis": axis,
                      "n_seeds": counts.get(name, 0),
                      "tune_adj_binned": tb, "gain_vs_A0": gain,
                      "tune_adj_strict": ts, "tune_r2_overall": r2})
@@ -231,15 +268,35 @@ def main() -> int:
     name = str(best["cell"])
     print(f"  winner on tune: {name} at {float(best['gain_vs_A0']):+.4f} "
           f"(> +{MIN_GAIN:.3f})")
-    print(f"  -> confirmatory contrast on the {len(conf)} CONFIRM extractants, "
-          f"both keys, {N_LOOKS}-look Bonferroni")
+    print(f"""
+  The screen selected a winner, so the confirmatory stage is authorised. It is
+  NOT run from these predictions: the pre-registration specifies 16 seeds a
+  side, both replicated, and the screen holds only {len(SEEDS)}. Confirming at
+  {len(SEEDS)} would compare an under-replicated winner against an
+  under-replicated anchor on the one look that is supposed to be decisive.
+
+  Submit, then re-run this module with --confirm {name}:
+    automl/slurm/campaign_driver.sh automl/slurm/sweep2.sh 24 8 34 \\
+        MODE=confirm CELL={name}""")
+    print(f"\n[sweep2] wrote {OUT_CELLS}")
+    return 0
+
+
+def confirmatory(name: str, cells: dict, conf, n_boot: int, n_seeds: int) -> int:
+    """The single pre-registered confirmatory look, at 16 seeds a side."""
+    if name not in cells:
+        print(f"[sweep2] cell {name} has no runs")
+        return 1
+    print(f"\n=== CONFIRMATORY: {name} vs A0, {n_seeds} seeds a side ===")
+    print(f"  {len(conf)} confirm extractants, both keys, "
+          f"{N_LOOKS}-look Bonferroni")
 
     test_rows = []
     for key in KEYS:
         tag = "binned" if key == BINNED else "STRICT"
         a = restrict(cells["A0"], conf)
         b = restrict(cells[name], conf)
-        r = paired_adjacent_corrected(a, b, args.n_boot, seed=0, key_col=key)
+        r = paired_adjacent_corrected(a, b, n_boot, seed=0, key_col=key)
         if r is None:
             continue
         clo, chi = _corrected(r["delta"], r["lo"], r["hi"], N_LOOKS)
@@ -247,7 +304,8 @@ def main() -> int:
         print(f"  [{tag:6s}] {name} minus A0: delta={r['delta']:+.4f} "
               f"[{r['lo']:+.4f}, {r['hi']:+.4f}] {v} | "
               f"{N_LOOKS}-look [{clo:+.4f}, {chi:+.4f}] {cv}")
-        test_rows.append({"key": key, "cell": name, "base": "A0", **r,
+        test_rows.append({"key": key, "cell": name, "base": "A0",
+                          "n_seeds": n_seeds, **r,
                           f"lo_{N_LOOKS}look": clo, f"hi_{N_LOOKS}look": chi,
                           "verdict": v, "verdict_corrected": cv})
 
@@ -270,7 +328,7 @@ def main() -> int:
       This is exactly the failure the two-stage design exists to catch, and it is
       the fourth time in this study that a screen-selected winner has not
       survived its own confirmation.""")
-    print(f"\n[sweep2] wrote {OUT_CELLS}\n[sweep2] wrote {OUT_TEST}")
+    print(f"\n[sweep2] wrote {OUT_TEST}")
     return 0
 
 
