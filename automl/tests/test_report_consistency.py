@@ -44,6 +44,12 @@ CLAIMS = [
     ("full stack over all arms", "full_stack.csv",
      "key=='composition_key'", "adj_r2",
      ["REANALYSIS_2026-07-29.md"]),
+    ("objective strict, adds to no-topology", "objective_test.csv",
+     "key=='strict_composition_key' and base=='no topology'", "delta",
+     ["OBJECTIVE_RESULTS.md", "REANALYSIS_2026-07-29.md"]),
+    ("objective binned, vs S0", "objective_test.csv",
+     "key=='composition_key' and base=='with S0'", "delta",
+     ["OBJECTIVE_RESULTS.md", "REANALYSIS_2026-07-29.md"]),
 ]
 
 

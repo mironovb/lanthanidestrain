@@ -1,9 +1,8 @@
-# Re-analysis, 29 July 2026: eight measurements, and what is left of the claim
+# Re-analysis, 29 July 2026: nine measurements, and what is left of the claim
 
 **Bogdan Mironov**
 Every result below has a pre-registration committed **before its data existed**.
-The decomposed-objective sweep is still on the cluster; everything else is
-finished.
+All nine campaigns are complete.
 
 ---
 
@@ -26,13 +25,19 @@ itself flags as defective.
 | 6 | **Magnitude compression** | gain +0.0087, not replicated | **shrinkage**, not miscalibration |
 | 7 | **Run-to-run noise floor** | **0.0000** | the "irreducible" premise was false |
 | 8 | **Recombination** of all 15 arms | **+0.2604** vs +0.2672 | stacking is exhausted |
+| 9 | **Decomposed objective** | level weight helps *monotonically* | the loss was not the constraint; my diagnosis pointed the wrong way |
 
 **The through-line.** This dataset's adjacent-pair signal is small relative to
 its measurement noise, and most apparent gains are artefacts of how the metric,
-the features, or the training loop were measured. Four of the eight results above
-are falsifications of things I or the study believed at the start of the day. The
-method for telling those apart is at least as much the contribution as any single
-effect.
+the features, or the training loop were measured. **Five of the nine results above
+are falsifications of things I or the study believed at the start of the day**,
+four of them mine. The method for telling those apart is at least as much the
+contribution as any single effect.
+
+**Four routes to the remaining headroom are now closed with numbers**: a better
+combination (§8), better features (§4), better geometries (§5), and a better
+objective (§9). What is left is the data itself -- 953 distinct complexes, 905
+adjacent pairs, and a ceiling of +0.679 that nothing here reaches half of.
 
 ---
 
