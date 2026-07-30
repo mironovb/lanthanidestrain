@@ -1,0 +1,3 @@
+block,n_columns,n_varying_within_block,frac_varying,median_abs_corr_with_dy,p90_abs_corr,max_abs_corr,best_column
+geometry (A1's 119 added columns),119,87,0.7310924369747899,0.0494788810347738,0.11810590774558141,0.18265828209367851,g3__polyhedron__hull_area
+published cond__,64,29,0.453125,0.08042771537799259,0.24043271464337349,0.35648510606378425,cond__extractant_concentration_M
