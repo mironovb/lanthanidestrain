@@ -1,5 +1,35 @@
 #!/usr/bin/env python3
-"""How much of the adjacent-pair metric is predictable *at all*?
+"""WITHDRAWN 30 July 2026 -- this module's answer was wrong.  See AUDIT_2026-07-30.md.
+                                     
+Every estimator here fails, and the module now refuses to report a ceiling.
+
+E2, the only one that produced a number in (0, 1], measured the SD of the pair
+difference across distinct exact condition sets inside one binned block, and
+treated it as irreducible.  It is not irreducible:
+
+* the model holds **64 exact numeric `cond__` columns** and 46% of binned blocks
+  (254/552) have at least one of them varying internally, so it can tell those
+  rows apart; and
+* ``adjacent_pair_arrays`` averages **y and p on the same grouping**, so
+  per-condition variation never enters the binned metric at all.
+
+Proof by contradiction: within the 203-pair subset E2 was measured on, the implied
+ceiling is **+0.173** -- below the best model's +0.267.  Nothing exceeds a real
+ceiling.  The published +0.679 divided that subset's noise variance (0.0235) by
+the **full** 905-pair set's variance (0.0733); those populations differ 2.6-fold
+in spread.
+
+E1 and E3 fail for a different reason, established by the DOI join in
+AUDIT_2026-07-30.md: a cell acquires duplicate rows non-randomly, and 94% of the
+disagreement is *within a single paper* rather than between papers.
+
+The module is kept, running and honest rather than deleted, because the three
+failed estimators and the reason each fails are the result.
+
+Original docstring follows.
+--------------------------------------------------------------------------------
+
+How much of the adjacent-pair metric is predictable *at all*?
 
 Motivation
 ----------
@@ -230,53 +260,47 @@ def main() -> int:
     # ceiling; it has shown that its own noise model does not describe this
     # data.  Marking that mechanically, rather than averaging it into a range,
     # is the difference between a result and a number.
-    out["valid"] = (out["ceiling_r2"] > 0) & (out["ceiling_r2"] <= 1)
+    # WITHDRAWN: no estimator here is valid.  E1/E3 fail on a non-representative
+    # subset; E2 measures a predictable quantity rather than noise.  Marking them
+    # all invalid is the correction, not a bug.
+    out["valid"] = False
+    out["withdrawn_reason"] = np.where(
+        out["estimator"].str.startswith("E2"),
+        "measures condition variation, which the model predicts and the metric averages out",
+        "non-representative subset: cells acquire duplicates non-randomly")
     OUT.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(OUT, index=False)
 
-    print("\n=== summary ===")
-    bad = out[~out["valid"]]
-    if len(bad):
-        print("  Estimators that failed, and why:")
-        for _, r in bad.iterrows():
-            print(f"    {r['estimator']:26s} ({r['key'][:6]}) "
-                  f"ceiling {r['ceiling_r2']:+.2f} -- outside (0, 1]")
-        print("    Both failures share one cause, and it is worth stating: a\n"
-              "    (block, metal) cell acquires a duplicate row precisely when\n"
-              "    two sources report the same system and DISAGREE, so the\n"
-              "    replicated cells are the worst-case subset rather than a\n"
-              "    sample.  Their pooled scatter exceeds the entire observed\n"
-              "    spread of the quantity being predicted, which is impossible\n"
-              "    for a representative noise estimate.  E1 and E3 therefore\n"
-              "    measure source conflict, not measurement precision, and are\n"
-              "    reported as a data-quality finding rather than as a ceiling.")
+    print("\n=== summary: WITHDRAWN, no ceiling is reported ===")
+    for _, r in out.iterrows():
+        print(f"    {r['estimator']:26s} ({r['key'][:6]}) "
+              f"would have given {r['ceiling_r2']:+.3f} -- INVALID")
+        print(f"        {r['withdrawn_reason']}")
+    print("""
+  Why every estimator fails (AUDIT_2026-07-30.md):
 
-    good = out[out["valid"]]
-    print()
-    for key in (BINNED, STRICT):
-        sub = good[good["key"] == key]
-        if sub.empty:
-            print(f"  {key:26s} no valid estimator")
-            continue
-        c = float(sub["ceiling_r2"].max())
-        kind = ("a ceiling" if key == BINNED else "a LOWER BOUND on the ceiling")
-        print(f"  {key:26s} {kind}: adjacent-pair R2 <= {c:+.3f}")
-    print("\n  Why the two differ in kind: under the binned key, measurements\n"
-          "  taken at different exact conditions are averaged into one cell and\n"
-          "  share one feature vector, so their disagreement is irreducible.\n"
-          "  Under the strict key they are separate blocks with different\n"
-          "  feature vectors, so part of that same disagreement is condition\n"
-          "  dependence a model can in principle predict -- which makes the\n"
-          "  strict figure a floor, not a cap.")
+  E2 measured how much the pair difference moves across distinct exact condition
+  sets inside one binned block, and treated that as irreducible.  It is not.  The
+  model holds 64 exact numeric cond__ columns and 46% of binned blocks vary
+  internally, so it can tell those rows apart -- and adjacent_pair_arrays averages
+  y and p on the SAME grouping, so per-condition variation never reaches the
+  metric at all.
 
-    best = 0.2672
-    sub = good[good["key"] == BINNED]
-    if not sub.empty:
-        c = float(sub["ceiling_r2"].max())
-        print(f"\n  The best published model scores {best:+.4f} on the binned "
-              f"key,\n  which is {100 * best / c:.0f}% of the estimated "
-              f"ceiling of {c:+.3f}.")
-        print(f"  Headroom remaining: {c - best:+.3f} R2.")
+  The contradiction that settles it: inside the 203-pair subset E2 was measured
+  on, the implied ceiling is +0.173, BELOW the best model's +0.267.  Nothing
+  exceeds a real ceiling.  The published +0.679 divided that subset's noise
+  (0.0235) by the FULL 905-pair set's variance (0.0733) -- populations 2.6x apart
+  in spread.
+
+  E1 and E3 fail differently: a cell acquires duplicate rows non-randomly, and the
+  DOI join shows 94% of the disagreement is WITHIN one paper, not between papers,
+  so it is not source conflict either.  75% of those cells have nothing recorded
+  varying at all.
+
+  => The ceiling is NOT IDENTIFIABLE from this dataset.  That is the result.
+     Withdrawn: "+0.679", "39% of attainable", "+0.412 headroom".
+     See ceiling_v2.py for the DOI-joined attempt and what it could and could not
+     establish.""")
     print(f"\n[ceiling] wrote {OUT}")
     return 0
 

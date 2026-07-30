@@ -264,3 +264,42 @@ and a ceiling of +0.679 that nothing here reaches half of.
 
 **Five of the nine results in this document are falsifications of things believed
 at the start of the day**, four of them mine.
+
+---
+
+## Erratum, 30 July 2026 — the ceiling is WITHDRAWN
+
+**Every statement in this document about a ceiling, about "39 % of attainable", or
+about "+0.412 of headroom" is withdrawn.** See
+[`AUDIT_2026-07-30.md`](AUDIT_2026-07-30.md).
+
+The estimator measured how much the adjacent-pair difference moves across distinct
+*exact* condition sets inside one binned block, and treated that as irreducible. It
+is not: the model holds **64 exact numeric `cond__` columns** and 46 % of binned
+blocks vary internally, and `adjacent_pair_arrays` averages **y and p on the same
+grouping**, so per-condition variation never reaches the metric at all.
+
+The contradiction that settles it: inside the 203-pair subset the estimate came
+from, the implied ceiling is **+0.173** — *below* the best model's +0.267. The
++0.679 divided that subset's noise variance (0.0235) by the **full** 905-pair set's
+variance (0.0733), populations 2.6× apart in spread.
+
+`ceiling_v2.py` rebuilt it properly, joining the **DOI** column that
+`raw_data/*_SAFE.csv` carries and the ML table dropped (100 % join, 110 DOIs). The
+verdict is **not identifiable**:
+
+- **94 %** of the disagreement between rows with identical model features is
+  *within a single paper*, not between papers — so it is not source conflict, which
+  was the assumption the first attempt rested on.
+- A quarter of it is a recorded covariate the pipeline drops, resolving to one
+  cause: `cond__diluent__other` collapses **42 distinct solvents** over 5.5 % of
+  rows.
+- Three quarters has **nothing recorded varying at all**, median SD 0.231 log
+  units — which propagated to two single-measurement cells exceeds the entire
+  observed spread of the target.
+
+**The four closure results are unaffected** — recombination, energetics, conformers
+and the objective each failed on its own terms. What is withdrawn is any claim
+about *how much room* they were failing to reach, and consequently the framing of
+them as "routes to the headroom". Optimisation targets must not be expressed as a
+fraction of an attainable maximum, because that maximum is unknown.

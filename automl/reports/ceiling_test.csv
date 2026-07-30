@@ -1,7 +1,7 @@
-key,estimator,note,n_pairs_used,n_pairs_total,var_observed,var_noise,ceiling_r2,valid
-composition_key,E1 row-level split-half,optimistic: pure measurement noise only,105,905,0.07327534718733489,0.15116090400947102,-1.062916244163468,False
-composition_key,E2 condition-level,right for the binned key; pessimistic for strict,203,905,0.07327534718733489,0.023487788254457697,0.6794585197336684,True
-composition_key,E3 propagated,lower bound: replicated cells are not representative,905,905,0.07327534718733489,0.3925733306277126,-4.357508980804475,False
-strict_composition_key,E1 row-level split-half,optimistic: pure measurement noise only,105,1417,0.0499914045389038,0.15116090400947102,-2.0237378886171546,False
-strict_composition_key,E2 condition-level,right for the binned key; pessimistic for strict,203,1417,0.0499914045389038,0.023487788254457697,0.5301634656777993,True
-strict_composition_key,E3 propagated,lower bound: replicated cells are not representative,1417,1417,0.0499914045389038,0.48130413019980633,-8.627737700893176,False
+key,estimator,note,n_pairs_used,n_pairs_total,var_observed,var_noise,ceiling_r2,valid,withdrawn_reason
+composition_key,E1 row-level split-half,optimistic: pure measurement noise only,105,905,0.07327534718733489,0.1513891718485933,-1.0660314506808617,False,non-representative subset: cells acquire duplicates non-randomly
+composition_key,E2 condition-level,right for the binned key; pessimistic for strict,203,905,0.07327534718733489,0.023487788254457697,0.6794585197336684,False,"measures condition variation, which the model predicts and the metric averages out"
+composition_key,E3 propagated,lower bound: replicated cells are not representative,905,905,0.07327534718733489,0.39316615498574764,-4.365599346538525,False,non-representative subset: cells acquire duplicates non-randomly
+strict_composition_key,E1 row-level split-half,optimistic: pure measurement noise only,105,1417,0.0499914045389038,0.1513891718485933,-2.0283040303614746,False,non-representative subset: cells acquire duplicates non-randomly
+strict_composition_key,E2 condition-level,right for the binned key; pessimistic for strict,203,1417,0.0499914045389038,0.023487788254457697,0.5301634656777993,False,"measures condition variation, which the model predicts and the metric averages out"
+strict_composition_key,E3 propagated,lower bound: replicated cells are not representative,1417,1417,0.0499914045389038,0.48203094679620906,-8.642276532180404,False,non-representative subset: cells acquire duplicates non-randomly
