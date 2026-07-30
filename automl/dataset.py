@@ -536,6 +536,13 @@ BLOCK_PRESETS: dict[str, tuple[str, ...]] = {
     "baseline_2d_energy":     BASE_2D + ("gE",),
     "baseline_2d_energy_abs": BASE_2D + ("gE_abs",),
     "baseline_2d_energy_rel": BASE_2D + ("gE_rel",),
+    # --- angular / polyhedral shape into the NEURAL encoder (SWEEP2 axis A1) --
+    # 662 of 662 encoder runs to date used baseline_2d, so no angle, continuous
+    # shape measure, %V_bur or bite angle has ever reached a neural encoder --
+    # these blocks have only ever been tested as tree features, where they lose.
+    # 119 columns: donor-M-donor angles (p3d_poly), CShM against ideal polyhedra
+    # (g3), %V_bur and solid-angle fraction (g4), bite angles (g8).
+    "baseline_2d_shape": BASE_2D + ("p3d_poly", "g3", "g4", "g8"),
     "baseline_no_ecfp": ("rdkit", "metal", "cond", "plan"),
     "baseline_2d_qc":   BASE_2D + ("qc",),
     # --- shipped 3D blocks --------------------------------------------------

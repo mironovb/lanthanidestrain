@@ -203,7 +203,9 @@ class SimplicialNet(nn.Module):
                  tabular_dim: int = 0, head_hidden: int = 256,
                  n_z: int = 32, node_feat_dim: int = 5,
                  radial_bins: int = 32, radial_max: float = 8.0,
-                 head_embed_mult: int = 1, use_triangles: bool = True):
+                 head_embed_mult: int = 1, use_triangles: bool = True,
+                 angular_readout: bool = False, attn_pool: bool = False,
+                 angular_bins: int = 8):
         super().__init__()
         self.dim = dim
         # ``use_triangles=False`` drops the 2-simplex level, leaving message
@@ -243,9 +245,33 @@ class SimplicialNet(nn.Module):
         self.radial_width = float(radial_max / max(radial_bins - 1, 1))
         self.radial_proj = _mlp(2 * radial_bins, dim, dim, dropout)
 
+        # SWEEP2 axis A3.  The donor-M-donor angle distribution IS the
+        # coordination polyhedron, and it is what the CShM and bite-angle
+        # descriptors summarise -- descriptors that have only ever been tested as
+        # tree features.  Every encoder in this study to date has been blind to
+        # it: node inputs are scalars, edge inputs are distances, and the
+        # triangle level carries one filtration radius.  A cosine is invariant to
+        # rotation, translation and reflection, so admitting it costs none of the
+        # invariance that refusing coordinates was protecting.
+        self.angular_readout = bool(angular_readout)
+        if self.angular_readout:
+            self.angular_proj = _mlp(angular_bins, dim, dim, dropout)
+
+        # SWEEP2 axis C2.  Pooling has only ever been mean/max plus the fixed
+        # metal-centred terms; no attention of any kind exists in this repo.  The
+        # metal embedding is the natural query -- selectivity is decided at the
+        # cation, and a mean over ~250 atoms dilutes it.
+        self.attn_pool = bool(attn_pool)
+        if self.attn_pool:
+            self.attn_q = nn.Linear(dim, dim)
+            self.attn_k = nn.Linear(dim, dim)
+            self.attn_v = nn.Linear(dim, dim)
+
         # global mean+max over 3 levels (6) + metal node (1) + metal-incident
-        # edge mean (1) + radial shell (1) = 9 blocks of `dim`
-        self.embed_dim = 9 * dim
+        # edge mean (1) + radial shell (1) = 9 blocks of `dim`, plus one each for
+        # the angular readout and the attention pool when enabled.
+        self.embed_dim = (9 + int(self.angular_readout)
+                          + int(self.attn_pool)) * dim
         self.tabular_dim = tabular_dim
         # ``head_embed_mult`` widens only the *head*, not ``encode``.  The
         # block-centred arm concatenates each embedding with its deviation from
@@ -308,6 +334,26 @@ class SimplicialNet(nn.Module):
         all_hist = scatter_sum(rbf, nb, B)
         don_hist = scatter_sum(rbf * is_donor.unsqueeze(-1), nb, B)
         parts.append(self.radial_proj(torch.cat([all_hist, don_hist], dim=-1)))
+
+        if self.angular_readout:
+            ma = batch.get("metal_ang")
+            if ma is None:
+                raise ValueError("angular_readout=True but the batch carries no "
+                                 "'metal_ang'; build complexes with angular=True")
+            parts.append(self.angular_proj(ma.to(hn.dtype)))
+
+        if self.attn_pool:
+            # One attention head with the metal node as the query, over all node
+            # embeddings, computed per complex via the node->complex map.
+            q = self.attn_q(hn[midx])                      # (B, dim)
+            k = self.attn_k(hn)                            # (N, dim)
+            v = self.attn_v(hn)                            # (N, dim)
+            logits = (k * q[nb]).sum(-1) / math.sqrt(self.dim)   # (N,)
+            m = scatter_max(logits.unsqueeze(-1), nb, B).squeeze(-1)
+            w = torch.exp(logits - m[nb])
+            denom = scatter_sum(w.unsqueeze(-1), nb, B).clamp(min=1e-8)
+            parts.append(scatter_sum(w.unsqueeze(-1) * v, nb, B) / denom)
+
         return torch.cat(parts, dim=-1)
 
     def forward(self, batch: dict[str, Any],

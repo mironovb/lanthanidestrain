@@ -1,0 +1,288 @@
+#!/usr/bin/env python3
+"""Angular features must keep every invariance the encoders already guarantee.
+
+`snn.py` and `dist_gnn.py` both achieve exact invariance by *refusing to admit a
+coordinate*: node inputs are scalars, edge inputs are distances.  That also threw
+away every angle, which is why 662 of 662 encoder runs were blind to the
+coordination polyhedron while the CShM / bite-angle / %V_bur descriptors sat in
+the tabular blocks losing to trees.
+
+Admitting **cosines** costs none of that invariance -- a cosine of an angle is
+unchanged by rotation, translation and reflection -- but "costs none" is a claim,
+so it is tested here at the same standard `test_encoders.py` holds the published
+encoders to.
+
+Also pins the property that makes the whole sweep safe: with the new flags off,
+every tensor is byte-identical to the published pipeline.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+import torch
+
+from automl.topo.simplicial_data import (N_ANGULAR_BINS, _cos_histogram,
+                                         metal_angular_histogram,
+                                         node_angular_features)
+
+
+def _cloud(n=24, seed=0):
+    rng = np.random.default_rng(seed)
+    coords = rng.normal(size=(n, 3)) * 2.0
+    # a connected-ish edge set
+    ii, jj = np.triu_indices(n, k=1)
+    d = np.linalg.norm(coords[ii] - coords[jj], axis=1)
+    keep = d < 3.5
+    edge_index = np.vstack([ii[keep], jj[keep]])
+    donor = np.zeros(n, dtype=np.int8)
+    donor[rng.choice(n, 8, replace=False)] = 1
+    return coords, edge_index, donor
+
+
+def _rotation(seed=1):
+    rng = np.random.default_rng(seed)
+    q, _ = np.linalg.qr(rng.normal(size=(3, 3)))
+    if np.linalg.det(q) < 0:          # keep it a proper rotation
+        q[:, 0] *= -1
+    return q
+
+
+# ---------------------------------------------------------------------------
+def test_cos_histogram_is_a_distribution():
+    h = _cos_histogram(np.array([-1.0, 0.0, 0.5, 1.0]))
+    assert h.shape == (N_ANGULAR_BINS,)
+    assert h.sum() == pytest.approx(1.0, abs=1e-5)
+    assert (h >= 0).all()
+
+
+def test_cos_histogram_empty_is_zero_not_nan():
+    """A node with fewer than two neighbours has no angle, and must not be NaN."""
+    h = _cos_histogram(np.zeros(0))
+    assert h.shape == (N_ANGULAR_BINS,) and np.isfinite(h).all() and h.sum() == 0
+
+
+@pytest.mark.parametrize("fn", ["node", "metal"])
+def test_rotation_invariant(fn):
+    coords, ei, donor = _cloud()
+    R = _rotation()
+    if fn == "node":
+        a = node_angular_features(coords, ei, len(coords))
+        b = node_angular_features(coords @ R.T, ei, len(coords))
+    else:
+        a = metal_angular_histogram(coords, donor, 0)
+        b = metal_angular_histogram(coords @ R.T, donor, 0)
+    np.testing.assert_allclose(a, b, rtol=1e-4, atol=1e-5)
+
+
+@pytest.mark.parametrize("fn", ["node", "metal"])
+def test_translation_invariant(fn):
+    coords, ei, donor = _cloud()
+    t = np.array([3.7, -1.2, 8.0])
+    if fn == "node":
+        a = node_angular_features(coords, ei, len(coords))
+        b = node_angular_features(coords + t, ei, len(coords))
+    else:
+        a = metal_angular_histogram(coords, donor, 0)
+        b = metal_angular_histogram(coords + t, donor, 0)
+    np.testing.assert_allclose(a, b, rtol=1e-4, atol=1e-5)
+
+
+@pytest.mark.parametrize("fn", ["node", "metal"])
+def test_reflection_invariant(fn):
+    """The published encoders are reflection invariant; cosines keep that.
+
+    A *cosine* cannot distinguish a structure from its mirror image, unlike a
+    signed dihedral.  That is a real limitation -- chirality is invisible -- and
+    it is asserted rather than assumed so nobody later reads chirality into a
+    result these features cannot express.
+    """
+    coords, ei, donor = _cloud()
+    M = np.diag([1.0, 1.0, -1.0])
+    if fn == "node":
+        a = node_angular_features(coords, ei, len(coords))
+        b = node_angular_features(coords @ M, ei, len(coords))
+    else:
+        a = metal_angular_histogram(coords, donor, 0)
+        b = metal_angular_histogram(coords @ M, donor, 0)
+    np.testing.assert_allclose(a, b, rtol=1e-4, atol=1e-5)
+
+
+def test_node_angular_is_permutation_equivariant():
+    """Relabelling atoms must permute the rows, not change them."""
+    coords, ei, _ = _cloud()
+    n = len(coords)
+    perm = np.random.default_rng(4).permutation(n)
+    inv = np.argsort(perm)
+    a = node_angular_features(coords, ei, n)
+    b = node_angular_features(coords[perm], inv[ei], n)
+    np.testing.assert_allclose(a, b[inv], rtol=1e-4, atol=1e-5)
+
+
+def test_angular_features_actually_see_geometry():
+    """Guard against a descriptor that is constant and therefore useless."""
+    c1, ei, donor = _cloud(seed=0)
+    c2, _, _ = _cloud(seed=9)
+    assert not np.allclose(metal_angular_histogram(c1, donor, 0),
+                           metal_angular_histogram(c2, donor, 0))
+
+
+def test_metal_histogram_degenerate_cases():
+    coords, _, donor = _cloud()
+    none = np.zeros(len(coords), dtype=np.int8)
+    h = metal_angular_histogram(coords, none, 0)
+    assert h.shape == (N_ANGULAR_BINS,) and np.isfinite(h).all() and h.sum() == 0
+
+
+# ---------------------------------------------------------------------------
+def test_encoder_defaults_are_unchanged_by_the_new_flags():
+    """With every new flag off, the encoder is the published one."""
+    from automl.topo.snn import SimplicialNet
+    torch.manual_seed(0)
+    a = SimplicialNet(dim=16, layers=2, dropout=0.0, tabular_dim=0)
+    torch.manual_seed(0)
+    b = SimplicialNet(dim=16, layers=2, dropout=0.0, tabular_dim=0,
+                      angular_readout=False, attn_pool=False,
+                      radial_bins=32, radial_max=8.0)
+    assert a.embed_dim == b.embed_dim == 9 * 16
+    for (n1, p1), (n2, p2) in zip(a.named_parameters(), b.named_parameters()):
+        assert n1 == n2 and torch.equal(p1, p2)
+
+
+@pytest.mark.parametrize("kw,expect_blocks", [
+    ({}, 9),
+    ({"angular_readout": True}, 10),
+    ({"attn_pool": True}, 10),
+    ({"angular_readout": True, "attn_pool": True}, 11),
+])
+def test_embedding_width_tracks_the_enabled_blocks(kw, expect_blocks):
+    from automl.topo.snn import SimplicialNet
+    dim = 16
+    m = SimplicialNet(dim=dim, layers=2, dropout=0.0, tabular_dim=0,
+                      node_feat_dim=5 + (N_ANGULAR_BINS
+                                         if kw.get("angular_readout") else 0),
+                      **kw)
+    assert m.embed_dim == expect_blocks * dim
+
+
+def test_angular_readout_without_the_data_raises_rather_than_guesses():
+    """A missing 'metal_ang' must fail loudly, not silently pool zeros."""
+    from automl.topo.snn import SimplicialNet
+    g = torch.Generator().manual_seed(0)
+    n, e, t = 20, 40, 10
+    batch = {
+        "z_idx": torch.randint(0, 27, (n,), generator=g),
+        "node_feat": torch.randn(n, 5 + N_ANGULAR_BINS, generator=g),
+        "edge_filt": torch.rand(e, 1, generator=g),
+        "tri_filt": torch.rand(t, 1, generator=g),
+        "edge_index": torch.randint(0, n, (2, e), generator=g),
+        "tri_edges": torch.randint(0, e, (3, t), generator=g),
+        "node_batch": torch.zeros(n, dtype=torch.long),
+        "edge_batch": torch.zeros(e, dtype=torch.long),
+        "tri_batch": torch.zeros(t, dtype=torch.long),
+        "metal_index": torch.tensor([0]), "n_complexes": 1,
+    }
+    m = SimplicialNet(dim=16, layers=2, dropout=0.0, tabular_dim=0,
+                      node_feat_dim=5 + N_ANGULAR_BINS, angular_readout=True)
+    m.eval()
+    with pytest.raises(ValueError, match="metal_ang"):
+        m.encode(batch)
+
+
+def test_attention_pool_is_permutation_invariant():
+    from automl.topo.snn import SimplicialNet
+    g = torch.Generator().manual_seed(2)
+    n, e, t = 30, 70, 20
+    ei = torch.randint(0, n, (2, e), generator=g)
+    batch = {
+        "z_idx": torch.randint(0, 27, (n,), generator=g),
+        "node_feat": torch.randn(n, 5, generator=g),
+        "edge_filt": torch.rand(e, 1, generator=g),
+        "tri_filt": torch.rand(t, 1, generator=g),
+        "edge_index": ei,
+        "tri_edges": torch.randint(0, e, (3, t), generator=g),
+        "node_batch": torch.zeros(n, dtype=torch.long),
+        "edge_batch": torch.zeros(e, dtype=torch.long),
+        "tri_batch": torch.zeros(t, dtype=torch.long),
+        "metal_index": torch.tensor([0]), "n_complexes": 1,
+    }
+    torch.manual_seed(0)
+    m = SimplicialNet(dim=16, layers=2, dropout=0.0, tabular_dim=0,
+                      attn_pool=True)
+    m.eval()
+    perm = torch.randperm(n, generator=torch.Generator().manual_seed(5))
+    inv = torch.argsort(perm)
+    p = dict(batch)
+    p["z_idx"] = batch["z_idx"][perm]
+    p["node_feat"] = batch["node_feat"][perm]
+    p["edge_index"] = inv[ei]
+    p["metal_index"] = inv[batch["metal_index"]]
+    with torch.no_grad():
+        torch.testing.assert_close(m.encode(p), m.encode(batch),
+                                   rtol=1e-4, atol=1e-4)
+
+
+# ---------------------------------------------------------------------------
+# Auxiliary targets (SWEEP2 axis B).  No multi-task setup has ever been run in
+# this study; these pin the contract the head depends on.
+def _aux_frame():
+    import pandas as pd
+    rng = np.random.default_rng(0)
+    n = 200
+    d = pd.DataFrame({
+        "g3__polyhedron__cshm_SAPR": rng.normal(2, 1, n),
+        "g3__polyhedron__cshm_TDD": rng.normal(3, 1, n),
+        "gE__abs__e_int_water_ev": rng.normal(-55, 1, n),
+        "gE__abs__dg_transfer_ev": rng.normal(-0.4, 0.3, n),
+        "gE__abs__q_metal_water": rng.normal(2.1, 0.1, n),
+        "gE__abs__q_transfer_water": rng.normal(0.9, 0.1, n),
+    })
+    # CShM is defined per coordination number, so most reference columns are NaN
+    d.loc[:99, "g3__polyhedron__cshm_SAPR"] = np.nan
+    d.loc[100:, "g3__polyhedron__cshm_TDD"] = np.nan
+    d.loc[:9, "gE__abs__e_int_water_ev"] = np.nan       # energies missing for a few
+    return d
+
+
+@pytest.mark.parametrize("name", ["cshm", "eint", "qtransfer"])
+def test_aux_targets_are_standardised(name):
+    from automl.topo.train import aux_target_columns
+    y = aux_target_columns(_aux_frame(), name)
+    assert y.ndim == 2 and len(y) == 200 and y.dtype == np.float32
+    # Per COLUMN over that column's own non-NaN values -- not over the rows that
+    # are finite in every column, which is a different and smaller set whenever
+    # one column has missing values that another does not.
+    np.testing.assert_allclose(np.nanmean(y, axis=0), 0, atol=1e-5)
+    np.testing.assert_allclose(np.nanstd(y, axis=0), 1, atol=1e-5)
+
+
+def test_cshm_uses_the_nearest_polyhedron_not_a_fixed_one():
+    """Most CShM references are NaN per complex; the scalar is the minimum.
+
+    Taking a fixed reference column would drop half the dataset; taking the
+    nan-min is the distance to whichever ideal polyhedron the complex is closest
+    to, which is the chemically meaningful quantity.
+    """
+    from automl.topo.train import aux_target_columns
+    d = _aux_frame()
+    y = aux_target_columns(d, "cshm")
+    assert y.shape[1] == 1
+    assert np.isfinite(y).mean() > 0.95, "nan-min should cover nearly every row"
+
+
+def test_missing_aux_values_stay_nan_rather_than_being_imputed():
+    """Masked, not imputed.
+
+    Imputing a physical quantity to its mean would teach the encoder that every
+    complex missing it is average, which is worse than saying nothing.
+    """
+    from automl.topo.train import aux_target_columns
+    y = aux_target_columns(_aux_frame(), "eint")
+    assert not np.isfinite(y[:10]).all(), "rows with a missing energy must be NaN"
+    assert np.isfinite(y[10:]).all()
+
+
+def test_unknown_aux_target_is_rejected():
+    from automl.topo.train import aux_target_columns
+    with pytest.raises(ValueError):
+        aux_target_columns(_aux_frame(), "not_a_target")

@@ -131,6 +131,89 @@ def load_triangle_edges(z: Any, cache: Path = CACHE_PATH,
 
 
 # ---------------------------------------------------------------------------
+# Angular features (SWEEP2 axis A).
+#
+# Across all 662 encoder runs to date the networks saw distances and scalars and
+# nothing else: `snn.py` and `dist_gnn.py` both achieve invariance by refusing to
+# admit a coordinate.  That also throws away every angle, and a coordination
+# polyhedron is an angular object -- which is why the CShM, %V_bur and bite-angle
+# descriptors exist at all, and why they have only ever been tested as tree
+# features.
+#
+# Cosines of angles are invariant to rotation, translation AND reflection, so
+# admitting them costs none of the invariance the refusal was protecting.  The
+# coordinates are already loaded here (`Complex.coords`) and used only for
+# `dist_to_metal` before being discarded.
+N_ANGULAR_BINS = 8
+
+
+def _cos_histogram(cosines: np.ndarray, n_bins: int = N_ANGULAR_BINS
+                   ) -> np.ndarray:
+    """Soft histogram of cos(theta) over [-1, 1].
+
+    Gaussian-smoothed so a small change in geometry moves the descriptor
+    smoothly, the same reasoning as the radial shell histogram in ``snn.py``.
+    """
+    if cosines.size == 0:
+        return np.zeros(n_bins, dtype=np.float32)
+    centres = np.linspace(-1.0, 1.0, n_bins, dtype=np.float32)
+    width = 2.0 / max(n_bins - 1, 1)
+    h = np.exp(-((cosines[:, None] - centres[None, :]) ** 2)
+               / (2.0 * width ** 2))
+    out = h.sum(axis=0)
+    return (out / max(out.sum(), 1e-8)).astype(np.float32)
+
+
+def node_angular_features(coords: np.ndarray, edge_index: np.ndarray,
+                          n_nodes: int, n_bins: int = N_ANGULAR_BINS
+                          ) -> np.ndarray:
+    """Per-node soft histogram of the angles subtended at it by its neighbours.
+
+    For node i with neighbours j, k the angle is between (j - i) and (k - i).
+
+    **Every** pair is used.  A first version capped the count at 64 randomly
+    sampled pairs to keep the cost linear in degree, and that silently broke
+    permutation equivariance: relabelling the atoms changes the neighbour
+    ordering, so a different subset was sampled and 12.5% of the rows moved.
+    The test caught it.  Exactness is cheap here anyway -- mean degree is ~21, so
+    ~220 pairs per node and ~50k per complex, computed once and cached.
+    """
+    out = np.zeros((n_nodes, n_bins), dtype=np.float32)
+    if edge_index.size == 0:
+        return out
+    nbrs: list[list[int]] = [[] for _ in range(n_nodes)]
+    for a, b in zip(edge_index[0], edge_index[1]):
+        nbrs[a].append(b)
+        nbrs[b].append(a)
+    for i, nb in enumerate(nbrs):
+        if len(nb) < 2:
+            continue
+        v = coords[nb] - coords[i]
+        v = v / np.maximum(np.linalg.norm(v, axis=1, keepdims=True), 1e-8)
+        ii, jj = np.triu_indices(len(nb), k=1)
+        out[i] = _cos_histogram(np.einsum("ij,ij->i", v[ii], v[jj]), n_bins)
+    return out
+
+
+def metal_angular_histogram(coords: np.ndarray, is_donor: np.ndarray,
+                            metal_idx: int, n_bins: int = N_ANGULAR_BINS
+                            ) -> np.ndarray:
+    """Donor-M-donor angle distribution: the coordination polyhedron itself.
+
+    This is the quantity the CShM and bite-angle descriptors summarise, given to
+    the encoder directly instead of through a tree.
+    """
+    d = np.flatnonzero(is_donor.astype(bool))
+    d = d[d != metal_idx]
+    if d.size < 2:
+        return np.zeros(n_bins, dtype=np.float32)
+    v = coords[d] - coords[metal_idx]
+    v = v / np.maximum(np.linalg.norm(v, axis=1, keepdims=True), 1e-8)
+    ii, jj = np.triu_indices(len(d), k=1)
+    return _cos_histogram(np.einsum("ij,ij->i", v[ii], v[jj]), n_bins)
+
+
+# ---------------------------------------------------------------------------
 @dataclass
 class Complex:
     """One simplicial complex, locally indexed from 0."""
@@ -146,6 +229,9 @@ class Complex:
     edge_filt: np.ndarray      # (E,)
     tri_edges: np.ndarray      # (3,T) local edge ids
     tri_filt: np.ndarray       # (T,)
+    # Angular features, filled only when the caller asks for them (SWEEP2 axis A).
+    node_ang: np.ndarray | None = None    # (N, N_ANGULAR_BINS)
+    metal_ang: np.ndarray | None = None   # (N_ANGULAR_BINS,)
 
     @property
     def n_nodes(self) -> int: return len(self.z_idx)
@@ -179,7 +265,7 @@ class SimplicialComplexes:
         return self._index.get(str(build_id))
 
     def get(self, k: int, filtration_max: float | None = None,
-            heavy_only: bool = False) -> Complex:
+            heavy_only: bool = False, angular: bool = False) -> Complex:
         z = self.z
         n0, n1 = int(self.node_ptr[k]), int(self.node_ptr[k + 1])
         e0, e1 = int(self.edge_ptr[k]), int(self.edge_ptr[k + 1])
@@ -238,13 +324,22 @@ class SimplicialComplexes:
         mi = int(np.argmax(metal)) if metal.any() else 0
         d2m = np.linalg.norm(coords - coords[mi], axis=1).astype(np.float32)
 
+        # Angular features are built here rather than in ``collate`` so the
+        # per-complex cache in ``train.ComplexCache`` pays for them once instead
+        # of once per batch.
+        node_ang = metal_ang = None
+        if angular:
+            node_ang = node_angular_features(coords, ei, len(zi))
+            metal_ang = metal_angular_histogram(coords, donor, mi)
+
         return Complex(build_id=self.build_ids[k], z_idx=z_index(zi),
                        coords=coords, charge=q, charge_missing=q_missing,
                        is_metal=metal, is_donor=donor,
                        dist_to_metal=d2m, edge_index=ei.astype(np.int64),
                        edge_filt=ef.astype(np.float32),
                        tri_edges=te.astype(np.int64),
-                       tri_filt=tf.astype(np.float32))
+                       tri_filt=tf.astype(np.float32),
+                       node_ang=node_ang, metal_ang=metal_ang)
 
 
 # ---------------------------------------------------------------------------
@@ -261,9 +356,14 @@ def collate(complexes: list[Complex]) -> dict[str, Any]:
     nb, eb, tb, metal_rows = [], [], [], []
     n_off = e_off = 0
     for i, c in enumerate(complexes):
-        node_feats.append(np.column_stack([
-            c.charge, c.charge_missing, c.is_metal, c.is_donor,
-            c.dist_to_metal]).astype(np.float32))
+        base = [c.charge, c.charge_missing, c.is_metal, c.is_donor,
+                c.dist_to_metal]
+        # The angular columns are appended AFTER the five published ones, so
+        # node_feat[:, :5] is unchanged and every existing arm is unaffected.
+        # snn.py reads dist_to_metal at index 4 and is_donor at index 3.
+        if c.node_ang is not None:
+            base.append(c.node_ang)
+        node_feats.append(np.column_stack(base).astype(np.float32))
         eidx.append(c.edge_index + n_off)
         tedg.append(c.tri_edges + e_off)
         ef.append(c.edge_filt); tf.append(c.tri_filt)
@@ -287,6 +387,12 @@ def collate(complexes: list[Complex]) -> dict[str, Any]:
         "tri_batch":  t(np.concatenate(tb)),
         "metal_index": t(np.asarray(metal_rows, dtype=np.int64)),
         "n_complexes": len(complexes),
+        # Donor-M-donor angle distribution per complex -- the coordination
+        # polyhedron itself, which is what CShM and bite angles summarise.
+        # Absent unless the caller asked for angular features, so the batch dict
+        # is byte-identical to the published one by default.
+        **({"metal_ang": t(np.stack([c.metal_ang for c in complexes]))}
+           if complexes and complexes[0].metal_ang is not None else {}),
     }
 
 

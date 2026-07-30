@@ -87,6 +87,47 @@ def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
     return df, X, cols
 
 
+def aux_target_columns(df: pd.DataFrame, name: str) -> np.ndarray:
+    """Per-row auxiliary target, standardised, with NaN where unavailable.
+
+    SWEEP2 axis B.  No multi-task setup has ever been run in this study: xTB
+    charge, E_int, coordination number and CShM are all *inputs* somewhere and
+    none has ever been a training target.  That matters most for the energies --
+    as inputs they destroyed the adjacent-pair metric by substituting for the
+    exact ionic radius (ENERGY_RESULTS.md), but as targets they cannot enter the
+    prediction path at all and can only shape the encoder.
+
+    Rows whose target is missing are returned as NaN and masked out of the loss
+    rather than imputed, because imputing a physical quantity to its mean would
+    teach the encoder that every such complex is average.
+    """
+    if name == "cshm":
+        # Continuous shape measures are defined per coordination number, so most
+        # reference columns are NaN for any one complex.  The chemically
+        # meaningful scalar is the distance to the NEAREST ideal polyhedron.
+        cols = [c for c in df.columns if c.startswith("g3__polyhedron__cshm")]
+        if not cols:
+            raise SystemExit("no g3 CShM columns; rebuild the matrix cache")
+        y = df[cols].min(axis=1, skipna=True).to_numpy(dtype=np.float64)
+    elif name == "eint":
+        cols = ["gE__abs__e_int_water_ev", "gE__abs__dg_transfer_ev"]
+    elif name == "qtransfer":
+        cols = ["gE__abs__q_metal_water", "gE__abs__q_transfer_water"]
+    else:
+        raise ValueError(name)
+    if name != "cshm":
+        missing = [c for c in cols if c not in df.columns]
+        if missing:
+            raise SystemExit(f"aux target {name!r} needs {missing}; run "
+                             f"automl.qc.energy_features and rebuild the cache")
+        y = df[cols].to_numpy(dtype=np.float64)
+    y = y.reshape(len(df), -1)
+    mu = np.nanmean(y, axis=0)
+    sd = np.nanstd(y, axis=0)
+    sd[sd < 1e-8] = 1.0
+    return ((y - mu) / sd).astype(np.float32)
+
+
 def block_means(pred: torch.Tensor, tgt: torch.Tensor, bidx: torch.Tensor,
                 n_blocks: int) -> tuple[torch.Tensor, torch.Tensor]:
     """Per-block means of the prediction and the target.
@@ -149,9 +190,12 @@ class ComplexCache:
     """Pre-loads and caches collated complexes on the target device."""
 
     def __init__(self, S: SimplicialComplexes, filtration_max, heavy_only,
-                 device):
+                 device, angular: bool = False):
         self.S, self.device = S, device
         self.filtration_max, self.heavy_only = filtration_max, heavy_only
+        # SWEEP2 axis A: build the angular features once per complex here, where
+        # the cache pays for them once instead of once per batch.
+        self.angular = bool(angular)
         self._c: dict[Any, Any] = {}
 
     def get(self, k: int, conformer: int = 0):
@@ -163,7 +207,8 @@ class ComplexCache:
                                           heavy_only=self.heavy_only)
             else:
                 self._c[key] = self.S.get(k, filtration_max=self.filtration_max,
-                                          heavy_only=self.heavy_only)
+                                          heavy_only=self.heavy_only,
+                                          angular=self.angular)
         return self._c[key]
 
     def n_conformers(self, k: int) -> int:
@@ -287,11 +332,19 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                             head_embed_mult=2 if cfg.get("block_centre") else 1
                             ).to(device)
     else:
+        from automl.topo.simplicial_data import N_ANGULAR_BINS
         model = SimplicialNet(dim=cfg["dim"], layers=cfg["layers"],
                               dropout=cfg["dropout"], tabular_dim=X.shape[1],
                               head_hidden=cfg["head_hidden"],
                               head_embed_mult=2 if cfg.get("block_centre") else 1,
-                              use_triangles=not cfg.get("no_triangles", False)
+                              use_triangles=not cfg.get("no_triangles", False),
+                              node_feat_dim=5 + (N_ANGULAR_BINS
+                                                 if cfg.get("node_angular") else 0),
+                              angular_readout=bool(cfg.get("angular_readout")),
+                              attn_pool=bool(cfg.get("attn_pool")),
+                              angular_bins=N_ANGULAR_BINS,
+                              radial_bins=int(cfg.get("radial_bins") or 32),
+                              radial_max=float(cfg.get("radial_max") or 8.0),
                               ).to(device)
     if pretrained_state is not None:
         # Encoder weights only.  Pretraining has no tabular block, so its head
@@ -306,7 +359,22 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
         if bad:
             raise RuntimeError(f"pretrained weights did not map onto the "
                                f"encoder: unexpected {bad[:5]}")
-    opt = torch.optim.AdamW(model.parameters(), lr=cfg["lr"],
+    # SWEEP2 axis B: a second head on the encoder embedding, trained jointly.
+    aux_name = cfg.get("aux_target")
+    aux_w = float(cfg.get("aux_weight") or 0.0)
+    aux_head = aux_y = None
+    if aux_name:
+        aux_y = aux_target_columns(df, aux_name)          # (rows, k), NaN allowed
+        # ``_centre`` concatenates the block-centred deviation when
+        # --block-centre is on, doubling the width the head sees.  Size from the
+        # multiplier rather than from embed_dim, or the two would silently
+        # mismatch in exactly that combination.
+        aux_in = model.embed_dim * getattr(model, "head_embed_mult", 1)
+        aux_head = nn.Linear(aux_in, aux_y.shape[1]).to(device)
+
+    opt = torch.optim.AdamW(list(model.parameters())
+                            + (list(aux_head.parameters()) if aux_head else []),
+                            lr=cfg["lr"],
                             weight_decay=cfg["weight_decay"])
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=cfg["epochs"])
 
@@ -536,6 +604,19 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                 # hand the biggest blocks the loss all over again.
                 loss = level_w * nn.functional.huber_loss(pm, tm, delta=1.0)
 
+            if aux_head is not None:
+                # Masked, not imputed: a complex whose CShM or E_int is missing
+                # contributes nothing rather than being taught that it is
+                # average.  The head reads the encoder embedding only -- the
+                # auxiliary quantity never reaches the log D prediction path,
+                # which is the whole point of using it as a target rather than
+                # as a feature.
+                at = torch.as_tensor(aux_y[rows], device=device)
+                ok = torch.isfinite(at).all(dim=-1)
+                if bool(ok.any()):
+                    ap_ = aux_head(e[ok])
+                    loss = loss + aux_w * nn.functional.mse_loss(ap_, at[ok])
+
             if pair_w > 0:
                 # All within-block pairs, weighted towards *adjacent* metals:
                 # neighbouring lanthanides are the hardest and the ones the
@@ -665,6 +746,36 @@ def main() -> int:
                          "term, e.g. --level-weight 0.2 --pair-loss-weight 2.0")
     ap.add_argument("--no-triangles", action="store_true",
                     help="drop the 2-simplex level from the SNN, leaving\n                          message passing over the GRAPH of the same complex.\n                          The other half of 'is it simplicial, or just 3D?'")
+    ap.add_argument("--node-angular", action="store_true",
+                    help="SWEEP2 A2: append a per-node soft histogram of the "
+                         "angles its neighbours subtend at it. No angular "
+                         "information has ever reached a neural encoder in this "
+                         "study (662/662 runs used baseline_2d and scalar node "
+                         "inputs); cosines are rotation/translation/reflection "
+                         "invariant so this costs no invariance")
+    ap.add_argument("--angular-readout", action="store_true",
+                    help="SWEEP2 A3: add a readout block from the donor-M-donor "
+                         "angle distribution -- the coordination polyhedron "
+                         "itself, which CShM and bite angles only summarise")
+    ap.add_argument("--attn-pool", action="store_true",
+                    help="SWEEP2 C2: attention pooling with the metal embedding "
+                         "as query. No attention of any kind exists in this repo")
+    ap.add_argument("--radial-bins", type=int, default=None,
+                    help="SWEEP2 C1: radial shell histogram resolution "
+                         "(hardcoded 32 in every run to date)")
+    ap.add_argument("--radial-max", type=float, default=None,
+                    help="SWEEP2 C1: radial shell histogram range in Angstrom "
+                         "(hardcoded 8.0 in every run to date)")
+    ap.add_argument("--aux-target", default=None,
+                    choices=("cshm", "eint", "qtransfer"),
+                    help="SWEEP2 axis B: train a SECOND head on a physical "
+                         "quantity alongside log D. Never attempted in this "
+                         "study. Reuses the energy campaign that failed as "
+                         "INPUTS -- as inputs they substituted for the exact "
+                         "ionic radius and destroyed selectivity; as targets "
+                         "they can only shape the representation")
+    ap.add_argument("--aux-weight", type=float, default=0.3,
+                    help="weight on the auxiliary loss")
     ap.add_argument("--block-key", default=None,
                     choices=("composition_key", "strict_composition_key"),
                     help="which blocking the contrast loss, the block-centred "
@@ -784,7 +895,9 @@ def main() -> int:
         # the row set is identical whichever is loaded.
         S = (ConformerComplexes(verbose=False) if args.conformers > 1
              else SimplicialComplexes(verbose=False))
-        cache = ComplexCache(S, args.filtration_max, args.heavy_only, device)
+        cache = ComplexCache(S, args.filtration_max, args.heavy_only, device,
+                             angular=bool(args.node_angular
+                                          or args.angular_readout))
         n_assets = len(S)
         if args.conformers > 1:
             tot = sum(S.n_conformers(k) for k in range(len(S)))
@@ -799,6 +912,13 @@ def main() -> int:
     cfg["level_weight"] = args.level_weight
     cfg["block_key"] = args.block_key
     cfg["no_triangles"] = args.no_triangles
+    cfg["node_angular"] = args.node_angular
+    cfg["angular_readout"] = args.angular_readout
+    cfg["attn_pool"] = args.attn_pool
+    cfg["radial_bins"] = args.radial_bins
+    cfg["radial_max"] = args.radial_max
+    cfg["aux_target"] = args.aux_target
+    cfg["aux_weight"] = args.aux_weight if args.aux_target else None
     cfg["n_conformers"] = args.conformers
     cfg["block_centre"] = args.block_centre
     if args.arch == "picnn":
@@ -924,7 +1044,13 @@ def main() -> int:
             + ("" if args.arch == "tabular"
                else f"_f{args.filtration_max}_h{int(args.heavy_only)}")
             # the ablation must not overwrite the full model's OOF file
-            + ("_notri" if args.no_triangles else ""))
+            + ("_notri" if args.no_triangles else "")
+            + ("_nang" if args.node_angular else "")
+            + ("_arod" if args.angular_readout else "")
+            + ("_attn" if args.attn_pool else "")
+            + (f"_aux{args.aux_target}" if args.aux_target else "")
+            + (f"_rb{args.radial_bins}" if args.radial_bins else "")
+            + (f"_rm{args.radial_max}" if args.radial_max else ""))
     pd.DataFrame({
         "safe_exp_id": df["safe_exp_id"].to_numpy(), "y": y, "oof": oof,
         "extractant_group": groups,
@@ -942,7 +1068,10 @@ def main() -> int:
                         if k in ("arch", "in_channels", "pi_images",
                                  "pair_loss_weight", "select_on",
                                  "level_weight", "block_key",
-                                 "no_triangles")},
+                                 "no_triangles", "node_angular",
+                                 "angular_readout", "attn_pool",
+                                 "radial_bins", "radial_max",
+                                 "aux_target", "aux_weight")},
            "n_rows": int(len(df)), "n_complexes": int(df["_cplx"].nunique()),
            "metrics": {k: (None if not np.isfinite(v) else float(v))
                        for k, v in metrics.items()},
