@@ -129,3 +129,26 @@ reports append-only.
 ---
 
 **Bogdan Mironov · 30 July 2026**
+
+---
+
+## Amendment 1 — the deterministic cost is 1.6×, measured, not 4× assumed
+
+**Written before the sweep was launched.**
+
+§3 assumed `--deterministic` would cost about 4× on G0, reasoning from the ~7×
+measured on S0 and the fact that G0 drops the 9.3 M triangles that dominate the
+float64 sorted scatter. Measured directly (job 5288140, 5 folds × 1 repeat):
+
+| | elapsed |
+|---|---|
+| G0, published path | **370 s** |
+| G0, `--deterministic` | **590 s** |
+
+**1.6×**, not 4×. The reasoning was right in direction and wrong in size, and the
+measurement is what the run is sized on.
+
+Consequence: 44 runs at 5 folds × 3 repeats ≈ 1,770 s each, ≈ **10.8 h** of wall
+clock at the two concurrent GPU jobs this account is capped to — inside the ~13 h
+the plan budgeted. **No cell is added or removed on the strength of the saving**;
+the design is what it was, it simply costs less than feared.
