@@ -215,3 +215,47 @@ change. 145 tests pass. The frozen tune/confirm split still hashes to
 to exactly **+0.2382**. Nothing in `data/` was written. Existing reports received
 appended errata rather than edits. Six pre-registrations plus two amendments were
 committed before their data existed.
+
+---
+
+## 9. The objective was not the constraint either — and my diagnosis pointed the wrong way
+
+**Added 29 July 2026, on completion of the 48-run sweep.**
+[`OBJECTIVE_RESULTS.md`](OBJECTIVE_RESULTS.md)
+
+§1 of `OBJECTIVE_PREREGISTRATION.md` measured that the published loss spends
+**68–91 % of its gradient** on the block mean the metric never reads. The
+arithmetic was right; the inference was wrong. The `level_weight` main effect is
+monotone in the **opposite** direction to the one predicted:
+
+| `level_weight` | mean tune adj R² (binned), 16 runs each | overall log D |
+|---|---|---|
+| 0.1 | +0.2286 | +0.289 |
+| 0.3 | +0.2351 | +0.335 |
+| **1.0** | **+0.2412** | **+0.385** |
+
+**More weight on the block mean is better.** The level term is not wasted
+gradient — it anchors the representation, and a network told only to get contrasts
+right places the blocks worse and learns a worse encoder for it.
+
+Training against the strict key is also worse (+0.2298 vs +0.2400), even after
+Amendment 1 restored the singleton blocks. So the strict key is a better *metric*
+and a worse *training signal*; those are separate questions and this separates
+them.
+
+Confirmatory, on the 78 confirm extractants: the decomposed arm **does not beat
+S0** (−0.0233 binned, −0.0170 strict). It does add to the no-topology stack, and
+under the strict key that survives 19-look Bonferroni — **+0.0150 [+0.0011,
++0.0289]**, the only strict-key contrast in this re-analysis that does. That is one
+look on 78 extractants and the direct OBJ-vs-S0 comparison is a null, so it is
+reported as narrow and in need of replication, not as a win.
+
+**This closes the fourth route to the headroom.** Recombination, features,
+geometries and the objective are all now measured and closed. The
+pre-registration said a negative here points at *the representation or the data*;
+`ENCODER_RESULTS.md` has since shown the representation family is broad and
+interchangeable, which leaves **the data** — 953 complexes, 905 adjacent pairs,
+and a ceiling of +0.679 that nothing here reaches half of.
+
+**Five of the nine results in this document are falsifications of things believed
+at the start of the day**, four of them mine.
