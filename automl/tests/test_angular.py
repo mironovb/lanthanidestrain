@@ -349,3 +349,27 @@ def test_the_two_angular_blocks_are_independently_selectable():
     # the five published columns survive unchanged under either switch
     np.testing.assert_array_equal(base["node_feat"].numpy(),
                                   node["node_feat"][:, :5].numpy())
+
+
+def test_the_standardise_fix_cannot_move_a_published_number():
+    """The published presets must contain no all-NaN column.
+
+    Today's `_standardise` fix changes behaviour ONLY where a column's nanmedian
+    is NaN, i.e. only where a column is entirely missing in the training fold.
+    If the published presets contain no such column, the fix is provably inert
+    there and no published result can shift -- which is the precondition that
+    lets it be applied to shared code mid-study rather than forked.
+
+    Verified directly at the time: old and new agreed bit-for-bit over all five
+    folds on both presets.  This pins the property the argument rests on, so a
+    future block added to BASE_2D that is sparse on the modelled rows fails here
+    loudly instead of silently changing a frozen number.
+    """
+    from automl.topo.train import build_row_table
+    for preset in ("baseline_2d", "baseline_2d_energy"):
+        _, X, _ = build_row_table(preset=preset, arch="snn")
+        empty = (~np.isfinite(X)).all(axis=0)
+        assert not empty.any(), (
+            f"{preset} now has {int(empty.sum())} all-NaN column(s); the "
+            f"_standardise fix is no longer inert for it, so published numbers "
+            f"from this preset must be re-verified before being quoted")
