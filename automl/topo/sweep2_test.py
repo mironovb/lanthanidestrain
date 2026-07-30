@@ -59,7 +59,7 @@ CELLS: dict[str, dict] = {
     "B1": {"aux_target": "cshm"},
     "B2": {"aux_target": "eint"},
     "B3": {"aux_target": "qtransfer"},
-    "C1": {"radial_bins": 64},
+    "C1": {"radial_bins": 64, "radial_max": 10.0},
     "C2": {"attn_pool": True},
     "C3": {"lr": 5e-4},
     "C4": {"weight_decay": 1e-3},
@@ -71,8 +71,8 @@ AXIS = {"A": "angular information", "B": "auxiliary target",
 # never be swept into the wrong cell.
 DEFAULTS = {"preset": "baseline_2d", "node_angular": False,
             "angular_readout": False, "attn_pool": False,
-            "aux_target": None, "radial_bins": None, "lr": 2e-3,
-            "weight_decay": 1e-4}
+            "aux_target": None, "radial_bins": None, "radial_max": None,
+            "lr": 2e-3, "weight_decay": 1e-4}
 
 
 def _matches(cfg: dict, want: dict) -> bool:

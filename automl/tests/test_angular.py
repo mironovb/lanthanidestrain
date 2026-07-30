@@ -373,3 +373,30 @@ def test_the_standardise_fix_cannot_move_a_published_number():
             f"{preset} now has {int(empty.sum())} all-NaN column(s); the "
             f"_standardise fix is no longer inert for it, so published numbers "
             f"from this preset must be re-verified before being quoted")
+
+
+def test_every_sweep_cell_is_identified_by_all_the_flags_it_sets():
+    """A cell's matcher must pin every flag the pre-registration gives it.
+
+    C1 is registered as `--radial-bins 64 --radial-max 10.0`, but the matcher
+    checked only radial_bins, so a run with 64 bins and the default 8.0 A cutoff
+    would have been swept into C1 and reported as the registered cell.  No such
+    run exists in this sweep, so nothing was misassigned -- but the matcher's
+    stated job is that a run can never land in the wrong cell, and an
+    under-specified identity does not do that job.
+    """
+    from automl.topo.sweep2_test import CELLS, DEFAULTS, _matches
+    base = {"arch": "snn", "no_triangles": True, "pair_loss_weight": 2.0,
+            "select_on": "adjacent", "level_weight": None}
+    for name, want in CELLS.items():
+        # every key a cell varies must be one the matcher actually inspects
+        for k in want:
+            assert k in DEFAULTS, (
+                f"cell {name} sets {k!r}, which _matches never checks")
+        # a config built from the cell's own flags must match that cell and,
+        # for non-anchor cells, must not match the anchor
+        cfg = dict(base, **want)
+        assert _matches(cfg, want), f"cell {name} does not match its own config"
+        if name != "A0":
+            assert not _matches(cfg, CELLS["A0"]), (
+                f"cell {name} is indistinguishable from the A0 anchor")
