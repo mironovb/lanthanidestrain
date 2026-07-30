@@ -153,6 +153,19 @@ def _standardise(train_X, *others):
     if train_X.shape[1] == 0:                      # topology-only ablation
         return [train_X] + [o for o in others]
     med = np.nanmedian(train_X, axis=0)
+    # A column that is all-NaN in the TRAINING FOLD has no median, and NaN
+    # imputed there propagates through the head into every prediction -- the
+    # whole run returns NaN.  It bit the shape preset immediately: four CShM
+    # reference columns (COC, OC, PBPY, TPR) are all-NaN across the geometry-OK
+    # rows because continuous shape measures are defined per coordination number
+    # and no modelled complex has those. build_matrix's own all-NaN filter runs
+    # on the full 5,992-row table and cannot see it.
+    #
+    # Imputing 0 makes such a column constant, which the sd guard below then
+    # turns into a no-op contribution -- the honest behaviour for a feature that
+    # carries nothing.  baseline_2d never hit this because ECFP, RDKit and cond
+    # are dense.
+    med = np.where(np.isfinite(med), med, 0.0)
     Xtr = np.where(np.isfinite(train_X), train_X, med)
     mu, sd = Xtr.mean(0), Xtr.std(0)
     sd[sd < 1e-8] = 1.0

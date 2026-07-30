@@ -286,3 +286,34 @@ def test_unknown_aux_target_is_rejected():
     from automl.topo.train import aux_target_columns
     with pytest.raises(ValueError):
         aux_target_columns(_aux_frame(), "not_a_target")
+
+
+def test_standardise_survives_an_all_nan_column():
+    """An all-NaN feature must become inert, not poison every prediction.
+
+    Found by smoking the shape preset before spending GPU on it: four CShM
+    reference columns are all-NaN across the geometry-OK rows, because shape
+    measures are defined per coordination number and no modelled complex has
+    those.  nanmedian returned NaN, the imputation wrote NaN everywhere, and the
+    run reported adjacent-pair R2 = nan.
+    """
+    from automl.topo.train import _standardise
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(50, 4)).astype(np.float64)
+    X[:, 2] = np.nan                      # entirely missing in this fold
+    X[:5, 1] = np.nan                     # partially missing
+    Xs, = _standardise(X)
+    assert np.isfinite(Xs).all(), "an all-NaN column must not produce NaNs"
+    assert np.allclose(Xs[:, 2], 0.0), "an all-NaN column must be inert"
+
+
+def test_standardise_applies_train_statistics_to_held_out_rows():
+    """The transform must be fitted on train only and merely applied elsewhere."""
+    from automl.topo.train import _standardise
+    rng = np.random.default_rng(1)
+    tr = rng.normal(size=(80, 3))
+    te = rng.normal(size=(20, 3)) + 5.0
+    a, b = _standardise(tr, te)
+    np.testing.assert_allclose(a.mean(0), 0, atol=1e-8)
+    np.testing.assert_allclose(a.std(0), 1, atol=1e-8)
+    assert abs(b.mean()) > 1.0, "held-out rows must NOT be re-centred on themselves"
