@@ -55,15 +55,26 @@ def _pairs(df: pd.DataFrame):
 
 
 def _stats(rows, X, idx, names, dy):
+    """Correlations of each feature's within-block difference with dy.
+
+    Three populations have to be kept apart, because conflating them
+    miscounts badly: columns dropped because some pair difference is NaN,
+    columns that are genuinely CONSTANT within every block, and columns that
+    vary.  Only the last can be correlated with dy at all.
+    """
     D = np.empty((len(rows), len(idx)))
     for n, (ra, rb, _) in enumerate(rows):
         D[n] = np.nanmean(X[np.ix_(ra, idx)], 0) - np.nanmean(X[np.ix_(rb, idx)], 0)
-    ok = np.isfinite(D).all(0)
-    D, nm = D[:, ok], [n for n, k in zip(names, ok) if k]
-    live = D.std(0) > 1e-9
-    D, nm = D[:, live], [n for n, k in zip(nm, live) if k]
-    r = np.array([np.corrcoef(D[:, j], dy)[0, 1] for j in range(D.shape[1])])
-    return r, nm, D.shape[1]
+    finite = np.isfinite(D)
+    n_nan = int((~finite.all(0)).sum())
+    # block-constant := the within-block adjacent difference is zero wherever
+    # it is defined.  NaN entries are not evidence of variation.
+    maxabs = np.where(finite, np.abs(D), 0.0).max(axis=0)
+    const = maxabs <= 1e-9
+    keep = (~const) & finite.all(0)
+    Dv, nm = D[:, keep], [n for n, k in zip(names, keep) if k]
+    r = np.array([np.corrcoef(Dv[:, j], dy)[0, 1] for j in range(Dv.shape[1])])
+    return r, nm, Dv.shape[1], int(const.sum()), n_nan
 
 
 def main() -> int:
@@ -90,10 +101,12 @@ def main() -> int:
 
     recs = []
     for label, X, idx, names in blocks:
-        r, nm, n_live = _stats(rows, X, idx, names, dy)
+        r, nm, n_live, n_const, n_nan = _stats(rows, X, idx, names, dy)
         a = np.abs(r)
         recs.append(dict(block=label, n_columns=len(names),
                          n_varying_within_block=n_live,
+                         n_block_constant=n_const,
+                         n_dropped_nan=n_nan,
                          frac_varying=n_live / len(names),
                          median_abs_corr_with_dy=float(np.median(a)),
                          p90_abs_corr=float(np.percentile(a, 90)),
@@ -117,11 +130,14 @@ def main() -> int:
     print(f"\nThat is within-block variation nearly orthogonal to what the metric "
           f"scores. It is consistent with A1's asymmetry -- overall R2 barely "
           f"moved while the adjacent-pair metric collapsed -- but it does NOT on "
-          f"its own establish that the head fits that variation. The falsifiable "
-          f"test is an A1 variant restricted to the "
-          f"{g['n_columns'] - g['n_varying_within_block']} block-constant "
-          f"columns, which cannot inject within-block noise: if the mechanism is "
-          f"right, that variant does not hurt.")
+          f"its own establish that the head fits that variation.")
+    print(f"\nOnly {g['n_block_constant']} of the {g['n_columns']} geometry columns "
+          f"are block-constant, so an ablation restricted to those is not "
+          f"available -- there is nothing there to train on. The falsifiable test "
+          f"is instead to replace every added column by its per-block MEAN: same "
+          f"columns, same between-block content, within-block variation removed by "
+          f"construction. If fitting within-block geometry noise is what breaks "
+          f"A1, the block-mean variant does not break it.")
     print(f"\nwrote {OUT}")
     return 0
 
