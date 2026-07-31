@@ -773,6 +773,13 @@ def main() -> int:
                          "study (662/662 runs used baseline_2d and scalar node "
                          "inputs); cosines are rotation/translation/reflection "
                          "invariant so this costs no invariance")
+    ap.add_argument("--extra-block-mean", action="store_true",
+                    help="POST-HOC (not pre-registered): replace every column "
+                         "the preset adds beyond baseline_2d by its mean within "
+                         "the composition block, removing within-block variation "
+                         "while keeping the columns and their between-block "
+                         "content. Tests whether A1's collapse is caused by the "
+                         "head fitting within-block geometry variation.")
     ap.add_argument("--angular-readout", action="store_true",
                     help="SWEEP2 A3: add a readout block from the donor-M-donor "
                          "angle distribution -- the coordination polyhedron "
@@ -858,6 +865,36 @@ def main() -> int:
                          "inputs; use --arch snn/picnn --topology-only for the "
                          "topology-only ablation.")
     df, X, cols = build_row_table(args.preset, args.arch, args.match_rows)
+    if args.extra_block_mean:
+        # POST-HOC diagnostic for sweep2 A1, not part of the pre-registration.
+        #
+        # Replace every column the preset adds beyond baseline_2d by its mean
+        # within the composition block.  The columns, their count and their
+        # between-block content are unchanged; only the within-block variation
+        # is removed.  So this isolates the one thing the adjacent-pair metric
+        # can be damaged by, holding the size of the feature addition fixed.
+        #
+        # Not a leak: composition_key = extractant || conditions and the CV
+        # groups by extractant, so no block spans a fold boundary (checked:
+        # 0 of 552 blocks span more than one extractant_group).  A block mean
+        # taken over the whole table is therefore identical to one taken inside
+        # the fold, and no label is involved either way.
+        from automl.dataset import BLOCK_PRESETS
+        base = set(build_row_table("baseline_2d", args.arch, args.match_rows)[2])
+        tgt = [i for i, c in enumerate(cols) if c not in base]
+        if not tgt:
+            raise SystemExit("--extra-block-mean needs a preset that adds "
+                             "columns beyond baseline_2d")
+        blk = df["composition_key"].to_numpy()
+        order = np.argsort(blk, kind="stable")
+        starts = np.concatenate(([0], np.flatnonzero(blk[order][1:] != blk[order][:-1]) + 1))
+        for seg in np.split(order, starts[1:]):
+            sub = X[np.ix_(seg, tgt)]
+            with np.errstate(invalid="ignore"):
+                m = np.nanmean(sub, axis=0)
+            X[np.ix_(seg, tgt)] = np.where(np.isfinite(m), m, np.nan)
+        print(f"[topo] --extra-block-mean: {len(tgt)} added columns replaced by "
+              f"their per-block means over {len(starts)} blocks", flush=True)
     if args.restrict_groups:
         # Confine the run to a named set of extractants.  This is what keeps a
         # hyperparameter sweep off the confirmation half: selection is made on
@@ -933,6 +970,7 @@ def main() -> int:
     cfg["level_weight"] = args.level_weight
     cfg["block_key"] = args.block_key
     cfg["no_triangles"] = args.no_triangles
+    cfg["extra_block_mean"] = args.extra_block_mean
     cfg["node_angular"] = args.node_angular
     cfg["angular_readout"] = args.angular_readout
     cfg["attn_pool"] = args.attn_pool
@@ -1066,6 +1104,7 @@ def main() -> int:
                else f"_f{args.filtration_max}_h{int(args.heavy_only)}")
             # the ablation must not overwrite the full model's OOF file
             + ("_notri" if args.no_triangles else "")
+            + ("_xbm" if args.extra_block_mean else "")
             + ("_nang" if args.node_angular else "")
             + ("_arod" if args.angular_readout else "")
             + ("_attn" if args.attn_pool else "")
@@ -1089,7 +1128,8 @@ def main() -> int:
                         if k in ("arch", "in_channels", "pi_images",
                                  "pair_loss_weight", "select_on",
                                  "level_weight", "block_key",
-                                 "no_triangles", "node_angular",
+                                 "no_triangles", "extra_block_mean",
+                                 "node_angular",
                                  "angular_readout", "attn_pool",
                                  "radial_bins", "radial_max",
                                  "aux_target", "aux_weight")},

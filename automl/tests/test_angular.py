@@ -400,3 +400,60 @@ def test_every_sweep_cell_is_identified_by_all_the_flags_it_sets():
         if name != "A0":
             assert not _matches(cfg, CELLS["A0"]), (
                 f"cell {name} is indistinguishable from the A0 anchor")
+
+
+def test_block_mean_transform_removes_only_within_block_variation():
+    """--extra-block-mean must change one thing and hold everything else fixed.
+
+    It is the controlled test of why A1 collapses, so it is worth only if the
+    added columns keep their count and their between-block content while losing
+    their within-block variation exactly.
+    """
+    from automl.topo.train import build_row_table
+    df, X, cols = build_row_table("baseline_2d_shape", "snn")
+    base = set(build_row_table("baseline_2d", "snn")[2])
+    tgt = [i for i, c in enumerate(cols) if c not in base]
+    assert len(tgt) == 119
+
+    Xm = X.copy()
+    blk = df["composition_key"].to_numpy()
+    order = np.argsort(blk, kind="stable")
+    starts = np.concatenate(
+        ([0], np.flatnonzero(blk[order][1:] != blk[order][:-1]) + 1))
+    segs = np.split(order, starts[1:])
+    for seg in segs:
+        with np.errstate(invalid="ignore"):
+            m = np.nanmean(Xm[np.ix_(seg, tgt)], axis=0)
+        Xm[np.ix_(seg, tgt)] = np.where(np.isfinite(m), m, np.nan)
+
+    # 1. within-block variation is gone EXACTLY, not approximately
+    for seg in segs:
+        v = Xm[np.ix_(seg, tgt)]
+        fin = np.isfinite(v)
+        for j in range(v.shape[1]):
+            col = v[fin[:, j], j]
+            if col.size > 1:
+                assert col.max() == col.min()
+
+    # 2. the baseline_2d columns are untouched
+    bcols = [i for i, c in enumerate(cols) if c in base]
+    a = np.nan_to_num(X[:, bcols], nan=-9e9)
+    b = np.nan_to_num(Xm[:, bcols], nan=-9e9)
+    assert np.array_equal(a, b)
+
+
+def test_no_composition_block_spans_a_cv_fold():
+    """The block-mean transform is leak-free only because of this property.
+
+    composition_key is extractant || binned conditions and the CV groups by
+    extractant, so every row of a block shares a fold.  A per-block mean taken
+    over the whole table is then identical to one taken inside the fold.  If a
+    future keying change broke this, the transform would quietly start moving
+    information across the fold boundary.
+    """
+    from automl.topo.train import build_row_table
+    df, _, _ = build_row_table("baseline_2d", "snn")
+    spans = df.groupby("composition_key")["extractant_group"].nunique()
+    assert int((spans > 1).sum()) == 0, (
+        f"{int((spans > 1).sum())} composition blocks span more than one "
+        f"extractant group; --extra-block-mean would leak across CV folds")
