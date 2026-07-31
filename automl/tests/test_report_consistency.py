@@ -50,6 +50,16 @@ CLAIMS = [
     ("objective binned, vs S0", "objective_test.csv",
      "key=='composition_key' and base=='with S0'", "delta",
      ["OBJECTIVE_RESULTS.md", "REANALYSIS_2026-07-29.md"]),
+    # SWEEP2.  The confirmatory delta is the number the whole campaign turns
+    # on, and A1's collapse is its one large effect; both must stay tied to
+    # the CSVs that produced them.
+    ("sweep2 confirmatory, binned", "sweep2_test.csv",
+     "key=='composition_key' and cell=='C1'", "delta",
+     ["SWEEP2_RESULTS.md"]),
+    ("sweep2 A1 collapse", "sweep2_cells.csv", "cell=='A1'", "gain_vs_A0",
+     ["SWEEP2_RESULTS.md"]),
+    ("sweep2 C1 screen gain", "sweep2_cells.csv", "cell=='C1'", "gain_vs_A0",
+     ["SWEEP2_RESULTS.md"]),
 ]
 
 
@@ -77,6 +87,32 @@ def test_reports_quote_their_own_csv(label, csv, query, col, docs):
         assert any(f in text for f in forms), (
             f"{doc} quotes no rendering of {label} = {value:+.4f} "
             f"(tried {forms}); the document has drifted from {csv}")
+
+
+def test_sweep2_confirmatory_verdict_is_not_overstated():
+    """C1 did not replicate; the report must not claim it did.
+
+    The screen's winner beat its gate on the tune half and then failed the
+    single confirmatory look after correction.  That is the outcome most likely
+    to drift in prose -- an uncorrected interval excluding zero is right there
+    in the CSV, and quoting it without the correction would turn a null into a
+    finding.
+    """
+    path = REPORTS / "sweep2_test.csv"
+    if not path.exists():
+        pytest.skip("sweep2_test.csv not present")
+    d = pd.read_csv(path)
+    binned = d[d["key"] == "composition_key"]
+    if binned.empty:
+        pytest.skip("no binned row")
+    assert (binned["verdict_corrected"] == "not distinguishable").all(), (
+        "sweep2_test.csv now shows a corrected verdict other than 'not "
+        "distinguishable'; SWEEP2_RESULTS.md asserts the sweep is a null and "
+        "must be revised if that changed")
+    assert (binned["n_seeds"] == 16).all(), (
+        "the confirmatory contrast must be computed at 16 seeds a side")
+    text = (REPORTS / "SWEEP2_RESULTS.md").read_text()
+    assert "did not replicate" in text
 
 
 def test_ceiling_is_withdrawn():
