@@ -74,9 +74,20 @@ CELLS: dict[str, dict] = {
 AXIS = {"A": "angular information", "B": "auxiliary target",
         "C": "readout / optimisation"}
 
+# POST-HOC cells.  Deliberately NOT in CELLS: they were designed after seeing
+# the screen, so letting one compete for the pre-registered gate would be
+# selection on a look.  Scored only under --posthoc, against A0 and A1.
+POSTHOC: dict[str, dict] = {
+    "A1BM": {"preset": "baseline_2d_shape", "extra_block_mean": True},
+}
+
 # Fields that must match the anchor unless the cell varies them, so a run can
 # never be swept into the wrong cell.
-DEFAULTS = {"preset": "baseline_2d", "node_angular": False,
+# extra_block_mean MUST be here: without it a cell whose `want` omits the key
+# leaves it unchecked, and the A1BM runs -- same preset as A1 -- would be swept
+# into cell A1 and averaged into a published contrast.
+DEFAULTS = {"preset": "baseline_2d", "extra_block_mean": False,
+            "node_angular": False,
             "angular_readout": False, "attn_pool": False,
             "aux_target": None, "radial_bins": None, "radial_max": None,
             "lr": 2e-3, "weight_decay": 1e-4}
@@ -102,7 +113,8 @@ def _matches(cfg: dict, want: dict) -> bool:
     return True
 
 
-def load_cells(verbose: bool = True, seeds: list[int] | None = None):
+def load_cells(verbose: bool = True, seeds: list[int] | None = None,
+               include_posthoc: bool = False):
     """Seed-ensembled out-of-fold predictions per cell, plus the seed counts.
 
     ``seeds`` selects which runs are admitted.  The screen uses the four
@@ -122,7 +134,7 @@ def load_cells(verbose: bool = True, seeds: list[int] | None = None):
         p = j.with_name(j.name.replace("run_", "oof_")).with_suffix(".parquet")
         if p.exists():
             runs.append((cfg, p))
-    for name, want in CELLS.items():
+    for name, want in {**CELLS, **(POSTHOC if include_posthoc else {})}.items():
         found: dict[int, Path] = {}
         for cfg, p in runs:
             if not _matches(cfg, want):
@@ -133,6 +145,20 @@ def load_cells(verbose: bool = True, seeds: list[int] | None = None):
             if s in found:
                 raise RuntimeError(f"cell {name} seed {s} matched twice: "
                                    f"{found[s].name} and {p.name}")
+            # The tag names the cell the job intended; the config records the
+            # flags it actually ran with.  If they disagree, a run has been
+            # assigned to the wrong cell -- which would corrupt a contrast
+            # silently, since every number downstream would still look normal.
+            # It is the failure mode a recording bug produces, and nothing else
+            # in the pipeline would notice it.
+            tag = str(cfg.get("tag") or "")
+            if tag.startswith("sw2_"):
+                intended = tag[4:].rsplit("_s", 1)[0]
+                if intended != name:
+                    raise RuntimeError(
+                        f"run {p.name} is tagged for cell {intended!r} but its "
+                        f"config matches cell {name!r}. One of the two is wrong; "
+                        f"refusing to score either.")
             found[s] = p
         if verbose:
             missing = sorted(set(seeds) - set(found))
@@ -173,6 +199,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--n-boot", type=int, default=400)
     ap.add_argument("--allow-partial", action="store_true")
+    ap.add_argument("--posthoc", action="store_true",
+                    help="score the POST-HOC cells (not pre-registered, no "
+                         "confirmatory status) against A0 and A1")
     ap.add_argument("--confirm", metavar="CELL", default=None,
                     help="run the CONFIRMATORY stage for CELL at 16 seeds a "
                          "side. Only legitimate for the cell the screen "
@@ -183,7 +212,9 @@ def main() -> int:
     print(f"[sweep2] frozen split: {len(tune)} tune / {len(conf)} confirm")
     print("\n=== cells ===")
     seed_set = (SEEDS + CONFIRM_SEEDS) if args.confirm else SEEDS
-    cells, counts = load_cells(seeds=seed_set)
+    cells, counts = load_cells(seeds=seed_set, include_posthoc=args.posthoc)
+    if args.posthoc:
+        return posthoc(cells, counts, tune)
     if "A0" not in cells:
         print("\nThe A0 anchor has no runs; nothing can be screened against it.")
         return 1
@@ -279,6 +310,43 @@ def main() -> int:
     automl/slurm/campaign_driver.sh automl/slurm/sweep2.sh 24 8 34 \\
         MODE=confirm CELL={name}""")
     print(f"\n[sweep2] wrote {OUT_CELLS}")
+    return 0
+
+
+def posthoc(cells: dict, counts: dict, tune) -> int:
+    """Score the post-hoc cells. Explanatory only -- no gate, no correction."""
+    if "A0" not in cells:
+        print("[sweep2] no A0 anchor")
+        return 1
+    a0 = _score(restrict(cells["A0"], tune), BINNED)[0]
+    print(f"\n=== POST-HOC (not pre-registered) -- tune half, anchor "
+          f"A0 = {a0:+.4f} ===")
+    print(f"  {'cell':6s} {'seeds':>5s} {'tune binned':>12s} {'vs A0':>9s} "
+          f"{'vs A1':>9s}")
+    a1 = _score(restrict(cells["A1"], tune), BINNED)[0] if "A1" in cells else None
+    for name in list(POSTHOC) + ["A1"]:
+        if name not in cells:
+            print(f"  {name:6s} -- no runs")
+            continue
+        v = _score(restrict(cells[name], tune), BINNED)[0]
+        d1 = f"{v - a1:+9.4f}" if a1 is not None else " " * 9
+        print(f"  {name:6s} {counts.get(name,0):5d} {v:+12.4f} "
+              f"{v - a0:+9.4f} {d1}")
+    if "A1BM" in cells and a1 is not None:
+        bm = _score(restrict(cells["A1BM"], tune), BINNED)[0]
+        near_anchor = abs(bm - a0) < abs(bm - a1)
+        print(f"""
+  A1BM keeps A1's 119 columns and its between-block content, and removes only
+  the within-block variation. It lands {'NEAR THE ANCHOR' if near_anchor else 'NEAR A1'}
+  ({bm:+.4f} vs A0 {a0:+.4f}, A1 {a1:+.4f}).""")
+        print("  => " + ("consistent with the head fitting within-block geometry "
+                         "variation the metric cannot use: remove that variation "
+                         "and the damage goes with it."
+                         if near_anchor else
+                         "NOT consistent with the within-block mechanism -- the "
+                         "damage survives removal of within-block variation, so "
+                         "something else about these columns is responsible."))
+    print("\n  Explanatory, post-hoc, no pre-registered decision rule.")
     return 0
 
 
