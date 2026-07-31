@@ -99,12 +99,35 @@ def main() -> int:
     print()
     print(out.to_string(index=False, float_format=lambda v: f"{v:+.4f}"))
 
+    # ---- the part that does not depend on a correlation --------------
+    # Which cell would each selection criterion pick, and what does the other
+    # metric do there?  This is the decision-relevant statement, it is a
+    # comparison of two argmaxes rather than a correlation over 10 points, and
+    # it survives however the A1 leverage question is resolved.
+    pick_adj = c.loc[c["gain_adjacent"].idxmax()]
+    pick_ovr = c.loc[c["gain_overall"].idxmax()]
+    print(f"\nselecting on ADJACENT-PAIR picks {pick_adj['cell']}: "
+          f"adjacent {pick_adj['gain_adjacent']:+.4f}, "
+          f"overall {pick_adj['gain_overall']:+.4f}")
+    print(f"selecting on OVERALL R2   picks {pick_ovr['cell']}: "
+          f"adjacent {pick_ovr['gain_adjacent']:+.4f}, "
+          f"overall {pick_ovr['gain_overall']:+.4f}")
+    if pick_adj["cell"] != pick_ovr["cell"]:
+        print(f"The two criteria disagree, and each winner is NEGATIVE on the "
+              f"other metric. Selecting this sweep on overall R2 would have "
+              f"chosen {pick_ovr['cell']}, which LOSES "
+              f"{abs(float(pick_ovr['gain_adjacent'])):.4f} of the quantity the "
+              f"study is about.")
+
     if not out.empty:
         r = out.iloc[0]
         both = int(((c["gain_overall"] > 0) & (c["gain_adjacent"] < 0)).sum())
-        print(f"\nAcross {int(r['n_cells'])} cells, r = {r['pearson_r']:+.3f} "
-              f"[{r['boot_lo']:+.3f}, {r['boot_hi']:+.3f}], Spearman "
-              f"{r['spearman_r']:+.3f}.")
+        print(f"\nThe correlation itself is NOT a usable claim. Across "
+              f"{int(r['n_cells'])} cells, r = {r['pearson_r']:+.3f} "
+              f"[{r['boot_lo']:+.3f}, {r['boot_hi']:+.3f}] but Spearman "
+              f"{r['spearman_r']:+.3f} -- a gap that size between Pearson and "
+              f"Spearman is the signature of one high-leverage point, not of a "
+              f"relationship.")
         print(f"{both} cell(s) improved overall R2 while LOSING adjacent-pair R2; "
               f"{int(r['n_cells_adjacent_up'])} improved adjacent-pair R2 at all.")
         if len(out) > 1:
