@@ -79,7 +79,19 @@ AXIS = {"A": "angular information", "B": "auxiliary target",
 # selection on a look.  Scored only under --posthoc, against A0 and A1.
 POSTHOC: dict[str, dict] = {
     "A1BM": {"preset": "baseline_2d_shape", "extra_block_mean": True},
+    # C1 changed the radial basis TWICE over: 32->64 bins and 8.0->10.0 A.
+    # If C1 confirms, the study's one improvement would rest on a cell whose
+    # cause is unidentified, so these separate the two.  Physically the cutoff
+    # is the suspect: 24.1% of atoms lie beyond 8.0 A, so the old basis was
+    # saturating for a quarter of every ligand, and 10.0 A exposes an 18.4%
+    # shell that had been collapsed onto the boundary.
+    "C1BINS": {"radial_bins": 64, "radial_max": 8.0},
+    "C1MAX": {"radial_bins": 32, "radial_max": 10.0},
 }
+# Each post-hoc cell is a decomposition of one screen cell, so it is read
+# against that cell, not against a common baseline.  Comparing C1BINS to A1
+# would be meaningless.
+POSTHOC_REF = {"A1BM": "A1", "C1BINS": "C1", "C1MAX": "C1"}
 
 # Fields that must match the anchor unless the cell varies them, so a run can
 # never be swept into the wrong cell.
@@ -319,33 +331,50 @@ def posthoc(cells: dict, counts: dict, tune) -> int:
         print("[sweep2] no A0 anchor")
         return 1
     a0 = _score(restrict(cells["A0"], tune), BINNED)[0]
-    print(f"\n=== POST-HOC (not pre-registered) -- tune half, anchor "
-          f"A0 = {a0:+.4f} ===")
-    print(f"  {'cell':6s} {'seeds':>5s} {'tune binned':>12s} {'vs A0':>9s} "
-          f"{'vs A1':>9s}")
-    a1 = _score(restrict(cells["A1"], tune), BINNED)[0] if "A1" in cells else None
-    for name in list(POSTHOC) + ["A1"]:
-        if name not in cells:
-            print(f"  {name:6s} -- no runs")
+    print(f"\n=== POST-HOC (not pre-registered) -- tune half, "
+          f"anchor A0 = {a0:+.4f} ===")
+    print(f"  {'cell':7s} {'ref':4s} {'seeds':>5s} {'tune binned':>12s} "
+          f"{'vs A0':>9s} {'vs ref':>9s}")
+    val: dict[str, float] = {}
+    for name in list(POSTHOC) + sorted(set(POSTHOC_REF.values())):
+        if name in val or name not in cells:
+            if name not in cells:
+                print(f"  {name:7s} {'':4s} -- no runs")
             continue
-        v = _score(restrict(cells[name], tune), BINNED)[0]
-        d1 = f"{v - a1:+9.4f}" if a1 is not None else " " * 9
-        print(f"  {name:6s} {counts.get(name,0):5d} {v:+12.4f} "
-              f"{v - a0:+9.4f} {d1}")
-    if "A1BM" in cells and a1 is not None:
-        bm = _score(restrict(cells["A1BM"], tune), BINNED)[0]
-        near_anchor = abs(bm - a0) < abs(bm - a1)
-        print(f"""
-  A1BM keeps A1's 119 columns and its between-block content, and removes only
-  the within-block variation. It lands {'NEAR THE ANCHOR' if near_anchor else 'NEAR A1'}
-  ({bm:+.4f} vs A0 {a0:+.4f}, A1 {a1:+.4f}).""")
+        val[name] = _score(restrict(cells[name], tune), BINNED)[0]
+    for name in list(POSTHOC) + sorted(set(POSTHOC_REF.values())):
+        if name not in val:
+            continue
+        ref = POSTHOC_REF.get(name, "")
+        dref = (f"{val[name] - val[ref]:+9.4f}"
+                if ref in val and name in POSTHOC else " " * 9)
+        print(f"  {name:7s} {ref:4s} {counts.get(name,0):5d} "
+              f"{val[name]:+12.4f} {val[name] - a0:+9.4f} {dref}")
+
+    if "A1BM" in val and "A1" in val:
+        bm, a1 = val["A1BM"], val["A1"]
+        near = abs(bm - a0) < abs(bm - a1)
+        print(f"\n  A1BM keeps A1's 119 columns and its between-block content and "
+              f"removes only\n  the within-block variation. It lands "
+              f"{'NEAR THE ANCHOR' if near else 'NEAR A1'} "
+              f"({bm:+.4f}; A0 {a0:+.4f}, A1 {a1:+.4f}).")
         print("  => " + ("consistent with the head fitting within-block geometry "
-                         "variation the metric cannot use: remove that variation "
-                         "and the damage goes with it."
-                         if near_anchor else
-                         "NOT consistent with the within-block mechanism -- the "
-                         "damage survives removal of within-block variation, so "
-                         "something else about these columns is responsible."))
+                         "variation the\n     metric cannot use: remove that "
+                         "variation and the damage goes with it."
+                         if near else
+                         "NOT the within-block mechanism -- the damage survives "
+                         "removal of\n     within-block variation, so something "
+                         "else about these columns is responsible."))
+    if "C1BINS" in val and "C1MAX" in val and "C1" in val:
+        gb, gm, gc = (val["C1BINS"] - a0, val["C1MAX"] - a0, val["C1"] - a0)
+        driver = ("the CUTOFF (radial_max 8->10 A)" if gm > gb
+                  else "the RESOLUTION (radial_bins 32->64)")
+        print(f"\n  C1 moved two things at once. Split: bins-only {gb:+.4f}, "
+              f"cutoff-only {gm:+.4f},\n  both {gc:+.4f} -- so C1's gain is "
+              f"carried by {driver}.")
+        print(f"  Physical check already in hand: 24.1% of atoms lie beyond "
+              f"8.0 A, so the\n  published basis saturated for a quarter of "
+              f"every ligand.")
     print("\n  Explanatory, post-hoc, no pre-registered decision rule.")
     return 0
 
