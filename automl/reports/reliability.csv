@@ -1,0 +1,3 @@
+key,label,n_cells_with_replicates,median_pairs_per_split,r_halfhalf_median,r_full_median,r_full_lo,r_full_hi,n_splits
+composition_key,binned,653,268.0,-0.7106813337497044,-4.912794489130107,-6.806743958271998,-2.943243485877124,200
+strict_composition_key,strict,273,105.0,-0.5733129117510987,-2.687275672602235,-4.094138410713989,-1.5437913936549181,200

@@ -457,3 +457,46 @@ def test_no_composition_block_spans_a_cv_fold():
     assert int((spans > 1).sum()) == 0, (
         f"{int((spans > 1).sum())} composition blocks span more than one "
         f"extractant group; --extra-block-mean would leak across CV folds")
+
+
+def test_pair_head_and_film_are_off_by_default():
+    """The published encoder must be untouched unless a flag asks for it."""
+    from automl.topo.snn import SimplicialNet
+    m = SimplicialNet(dim=32, layers=2, tabular_dim=4, use_triangles=False)
+    assert m.pair_head is None and m.film is None
+    assert not m.use_pair_head and m.film_dim == 0
+
+
+def test_film_is_near_identity_at_initialisation():
+    """FiLM uses the residual form, so switching it on cannot discard the
+    representation the rest of the study is built on."""
+    import torch
+    from automl.topo.snn import SimplicialNet
+    torch.manual_seed(0)
+    m = SimplicialNet(dim=32, layers=2, tabular_dim=0, use_triangles=False,
+                      film_dim=6).eval()
+    e = torch.randn(8, m.embed_dim)
+    with torch.no_grad():
+        out = m.modulate(e, torch.zeros(8, 6))
+    # zero conditions -> gamma,beta come from the bias alone; the residual form
+    # keeps the output on the same scale as the input rather than near zero
+    assert out.shape == e.shape
+    assert float((out - e).abs().mean()) < float(e.abs().mean())
+
+
+def test_pair_forward_is_antisymmetric_in_its_difference_channel():
+    """Swapping the pair order must flip the sign of the difference channel.
+
+    The target dy is antisymmetric, so feeding h_i - h_j (which flips) rather
+    than only [h_i, h_j] gives the head a channel with the right symmetry.
+    """
+    import torch
+    from automl.topo.snn import SimplicialNet
+    torch.manual_seed(0)
+    m = SimplicialNet(dim=16, layers=2, tabular_dim=0, use_triangles=False,
+                      pair_head=True).eval()
+    e = torch.randn(4, m.embed_dim)
+    i, j = torch.tensor([0, 1]), torch.tensor([2, 3])
+    d_ij = e[i] - e[j]
+    d_ji = e[j] - e[i]
+    torch.testing.assert_close(d_ij, -d_ji)

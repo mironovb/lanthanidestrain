@@ -299,6 +299,16 @@ def pretrain(model: SimplicialNet, cache: ComplexCache, complex_ids: list[int],
 
 
 # ---------------------------------------------------------------------------
+def _cond_columns(cfg) -> list[int]:
+    """Design-matrix positions of the experimental-condition columns (T3).
+
+    Resolved by NAME, so a preset change cannot silently point FiLM at the
+    wrong block.
+    """
+    return [i for i, c in enumerate(cfg.get("_cols") or [])
+            if str(c).startswith("cond__")]
+
+
 def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
              pretrained_state=None, target_col: str | None = None,
              emb_out: np.ndarray | None = None) -> np.ndarray:
@@ -329,6 +339,12 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
         fit_idx, val_idx = tr_idx[~is_val], tr_idx[is_val]
 
     Xtr, Xval, Xte = _standardise(X[fit_idx], X[val_idx], X[te_idx])
+    # Before any architecture is built: both the training loop and _predict use
+    # it for every arch, so defining it inside the snn branch would raise
+    # NameError only on --arch dist/tabular.
+    cond_idx = _cond_columns(cfg)
+    if cfg.get("film") and not cond_idx:
+        raise SystemExit("--film needs cond__ columns; none in this preset")
     y = df[target_col or TARGET].to_numpy(dtype=np.float32)
     ymu, ysd = float(y[fit_idx].mean()), float(y[fit_idx].std() or 1.0)
 
@@ -353,6 +369,10 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                             ).to(device)
     else:
         from automl.topo.simplicial_data import N_ANGULAR_BINS
+        # T3: which design-matrix columns are experimental conditions.  Taken
+        # from the standardised matrix so FiLM sees the same scaling the head
+        # does, and resolved by name so a preset change cannot silently shift
+        # them.
         model = SimplicialNet(dim=cfg["dim"], layers=cfg["layers"],
                               dropout=cfg["dropout"], tabular_dim=X.shape[1],
                               head_hidden=cfg["head_hidden"],
@@ -360,6 +380,8 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                               use_triangles=not cfg.get("no_triangles", False),
                               node_feat_dim=5 + (N_ANGULAR_BINS
                                                  if cfg.get("node_angular") else 0),
+                              pair_head=bool(cfg.get("pair_head")),
+                              film_dim=(len(cond_idx) if cfg.get("film") else 0),
                               angular_readout=bool(cfg.get("angular_readout")),
                               attn_pool=bool(cfg.get("attn_pool")),
                               angular_bins=N_ANGULAR_BINS,
@@ -421,6 +443,7 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
     blk_all = (df[cfg["block_key"]].to_numpy()
                if cfg.get("block_key") else comp_all)
     pair_w = float(cfg.get("pair_loss_weight", 0.0))
+    ph_w = float(cfg.get("pair_head_weight") or 0.0)
     # None = the published objective (Huber on the raw target).  A number turns
     # on the decomposed objective and is the weight on the block-mean term.
     level_w = cfg.get("level_weight")
@@ -536,6 +559,8 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                                          device=device)
                 e = _centre(emb[gather], blk_all[rows])
                 tab = torch.as_tensor(Xs[take], device=device)
+                if cond_idx and getattr(model, "film", None) is not None:
+                    e = model.modulate(e, tab[:, cond_idx])
                 outs[take] = (model.head(torch.cat([e, tab], -1))
                               .squeeze(-1).cpu().numpy())
         return outs * ysd + ymu
@@ -594,7 +619,10 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
             xpos = np.array([fit_pos[int(r)] for r in rows])
             tab = torch.as_tensor(Xtr[xpos], device=device)
             e = _centre(emb[gather], blk_all[rows])
-            pred = model.head(torch.cat([e, tab], -1)).squeeze(-1)
+            if cond_idx and getattr(model, "film", None) is not None:
+                e = model.modulate(e, tab[:, cond_idx])
+            emb_row = torch.cat([e, tab], -1)
+            pred = model.head(emb_row).squeeze(-1)
             tgt = torch.as_tensor((y[rows] - ymu) / ysd, device=device)
 
             if level_w is None:
@@ -654,6 +682,21 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                     dp = pred[pi] - pred[pj]
                     dt = tgt[pi] - tgt[pj]
                     loss = loss + pair_w * (w * (dp - dt) ** 2).mean()
+                    # T2: the same pairs, but the difference gets its own
+                    # parameters instead of being the difference of two scalar
+                    # level predictions.  Restricted to ADJACENT metals, which
+                    # is exactly the population the metric scores -- the level
+                    # surrogate above deliberately includes all within-block
+                    # pairs for gradient stability, and this one does not need
+                    # to because it is not the only pair signal.
+                    if getattr(model, "pair_head", None) is not None:
+                        adj = dl <= 1.0
+                        if int(adj.sum()) > 0:
+                            ai, aj = pi[adj], pj[adj]
+                            dhat = model.pair_forward(emb_row, ai, aj)
+                            dtrue = tgt[ai] - tgt[aj]
+                            loss = loss + ph_w * nn.functional.huber_loss(
+                                dhat, dtrue, delta=1.0)
             opt.zero_grad(); loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), 5.0)
             opt.step()
@@ -773,6 +816,17 @@ def main() -> int:
                          "study (662/662 runs used baseline_2d and scalar node "
                          "inputs); cosines are rotation/translation/reflection "
                          "invariant so this costs no invariance")
+    ap.add_argument("--pair-head", action="store_true",
+                    help="CAMPAIGN3 T2: a head that predicts the adjacent-pair "
+                         "difference DIRECTLY from [h_i, h_j, h_i-h_j], with "
+                         "its own parameters, instead of differencing two "
+                         "scalar level predictions.")
+    ap.add_argument("--pair-head-weight", type=float, default=1.0,
+                    help="weight on the T2 pairwise loss")
+    ap.add_argument("--film", action="store_true",
+                    help="CAMPAIGN3 T3: FiLM the structural embedding on the "
+                         "cond__ columns, so 45 diluents and 9 acids reach the "
+                         "structure representation instead of only the head.")
     ap.add_argument("--extra-block-mean", action="store_true",
                     help="POST-HOC (not pre-registered): replace every column "
                          "the preset adds beyond baseline_2d by its mean within "
@@ -971,6 +1025,10 @@ def main() -> int:
     cfg["block_key"] = args.block_key
     cfg["no_triangles"] = args.no_triangles
     cfg["extra_block_mean"] = args.extra_block_mean
+    cfg["_cols"] = list(cols)          # for FiLM's cond__ lookup; not a knob
+    cfg["pair_head"] = args.pair_head
+    cfg["pair_head_weight"] = args.pair_head_weight
+    cfg["film"] = args.film
     cfg["node_angular"] = args.node_angular
     cfg["angular_readout"] = args.angular_readout
     cfg["attn_pool"] = args.attn_pool
@@ -1104,6 +1162,8 @@ def main() -> int:
                else f"_f{args.filtration_max}_h{int(args.heavy_only)}")
             # the ablation must not overwrite the full model's OOF file
             + ("_notri" if args.no_triangles else "")
+            + ("_ph" if args.pair_head else "")
+            + ("_film" if args.film else "")
             + ("_xbm" if args.extra_block_mean else "")
             + ("_nang" if args.node_angular else "")
             + ("_arod" if args.angular_readout else "")
@@ -1128,7 +1188,8 @@ def main() -> int:
                         if k in ("arch", "in_channels", "pi_images",
                                  "pair_loss_weight", "select_on",
                                  "level_weight", "block_key",
-                                 "no_triangles", "extra_block_mean",
+                                 "no_triangles", "pair_head",
+                                 "pair_head_weight", "film", "extra_block_mean",
                                  "node_angular",
                                  "angular_readout", "attn_pool",
                                  "radial_bins", "radial_max",

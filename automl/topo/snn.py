@@ -205,6 +205,7 @@ class SimplicialNet(nn.Module):
                  radial_bins: int = 32, radial_max: float = 8.0,
                  head_embed_mult: int = 1, use_triangles: bool = True,
                  angular_readout: bool = False, attn_pool: bool = False,
+                 pair_head: bool = False, film_dim: int = 0,
                  angular_bins: int = 8):
         super().__init__()
         self.dim = dim
@@ -270,6 +271,8 @@ class SimplicialNet(nn.Module):
         # global mean+max over 3 levels (6) + metal node (1) + metal-incident
         # edge mean (1) + radial shell (1) = 9 blocks of `dim`, plus one each for
         # the angular readout and the attention pool when enabled.
+        self.use_pair_head = bool(pair_head)
+        self.film_dim = int(film_dim or 0)
         self.embed_dim = (9 + int(self.angular_readout)
                           + int(self.attn_pool)) * dim
         self.tabular_dim = tabular_dim
@@ -280,6 +283,26 @@ class SimplicialNet(nn.Module):
         # built with mult=1 stays byte-compatible with every existing run.
         self.head_embed_mult = int(head_embed_mult)
         head_in = self.head_embed_mult * self.embed_dim + tabular_dim
+        # T2: its own capacity, over [h_i, h_j, h_i - h_j].
+        self.pair_head = (nn.Sequential(
+            nn.Linear(3 * head_in, head_hidden), nn.SiLU(), nn.Dropout(dropout),
+            nn.Linear(head_hidden, head_hidden // 2), nn.SiLU(),
+            nn.Linear(head_hidden // 2, 1)) if self.use_pair_head else None)
+        # T3: FiLM.  The 64 condition columns -- 45 diluents, 9 acids,
+        # concentrations, temperature -- currently enter only AFTER pooling, so
+        # kerosene and nitrobenzene give byte-identical structural embeddings.
+        # A partition coefficient cannot be condition-independent in its
+        # structural part, so let the conditions modulate the node channels.
+        # Applied to the pooled per-ROW embedding rather than to node channels,
+        # because ``encode`` runs once per COMPLEX and its result is reused by
+        # every row sharing that complex -- while conditions vary row to row.
+        # Node-level FiLM would force one encode per row, a 5x cost (4,746 rows
+        # against 956 complexes) for the same scientific content: a structural
+        # representation that depends on the medium it is measured in.
+        self.film = (nn.Sequential(
+            nn.Linear(self.film_dim, dim), nn.SiLU(),
+            nn.Linear(dim, 2 * self.embed_dim)) if self.film_dim else None)
+        self.n_layers = layers
         self.head = nn.Sequential(
             nn.LayerNorm(head_in),
             nn.Linear(head_in, head_hidden), nn.SiLU(), nn.Dropout(dropout),
@@ -288,7 +311,8 @@ class SimplicialNet(nn.Module):
             nn.Linear(head_hidden // 2, 1))
 
     # -- encoder ------------------------------------------------------------
-    def encode(self, batch: dict[str, Any]) -> torch.Tensor:
+    def encode(self, batch: dict[str, Any],
+               cond: torch.Tensor | None = None) -> torch.Tensor:
         hn = self.z_emb(batch["z_idx"]) + self.node_in(batch["node_feat"])
         he = self.edge_in(batch["edge_filt"])
         ei = batch["edge_index"]
@@ -357,13 +381,62 @@ class SimplicialNet(nn.Module):
         return torch.cat(parts, dim=-1)
 
     def forward(self, batch: dict[str, Any],
-                tabular: torch.Tensor | None = None) -> torch.Tensor:
-        emb = self.encode(batch)
+                tabular: torch.Tensor | None = None,
+                cond: torch.Tensor | None = None) -> torch.Tensor:
+        emb = self.encode(batch, cond=cond)
         if self.tabular_dim:
             if tabular is None:
                 raise ValueError("model built with tabular_dim>0 but none given")
             emb = torch.cat([emb, tabular], dim=-1)
         return self.head(emb).squeeze(-1)
+
+    def embed(self, batch: dict[str, Any],
+              tabular: torch.Tensor | None = None,
+              cond: torch.Tensor | None = None) -> torch.Tensor:
+        """The representation the head sees. Needed by the pairwise head."""
+        emb = self.encode(batch, cond=cond)
+        if self.tabular_dim:
+            emb = torch.cat([emb, tabular], dim=-1)
+        return emb
+
+    def modulate(self, e: torch.Tensor, cond: torch.Tensor) -> torch.Tensor:
+        """T3 -- FiLM the structural embedding on the experimental conditions.
+
+        45 diluents and 9 acids are recorded, and today they enter only as
+        tabular columns concatenated after pooling, so the structural part of
+        the representation is byte-identical in kerosene and in nitrobenzene.
+        A partition coefficient cannot be independent of the phase it partitions
+        into, so let the conditions scale and shift the structure channels.
+
+        Residual form (1 + gamma): at initialisation the transform is close to
+        the identity, so turning FiLM on does not throw away the representation
+        the rest of the study is built on.
+        """
+        if self.film is None:
+            raise ValueError("model built without --film")
+        g, b = self.film(cond).chunk(2, dim=-1)
+        return (1.0 + g) * e + b
+
+    def pair_forward(self, emb: torch.Tensor, i: torch.Tensor,
+                     j: torch.Tensor) -> torch.Tensor:
+        """CAMPAIGN3 T2 -- predict dy for a pair DIRECTLY.
+
+        Every model in this study predicts a level per row and lets the metric
+        difference block-averaged predictions.  ``--pair-loss-weight`` already
+        penalises the difference of two *scalar* predictions, but that
+        difference has no parameters of its own: whatever the level head cannot
+        represent about a pair, the surrogate cannot either.
+
+        This head sees [h_i, h_j, h_i - h_j] and regresses the difference with
+        its own capacity, so it can express pair interactions that no
+        difference-of-levels can.  The concatenation is deliberately
+        antisymmetric-friendly: h_i - h_j flips sign with the pair order, which
+        is the symmetry the target has.
+        """
+        if self.pair_head is None:
+            raise ValueError("model built without --pair-head")
+        z = torch.cat([emb[i], emb[j], emb[i] - emb[j]], dim=-1)
+        return self.pair_head(z).squeeze(-1)
 
 
 class MaskedChargeHead(nn.Module):
