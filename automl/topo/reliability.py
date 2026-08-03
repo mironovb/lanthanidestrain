@@ -10,8 +10,13 @@ because it estimated a noise SD on the 273 cells that happen to carry duplicates
 and assumed it transferred to all 905 pairs -- and cells acquire duplicates
 preferentially when sources disagree, so it does not transfer.
 
-Split-half reliability avoids the transfer assumption entirely by measuring the
-metric on itself:
+RESULT, 31 July 2026: **the noise floor is not identifiable from this dataset**,
+now by three independent routes.  This module records the attempt and the
+evidence, because "we tried and it cannot be done" is a result and quietly
+dropping it would leave the next person to repeat it.  See CEILING_CLOSED.md.
+
+Split-half reliability was intended to avoid the transfer assumption by
+measuring the metric on itself:
 
     1. keep every (block, metal) cell with >= 2 rows
     2. split each cell's rows at random into halves A and B, average each
