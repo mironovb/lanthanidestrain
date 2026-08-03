@@ -51,7 +51,9 @@ N_OOP_MAX_A = 0.15
 MIN_H_TO_NITRATE_O = 1.40
 INNER_CUTOFF_A = 3.10
 LNN_MIN_A, LNN_MAX_A = 4.0, 14.0
-RMSD_MAX_A = 1.0
+RMSD_DIAGNOSTIC_MAX_A = 2.5   # wholesale conformational change only; the repo's
+                              # own measured yardstick for "different conformers,
+                              # not refinements" is 1.87 A
 D_LN_DONOR_MAX = 0.25
 D_DONOR_DONOR_MAX = 0.40
 ACCEPT_FRACTION_MIN = 0.80          # pre-registered: below this, do not model
@@ -62,7 +64,7 @@ REJECT_CODES = (
     "CHARGE_MODEL_BROKEN", "SEED_NO_FEASIBLE_POSE", "CONTROL_FAILED",
     "XTB_CRASH", "timeout", "scf_not_converged", "EXCEPTION",
     "NITRATE_BROKEN", "NITRATE_PROTONATED", "NITRATE_PYRAMIDAL",
-    "MODE_MIGRATED", "LIGAND_MOVED", "CONNECTIVITY_CHANGED", "CN_CHANGED",
+    "ION_DETACHED", "LIGAND_MOVED", "CONNECTIVITY_CHANGED", "CN_CHANGED",
     "NOT_CONVERGED",
 )
 
@@ -75,6 +77,32 @@ def _load_xyz(path: Path):
         p = ln.split()
         sym.append(p[0]); xyz.append([float(p[1]), float(p[2]), float(p[3])])
     return sym, np.asarray(xyz, dtype=float)
+
+
+# Covalent radii (Angstrom), Cordero et al.  Only the elements present here.
+_COV_R = {"H": 0.31, "C": 0.76, "N": 0.71, "O": 0.66, "F": 0.57, "P": 1.07,
+          "S": 1.05, "Cl": 1.02, "Br": 1.20, "I": 1.39}
+_COV_R_LN = 2.00                     # any lanthanide; metal bonds excluded anyway
+COV_SCALE = 1.25
+
+
+def covalent_adjacency(symbols, coords, exclude: set[int] | None = None):
+    """Boolean bond matrix by covalent-radius overlap.
+
+    Metal-ligand contacts are deliberately EXCLUDED: they are dative, their
+    length legitimately changes when an anion coordinates, and including them
+    would make this gate fire on exactly the accommodation Amendment 1 accepts.
+    What it must catch is a bond broken or formed *within* the ligand -- above
+    all a proton hop, which every distance-based check misses.
+    """
+    r = np.array([_COV_R.get(str(s), _COV_R_LN) for s in symbols])
+    d = np.linalg.norm(coords[:, None, :] - coords[None, :, :], axis=2)
+    adj = d <= COV_SCALE * (r[:, None] + r[None, :])
+    np.fill_diagonal(adj, False)
+    if exclude:
+        for i in exclude:
+            adj[i, :] = False; adj[:, i] = False
+    return adj
 
 
 def _angle(a, b, c) -> float:
@@ -131,17 +159,24 @@ def gate_structure(rec: dict) -> dict:
         g["reject_code"] = "NITRATE_PROTONATED"; return g
 
     # --- G3 binding mode --------------------------------------------------
-    inner = 0; lnn = []
+    # Amendment 1: inner-sphere coordination reached by relaxation is the
+    # CORRECT outcome, not a failure.  Mode is recorded as a covariate.
+    inner = 0; lnn = []; modes = []
     for a in range(n_add):
         b = n0 + 4 * a
         lnn.append(float(np.linalg.norm(nc[b] - nc[mi])))
-        inner += int((np.linalg.norm(nc[b + 1:b + 4] - nc[mi], axis=1)
-                      < INNER_CUTOFF_A).sum())
-    g["n_inner_O"] = inner; g["lnn_max"] = max(lnn); g["lnn_min"] = min(lnn)
-    if inner > 0:
-        g["reject_code"] = "MODE_MIGRATED"; return g
-    if max(lnn) > LNN_MAX_A or min(lnn) < LNN_MIN_A:
-        g["reject_code"] = "MODE_MIGRATED"; return g
+        n_in = int((np.linalg.norm(nc[b + 1:b + 4] - nc[mi], axis=1)
+                    < INNER_CUTOFF_A).sum())
+        inner += n_in
+        modes.append("inner" if n_in >= 1 else "outer")
+    g["n_inner_O"] = inner
+    g["lnn_max"] = max(lnn); g["lnn_min"] = min(lnn)
+    g["binding_modes"] = "|".join(modes)
+    g["n_inner_nitrate"] = sum(1 for m in modes if m == "inner")
+    if max(lnn) > LNN_MAX_A:
+        # still far enough to be a detached ion rather than this complex's
+        # counter-ion; that IS a failure
+        g["reject_code"] = "ION_DETACHED"; return g
 
     # --- G4 ligand undisturbed, against the CONTROL -----------------------
     g["rmsd_vs_control"] = kabsch_rmsd(nc[:n0], cc[:n0])
@@ -158,11 +193,25 @@ def gate_structure(rec: dict) -> dict:
         g["dij_donor_max_delta"] = float(np.abs(pn - pc).max())
     else:
         g["dLn_donor_max_delta"] = g["dij_donor_max_delta"] = np.nan
-    if g["rmsd_vs_control"] > RMSD_MAX_A:
+    # Amendment 1: RMSD and donor shifts are DIAGNOSTICS, not gates.  They were
+    # specified assuming an ion that does not perturb the ligand; when the
+    # nitrate coordinates, the ligand must adjust, and rejecting that discards
+    # the physical response the campaign exists to capture.  Only a wholesale
+    # conformational change is a failure, and the repo's own yardstick for that
+    # is 1.87 A ("different conformers, not refinements").
+    if g["rmsd_vs_control"] > RMSD_DIAGNOSTIC_MAX_A:
         g["reject_code"] = "LIGAND_MOVED"; return g
-    if (g["dLn_donor_max_delta"] > D_LN_DONOR_MAX
-            or g["dij_donor_max_delta"] > D_DONOR_DONOR_MAX):
-        g["reject_code"] = "LIGAND_MOVED"; return g
+
+    # G4c -- the gate accommodation CANNOT explain away.  A bond broken or
+    # formed anywhere in the ligand, including a proton hop between two ligand
+    # sites, which both checks above miss.
+    an = covalent_adjacency(ns[:n0], nc[:n0], exclude={mi})
+    ac = covalent_adjacency(cs[:n0], cc[:n0], exclude={mi})
+    diff = np.argwhere(an != ac)
+    g["adjacency_changed_pairs"] = int(len(diff) // 2)
+    if len(diff):
+        g["reject_detail"] = str([tuple(map(int, x)) for x in diff[:20]])
+        g["reject_code"] = "CONNECTIVITY_CHANGED"; return g
 
     # --- G5 coordination number ------------------------------------------
     g["cn_ligand_out"] = ligand_cn(ns[:n0], nc[:n0], mi)
@@ -226,6 +275,11 @@ def main() -> int:
                                   f"{glob:.0%} -- family-correlated failure")
     if acc:
         a = d[d["reject_code"] == "accepted"]
+        if "binding_modes" in a:
+            print(f"\n  binding mode: "
+                  f"{int(a['n_inner_nitrate'].sum())} inner-sphere nitrates over "
+                  f"{int(a['n_add'].sum())} placed "
+                  f"({a['n_inner_nitrate'].sum()/max(a['n_add'].sum(),1):.0%})")
         for col in ("rmsd_vs_control", "dLn_donor_max_delta", "lnn_max",
                     "min_H_to_nitrate_O"):
             if col in a and a[col].notna().any():

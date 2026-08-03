@@ -170,10 +170,16 @@ def _synthetic(tmp_path, *, h_offset=None, break_no=False, pyramidal=False,
     return sym + nsym, np.vstack([xyz, nxyz])
 
 
-def _record(tmp_path, sym, xyz, n0):
+def _record(tmp_path, sym, xyz, n0, control_xyz=None):
+    """control_xyz lets a test perturb the NEUTRAL arm only.
+
+    Without it both arms are written from the same coordinates, so a
+    connectivity change appears in the control too and cancels -- which is how
+    this helper silently made the G4c test vacuous.
+    """
     n = tmp_path / "neutral.xyz"; c = tmp_path / "control.xyz"
     _write_xyz(n, sym, xyz)
-    _write_xyz(c, sym[:n0], xyz[:n0])
+    _write_xyz(c, sym[:n0], (xyz if control_xyz is None else control_xyz)[:n0])
     import automl.qc.neutralize_report as R
     R.REPO = tmp_path
     return {"geometry_key": "t", "metal": "La", "n_add": 1,
@@ -218,12 +224,46 @@ def test_g2_rejects_a_pyramidalised_nitrate(tmp_path):
     assert g["reject_code"] == "NITRATE_PYRAMIDAL", g
 
 
-def test_g3_flags_an_ion_that_migrated_inner_sphere(tmp_path):
-    """Real chemistry, but it breaks the ligand-undisturbed premise.
+def test_inner_sphere_migration_is_accepted_and_recorded(tmp_path):
+    """Amendment 1: this is the correct outcome, not a failure.
 
-    Quarantined for review rather than silently absorbed into either bucket.
+    The pilot showed nitrates seeded at ~6 A relaxing to Ln-O of 2.13-2.53 A
+    with cn_ligand unchanged -- textbook bidentate coordination.  Rejecting it
+    would have discarded exactly the physics the campaign exists to capture, so
+    the mode is recorded as a covariate instead of used as a filter.
     """
     from automl.qc.neutralize_report import gate_structure
     sym, xyz = _synthetic(tmp_path, inner=True)
     g = gate_structure(_record(tmp_path, sym, xyz, 10))
-    assert g["reject_code"] == "MODE_MIGRATED", g
+    assert g["reject_code"] == "accepted", g
+    assert g["binding_modes"] == "inner"
+    assert g["n_inner_nitrate"] == 1
+
+
+def test_a_detached_ion_is_still_rejected(tmp_path):
+    """Accepting inner-sphere must not also accept an ion in vacuum."""
+    from automl.qc.neutralize_report import gate_structure
+    from automl.qc.nitrate_placement import nitrate_template
+    sym, xyz = _synthetic(tmp_path)
+    _, tpl = nitrate_template()
+    xyz[10:14] = tpl + np.array([30.0, 0.0, 0.0])      # 30 A away
+    g = gate_structure(_record(tmp_path, sym, xyz, 10))
+    assert g["reject_code"] == "ION_DETACHED", g
+
+
+def test_g4c_rejects_a_broken_ligand_bond(tmp_path):
+    """The gate accommodation cannot explain away.
+
+    RMSD and donor shifts legitimately move when the nitrate coordinates, so
+    connectivity is what remains load-bearing: no bond may break or form
+    anywhere in the ligand.
+    """
+    from automl.qc.neutralize_report import gate_structure
+    sym, clean = _synthetic(tmp_path)
+    sym2, xyz2 = _synthetic(tmp_path)
+    # move the ligand H onto a donor O in the NEUTRAL arm only: forms a bond the
+    # control does not have
+    xyz2[9] = xyz2[1] + np.array([0.0, 0.0, 0.98])
+    g = gate_structure(_record(tmp_path, sym2, xyz2, 10, control_xyz=clean))
+    assert g["reject_code"] == "CONNECTIVITY_CHANGED", g
+    assert g["adjacency_changed_pairs"] >= 1
