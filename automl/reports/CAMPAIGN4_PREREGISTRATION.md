@@ -112,3 +112,54 @@ bootstrap.
 - `--verify-against-shipped` must reproduce the original geometries element-for-element
   through the new code path before any new asset is trusted.
 - Nothing is written to `data/`.
+
+---
+
+## Amendment 1 — the outer-sphere premise is falsified by the pilot (31 July 2026)
+
+Written **before** any amended structure was accepted or any model trained.
+
+Section 2 asserted that "because the sphere is saturated, nitrate can only occupy
+the second sphere", and forbade any inner-sphere competition claim. **The smoke run
+falsifies that**, and the mistake is now clear: the analysis behind it tested **rigid**
+insertion into the shipped geometry. Relaxation opens the coordination sphere.
+
+Three dicyclohexano-18-crown-6 complexes, nitrate seeded at 5.75–6.50 Å:
+
+| | seed Ln···N | final Ln···N | final Ln–O | O inside 3.10 Å |
+|---|---|---|---|---|
+| 57, nitrate 0 | 6.00 | **2.72** | 2.33 / 2.53 | 2 |
+| 63, nitrate 1 | 6.50 | **2.57** | 2.13 / 2.77 | 2 |
+| 68, nitrate 0 | 5.75 | **2.47** | 2.23 / 2.24 | 2 |
+
+Ln–O of 2.13–2.53 Å against the corpus mean of **2.130 Å** is textbook bidentate
+inner-sphere coordination, and Ln(crown)(NO₃)ₙ is a well-known structure. In every
+case `cn_ligand` is **unchanged** (10→10, 10→10, 9→9): the ligand kept its own donors
+and the nitrate coordinated in addition.
+
+### What changes
+
+1. **`MODE_MIGRATED` is no longer a rejection.** Inner-sphere coordination reached by
+   relaxation is the correct outcome, not a failure. The binding mode is recorded per
+   nitrate (`inner` / `outer`, with the Ln–O distances) and becomes a reported
+   covariate rather than a filter.
+2. **The G4 RMSD gate is mis-specified and is demoted to a diagnostic.** It was set
+   assuming an outer-sphere ion that should not perturb the ligand. If the nitrate
+   coordinates, the ligand *must* adjust — measured 1.19–1.64 Å RMSD against the
+   control, with donor shifts of 0.33–0.48 Å. Rejecting those would discard exactly
+   the physical response the campaign exists to capture.
+3. **The structural gates that remain hard are the ones that cannot be explained by
+   accommodation**: `cn_ligand` exactly unchanged (G5), and covalent connectivity over
+   the original atoms bit-identical (G4c) — no bond may break or form anywhere in the
+   ligand. G4c was specified in the plan and had not yet been implemented; it is now
+   the load-bearing check, and it is added before any structure is accepted.
+4. **The hypothesis is upgraded, not weakened.** The campaign can now test inner-sphere
+   competition — the more interesting original question — because the anion reaches the
+   inner sphere on its own. No claim is made that this happens for every family; the
+   binding-mode split is reported.
+
+### What does not change
+
+The decision rule, the +0.005 gate, the 29-look count, the 16-seeds-a-side confirmatory
+design, the replacement-not-augmentation declaration, and the 80 % accepted-fraction
+floor all stand exactly as pre-registered.
