@@ -60,6 +60,12 @@ CLAIMS = [
      ["SWEEP2_RESULTS.md"]),
     ("sweep2 C1 screen gain", "sweep2_cells.csv", "cell=='C1'", "gain_vs_A0",
      ["SWEEP2_RESULTS.md"]),
+    ("campaign3 T2 gain", "c3_cells.csv", "cell=='T2'", "gain_vs_D0",
+     ["CAMPAIGN3_RESULTS.md"]),
+    ("campaign3 T2X gain", "c3_cells.csv", "cell=='T2X'", "gain_vs_D0",
+     ["CAMPAIGN3_RESULTS.md"]),
+    ("campaign3 T3 gain", "c3_cells.csv", "cell=='T3'", "gain_vs_D0",
+     ["CAMPAIGN3_RESULTS.md"]),
 ]
 
 
@@ -219,6 +225,27 @@ def test_withdrawn_numbers_are_not_asserted(token, why):
         f"{token} ({why}) is asserted without a withdrawal marker at "
         f"{offenders}. Strike it through in place, or move it below the "
         f"erratum heading.")
+
+
+def test_campaign3_reports_a_null_and_spends_no_confirmatory_look():
+    """No cell cleared the gate, so no confirmatory contrast may exist.
+
+    The screen's best cell is NEGATIVE (-0.0253).  If a c3_test.csv ever appears
+    it means a confirmatory look was spent on a cell that did not earn one, and
+    the report's "no confirmatory run was spent" claim -- plus the intact
+    26-look budget it implies -- would be false.
+    """
+    cells = REPORTS / "c3_cells.csv"
+    if not cells.exists():
+        pytest.skip("c3_cells.csv not present")
+    d = pd.read_csv(cells)
+    best = d[d["cell"] != "D0"]["gain_vs_D0"].max()
+    assert best <= 0.005, (
+        f"a campaign-3 cell now clears the +0.005 gate at {best:+.4f}; "
+        f"CAMPAIGN3_RESULTS.md asserts a null and must be revised")
+    assert not (REPORTS / "c3_test.csv").exists(), (
+        "c3_test.csv exists, so a confirmatory look was spent -- but no cell "
+        "cleared the screening gate that authorises one")
 
 
 def test_campaign3_anchor_reproduces_the_sweep2_anchor():

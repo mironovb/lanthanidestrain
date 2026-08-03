@@ -54,10 +54,21 @@ CELLS: dict[str, dict] = {
     "T23": {"pair_loss_weight": 2.0, "pair_head": True, "pair_head_weight": 1.0,
             "film": True},
 }
+# POST-HOC.  Deliberately not in CELLS: designed after the screen, so letting
+# either compete for the pre-registered gate would be selection on a look.
+POSTHOC: dict[str, dict] = {
+    "T2REC":  {"pair_loss_weight": 2.0, "pair_head": True,
+               "pair_head_weight": 1.0, "pair_reconcile": True},
+    "T2XREC": {"pair_loss_weight": 0.0, "pair_head": True,
+               "pair_head_weight": 2.0, "pair_reconcile": True},
+}
+POSTHOC_REF = {"T2REC": "T2", "T2XREC": "T2X"}
+
 AXIS = {"D0": "(anchor)", "T2": "pairwise head", "T2W": "pairwise head",
         "T2X": "pairwise head", "T3": "condition FiLM", "T23": "both"}
 
 DEFAULTS = {"pair_head": False, "pair_head_weight": 1.0, "film": False,
+            "pair_reconcile": False,
             "preset": "baseline_2d", "node_angular": False,
             "angular_readout": False, "attn_pool": False, "aux_target": None,
             "extra_block_mean": False, "radial_bins": None, "radial_max": None,
@@ -84,7 +95,8 @@ def _matches(cfg: dict, want: dict) -> bool:
     return True
 
 
-def load_cells(verbose: bool = True, seeds: list[int] | None = None):
+def load_cells(verbose: bool = True, seeds: list[int] | None = None,
+               include_posthoc: bool = False):
     seeds = list(SEEDS) if seeds is None else list(seeds)
     out: dict[str, pd.DataFrame] = {}
     counts: dict[str, int] = {}
@@ -96,7 +108,7 @@ def load_cells(verbose: bool = True, seeds: list[int] | None = None):
         p = j.with_name(j.name.replace("run_", "oof_")).with_suffix(".parquet")
         if p.exists():
             runs.append((cfg, p))
-    for name, want in CELLS.items():
+    for name, want in {**CELLS, **(POSTHOC if include_posthoc else {})}.items():
         found: dict[int, Path] = {}
         for cfg, p in runs:
             if not _matches(cfg, want):
@@ -181,6 +193,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--n-boot", type=int, default=400)
     ap.add_argument("--allow-partial", action="store_true")
+    ap.add_argument("--posthoc", action="store_true")
     ap.add_argument("--confirm", metavar="CELL", default=None)
     args = ap.parse_args()
 
@@ -188,7 +201,26 @@ def main() -> int:
     print(f"[c3] frozen split: {len(tune)} tune / {len(conf)} confirm")
     print("\n=== cells ===")
     seed_set = (SEEDS + CONFIRM_SEEDS) if args.confirm else SEEDS
-    cells, counts = load_cells(seeds=seed_set)
+    cells, counts = load_cells(seeds=seed_set, include_posthoc=args.posthoc)
+    if args.posthoc:
+        d0 = _score(restrict(cells["D0"], tune), BINNED)[0]
+        print(f"\n=== POST-HOC (not pre-registered) -- tune half, "
+              f"D0 = {d0:+.4f} ===")
+        print(f"  {'cell':7s} {'ref':5s} {'tune binned':>12s} {'vs D0':>9s} "
+              f"{'vs ref':>9s}")
+        for nm in list(POSTHOC) + sorted(set(POSTHOC_REF.values())):
+            if nm not in cells:
+                print(f"  {nm:7s} -- no runs"); continue
+            v = _score(restrict(cells[nm], tune), BINNED)[0]
+            ref = POSTHOC_REF.get(nm, "")
+            dv = ""
+            if ref in cells:
+                dv = f"{v - _score(restrict(cells[ref], tune), BINNED)[0]:+9.4f}"
+            print(f"  {nm:7s} {ref:5s} {v:+12.4f} {v - d0:+9.4f} {dv:>9s}")
+        print("\n  Routing the pair head into the metric either recovers what "
+              "the\n  separate pathway was discarding, or shows there was "
+              "nothing to route.")
+        return 0
     if "D0" not in cells:
         print("\nno D0 anchor; nothing can be screened against it.")
         return 1
