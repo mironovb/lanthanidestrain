@@ -134,3 +134,96 @@ def test_no_feasible_pose_is_reported_not_guessed():
     assert rec["ok"] is False
     assert rec["reason"] == "SEED_NO_FEASIBLE_POSE"
     assert rec["n_feasible"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Gate tests.  Synthetic structures written to a tmp dir -- never generated
+# artefacts, per AGENTS.md.
+
+def _write_xyz(path, symbols, coords):
+    lines = [str(len(symbols)), "test"]
+    for s, c in zip(symbols, coords):
+        lines.append(f"{s} {c[0]:.6f} {c[1]:.6f} {c[2]:.6f}")
+    path.write_text("\n".join(lines) + "\n")
+
+
+def _synthetic(tmp_path, *, h_offset=None, break_no=False, pyramidal=False,
+               inner=False):
+    """A minimal La complex plus one outer-sphere nitrate, perturbable."""
+    from automl.qc.nitrate_placement import nitrate_template
+    # La at origin, 8 O donors at 2.4 A, 1 H far away
+    dirs = np.array([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0],
+                     [0, 0, 1], [0, 0, -1], [0.7, 0.7, 0], [-0.7, -0.7, 0]],
+                    dtype=float)
+    dirs /= np.linalg.norm(dirs, axis=1, keepdims=True)
+    sym = ["La"] + ["O"] * 8 + ["H"]
+    xyz = np.vstack([np.zeros(3), dirs * 2.4, np.array([0.0, 0.0, 5.0])])
+    nsym, ntpl = nitrate_template()
+    centre = np.array([7.0, 0.0, 0.0]) if not inner else np.array([2.5, 0.0, 0.0])
+    nxyz = ntpl + centre
+    if break_no:
+        nxyz[1] = nxyz[0] + (nxyz[1] - nxyz[0]) * 1.6      # stretched N-O
+    if pyramidal:
+        nxyz[0] = nxyz[0] + np.array([0.0, 0.0, 0.45])     # N out of the O3 plane
+    if h_offset is not None:
+        xyz[9] = nxyz[1] + np.array([h_offset, 0.0, 0.0])  # H onto a nitrate O
+    return sym + nsym, np.vstack([xyz, nxyz])
+
+
+def _record(tmp_path, sym, xyz, n0):
+    n = tmp_path / "neutral.xyz"; c = tmp_path / "control.xyz"
+    _write_xyz(n, sym, xyz)
+    _write_xyz(c, sym[:n0], xyz[:n0])
+    import automl.qc.neutralize_report as R
+    R.REPO = tmp_path
+    return {"geometry_key": "t", "metal": "La", "n_add": 1,
+            "cn_ligand_in": 8, "neutral_xyz": "neutral.xyz",
+            "control_xyz": "control.xyz",
+            "neutral": {"xtb_converged": True, "meets_target": True},
+            "control": {"xtb_converged": True, "meets_target": True}}
+
+
+def test_gates_accept_a_clean_synthetic_structure(tmp_path):
+    from automl.qc.neutralize_report import gate_structure
+    sym, xyz = _synthetic(tmp_path)
+    g = gate_structure(_record(tmp_path, sym, xyz, 10))
+    assert g["reject_code"] == "accepted", g
+
+
+def test_g2_rejects_proton_transfer(tmp_path):
+    """The most dangerous silent failure in the pipeline.
+
+    A -1 anion against an acidic proton gives HNO3 + deprotonated ligand: same
+    formula, same total charge, converged, plausible -- and invisible to every
+    composition or charge check. Only the H...O distance sees it.
+    """
+    from automl.qc.neutralize_report import gate_structure
+    sym, xyz = _synthetic(tmp_path, h_offset=0.98)   # H bonded to a nitrate O
+    g = gate_structure(_record(tmp_path, sym, xyz, 10))
+    assert g["reject_code"] == "NITRATE_PROTONATED", g
+    assert g["min_H_to_nitrate_O"] < 1.40
+
+
+def test_g2_rejects_a_broken_nitrate(tmp_path):
+    from automl.qc.neutralize_report import gate_structure
+    sym, xyz = _synthetic(tmp_path, break_no=True)
+    g = gate_structure(_record(tmp_path, sym, xyz, 10))
+    assert g["reject_code"] == "NITRATE_BROKEN", g
+
+
+def test_g2_rejects_a_pyramidalised_nitrate(tmp_path):
+    from automl.qc.neutralize_report import gate_structure
+    sym, xyz = _synthetic(tmp_path, pyramidal=True)
+    g = gate_structure(_record(tmp_path, sym, xyz, 10))
+    assert g["reject_code"] == "NITRATE_PYRAMIDAL", g
+
+
+def test_g3_flags_an_ion_that_migrated_inner_sphere(tmp_path):
+    """Real chemistry, but it breaks the ligand-undisturbed premise.
+
+    Quarantined for review rather than silently absorbed into either bucket.
+    """
+    from automl.qc.neutralize_report import gate_structure
+    sym, xyz = _synthetic(tmp_path, inner=True)
+    g = gate_structure(_record(tmp_path, sym, xyz, 10))
+    assert g["reject_code"] == "MODE_MIGRATED", g
