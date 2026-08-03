@@ -299,6 +299,31 @@ def pretrain(model: SimplicialNet, cache: ComplexCache, complex_ids: list[int],
 
 
 # ---------------------------------------------------------------------------
+def rebuild_from_differences(means: dict[int, float],
+                             diffs: dict[tuple[int, int], float]
+                             ) -> dict[int, float]:
+    """Replace a chain's adjacent increments while preserving its overall level.
+
+    ``means`` maps metal index -> the level head's cell mean.  ``diffs`` maps
+    (lighter, heavier) -> the predicted ``y_lighter - y_heavier``.  Walking the
+    chain reproduces every supplied difference exactly; gaps with no supplied
+    difference keep the level head's own spacing.  The result is then shifted so
+    its mean equals the input's, because the metric scores DIFFERENCES and the
+    block's absolute level is the level head's job, not the pair head's.
+
+    Extracted from ``run_fold`` so the arithmetic can be tested without a GPU.
+    """
+    ks = sorted(means)
+    new = dict(means)
+    for a_, b_ in zip(ks[:-1], ks[1:]):
+        if (a_, b_) in diffs:
+            new[b_] = new[a_] - float(diffs[(a_, b_)])
+        else:
+            new[b_] = new[a_] + (means[b_] - means[a_])
+    off = (np.mean([means[k] for k in ks]) - np.mean([new[k] for k in ks]))
+    return {k: new[k] + off for k in ks}
+
+
 def _cond_columns(cfg) -> list[int]:
     """Design-matrix positions of the experimental-condition columns (T3).
 
@@ -565,6 +590,63 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                               .squeeze(-1).cpu().numpy())
         return outs * ysd + ymu
 
+    def _reconcile(level_pred, idx, Xs):
+        """Make the pair head's skill reach the metric.
+
+        The metric averages predictions per (block, metal) and differences
+        neighbours.  A pair head trained to predict dy sits on a different
+        pathway entirely, so however well it does, the scored quantity never
+        sees it -- which is the most likely reason T2/T2W/T2X all lost.
+
+        Fix: keep the level head's overall level inside each block, and replace
+        its ADJACENT INCREMENTS by the pair head's.  Exact, not a fit: walking
+        the chain from the block mean reproduces the requested differences by
+        construction, and non-adjacent gaps keep the level head's own spacing.
+        Rows inherit their cell's shift, so per-row predictions -- what the
+        metric consumes -- carry it.
+        """
+        model.eval()
+        blk = blk_all[idx]
+        lidx = lidx_all[idx]
+        adj = np.array(level_pred, dtype=np.float64, copy=True)
+        with torch.no_grad():
+            for b in np.unique(blk):
+                sel = np.flatnonzero(blk == b)
+                metals = np.unique(lidx[sel])
+                if len(metals) < 2:
+                    continue
+                # cell means from the level head
+                m = {int(k): float(adj[sel][lidx[sel] == k].mean())
+                     for k in metals}
+                ks = sorted(m)
+                # one representative row per metal, for the pair head
+                rep = {int(k): sel[np.flatnonzero(lidx[sel] == k)[0]]
+                       for k in metals}
+                ids = sorted({int(cplx[idx[r]]) for r in rep.values()})
+                remap = {c: i for i, c in enumerate(ids)}
+                emb = _encode(ids)
+                rows_r = np.array([idx[rep[k]] for k in ks])
+                gather = torch.as_tensor([remap[int(cplx[r])] for r in rows_r],
+                                         device=device)
+                e = _centre(emb[gather], blk_all[rows_r])
+                pos = np.array([int(np.flatnonzero(idx == r)[0])
+                                for r in rows_r])
+                tab = torch.as_tensor(Xs[pos], device=device)
+                if cond_idx and getattr(model, "film", None) is not None:
+                    e = model.modulate(e, tab[:, cond_idx])
+                er = torch.cat([e, tab], -1)
+                diffs = {}
+                for a_, b_ in zip(range(len(ks) - 1), range(1, len(ks))):
+                    if ks[b_] - ks[a_] != 1:
+                        continue          # non-adjacent: keep the level spacing
+                    diffs[(ks[a_], ks[b_])] = float(model.pair_forward(
+                        er, torch.tensor([a_], device=device),
+                        torch.tensor([b_], device=device)).item()) * ysd
+                new = rebuild_from_differences(m, diffs)
+                for k in ks:
+                    adj[sel[lidx[sel] == k]] += new[k] - m[k]
+        return adj
+
     # Row index -> position in the standardised training matrix.
     fit_pos = {int(r): i for i, r in enumerate(fit_idx)}
 
@@ -744,7 +826,10 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                     [remap[c] for c in cplx[rows]], device=device)],
                     blk_all[rows])
                 emb_out[rows] = e.cpu().numpy()
-    return _predict(te_idx, Xte)
+    out = _predict(te_idx, Xte)
+    if cfg.get("pair_reconcile") and getattr(model, "pair_head", None) is not None:
+        out = _reconcile(out, te_idx, Xte)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -823,6 +908,14 @@ def main() -> int:
                          "scalar level predictions.")
     ap.add_argument("--pair-head-weight", type=float, default=1.0,
                     help="weight on the T2 pairwise loss")
+    ap.add_argument("--pair-reconcile", action="store_true",
+                    help="POST-HOC (campaign 3): at inference, adjust the "
+                         "level head's per-(block,metal) means so their "
+                         "adjacent differences match the pair head's "
+                         "predictions. Without this the pair head's skill "
+                         "never reaches the metric, which scores differences "
+                         "of LEVEL predictions on a pathway the pair head does "
+                         "not touch.")
     ap.add_argument("--film", action="store_true",
                     help="CAMPAIGN3 T3: FiLM the structural embedding on the "
                          "cond__ columns, so 45 diluents and 9 acids reach the "
@@ -1029,6 +1122,7 @@ def main() -> int:
     cfg["pair_head"] = args.pair_head
     cfg["pair_head_weight"] = args.pair_head_weight
     cfg["film"] = args.film
+    cfg["pair_reconcile"] = args.pair_reconcile
     cfg["node_angular"] = args.node_angular
     cfg["angular_readout"] = args.angular_readout
     cfg["attn_pool"] = args.attn_pool
@@ -1164,6 +1258,7 @@ def main() -> int:
             + ("_notri" if args.no_triangles else "")
             + ("_ph" if args.pair_head else "")
             + ("_film" if args.film else "")
+            + ("_rec" if args.pair_reconcile else "")
             + ("_xbm" if args.extra_block_mean else "")
             + ("_nang" if args.node_angular else "")
             + ("_arod" if args.angular_readout else "")
@@ -1189,7 +1284,8 @@ def main() -> int:
                                  "pair_loss_weight", "select_on",
                                  "level_weight", "block_key",
                                  "no_triangles", "pair_head",
-                                 "pair_head_weight", "film", "extra_block_mean",
+                                 "pair_head_weight", "film",
+                                 "pair_reconcile", "extra_block_mean",
                                  "node_angular",
                                  "angular_readout", "attn_pool",
                                  "radial_bins", "radial_max",

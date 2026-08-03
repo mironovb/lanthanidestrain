@@ -500,3 +500,39 @@ def test_pair_forward_is_antisymmetric_in_its_difference_channel():
     d_ij = e[i] - e[j]
     d_ji = e[j] - e[i]
     torch.testing.assert_close(d_ij, -d_ji)
+
+
+def test_rebuild_from_differences_reproduces_the_requested_gaps():
+    """The reconciliation must impose the pair head's differences exactly."""
+    from automl.topo.train import rebuild_from_differences
+    means = {1: 0.5, 2: 0.2, 3: -0.4, 4: -0.9}
+    diffs = {(1, 2): 0.7, (2, 3): 0.1, (3, 4): -0.2}
+    new = rebuild_from_differences(means, diffs)
+    for (a, b), d in diffs.items():
+        assert new[a] - new[b] == pytest_approx(d)
+
+
+def test_rebuild_from_differences_preserves_the_block_level():
+    """Only the shape across metals may change; the offset is the level head's.
+
+    The metric scores differences, so injecting a level shift would move
+    predictions without touching the quantity being scored -- pure risk.
+    """
+    from automl.topo.train import rebuild_from_differences
+    means = {1: 3.0, 2: 2.0, 3: 1.0}
+    new = rebuild_from_differences(means, {(1, 2): 5.0, (2, 3): -4.0})
+    assert np.mean(list(new.values())) == pytest_approx(np.mean(list(means.values())))
+
+
+def test_rebuild_from_differences_keeps_spacing_where_no_pair_is_given():
+    """A gap the pair head cannot speak for (non-adjacent) is left alone."""
+    from automl.topo.train import rebuild_from_differences
+    means = {1: 0.0, 2: -1.0, 4: -3.0}     # 2->4 is not adjacent
+    new = rebuild_from_differences(means, {(1, 2): 0.5})
+    assert new[1] - new[2] == pytest_approx(0.5)
+    assert new[4] - new[2] == pytest_approx(means[4] - means[2])
+
+
+def pytest_approx(v):
+    import pytest
+    return pytest.approx(v, abs=1e-9)
