@@ -213,10 +213,23 @@ def gate_structure(rec: dict) -> dict:
         g["reject_detail"] = str([tuple(map(int, x)) for x in diff[:20]])
         g["reject_code"] = "CONNECTIVITY_CHANGED"; return g
 
-    # --- G5 coordination number ------------------------------------------
+    # --- G5 coordination number (Amendment 2) -----------------------------
+    # Reference is the CONTROL, not the shipped geometry: re-relaxation alone
+    # changes the ligand CN in 49% of structures, so comparing against shipped
+    # charged the anion for changes it did not cause.
+    #
+    # And the bound allows displacement, because a bidentate nitrate entering a
+    # saturated sphere MUST displace ligand donors -- that competition is the
+    # hypothesis under Amendment 1, so a gate forbidding it cannot stand.  The
+    # allowance is the number of sites a bidentate nitrate occupies, derived
+    # from the observed binding mode rather than fitted to an accept rate.
+    g["cn_ligand_shipped"] = int(rec.get("cn_ligand_in", -1))
+    g["cn_ligand_control"] = ligand_cn(cs, cc, mi)
     g["cn_ligand_out"] = ligand_cn(ns[:n0], nc[:n0], mi)
-    g["cn_ligand_in"] = int(rec.get("cn_ligand_in", -1))
-    if g["cn_ligand_in"] >= 0 and g["cn_ligand_out"] != g["cn_ligand_in"]:
+    displaced = g["cn_ligand_control"] - g["cn_ligand_out"]
+    g["donors_displaced"] = int(displaced)
+    g["displacement_allowance"] = int(2 * g["n_inner_nitrate"])
+    if displaced > g["displacement_allowance"] or displaced < -1:
         g["reject_code"] = "CN_CHANGED"; return g
 
     # --- G6 convergence, both arms ---------------------------------------
@@ -281,7 +294,7 @@ def main() -> int:
                   f"{int(a['n_add'].sum())} placed "
                   f"({a['n_inner_nitrate'].sum()/max(a['n_add'].sum(),1):.0%})")
         for col in ("rmsd_vs_control", "dLn_donor_max_delta", "lnn_max",
-                    "min_H_to_nitrate_O"):
+                    "min_H_to_nitrate_O", "donors_displaced"):
             if col in a and a[col].notna().any():
                 print(f"\n  {col:24s} median {a[col].median():.3f}  "
                       f"p95 {a[col].quantile(.95):.3f}  max {a[col].max():.3f}")

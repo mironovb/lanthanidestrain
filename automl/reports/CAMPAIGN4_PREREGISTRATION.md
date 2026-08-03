@@ -163,3 +163,65 @@ and the nitrate coordinated in addition.
 The decision rule, the +0.005 gate, the 29-look count, the 16-seeds-a-side confirmatory
 design, the replacement-not-augmentation declaration, and the 80 % accepted-fraction
 floor all stand exactly as pre-registered.
+
+---
+
+## Amendment 2 — the CN gate used the wrong reference, and forbade the physics (31 July 2026)
+
+Written **before** any structure was re-accepted under the revised gate. The pilot
+(49 structures, 16 whole ligand families) accepted only **59.2 %**, below the
+pre-registered 80 % floor, with `CN_CHANGED` accounting for 19 of the 20 rejections.
+Two separate defects, both mine.
+
+### Defect 1 — wrong reference
+
+G5 compared the ligand CN of the **shipped** geometry against the **relaxed neutral**
+one. Measured over the pilot:
+
+| comparison | ligand CN changed |
+|---|---|
+| shipped → control (re-relaxation alone, no anion) | **49 %** |
+| control → neutral (the anion's effect) | 29 % |
+| shipped → neutral (what the gate tested) | 41 % |
+
+Re-relaxation alone moves the CN in half of all structures, so the gate was charging
+the anion for changes it did not cause. This is exactly the confound the matched
+control exists to remove, and G5 simply failed to use it. **The reference becomes the
+control.**
+
+### Defect 2 — the gate forbade the effect under test
+
+Requiring the ligand CN to be *unchanged* is incompatible with inner-sphere
+competition: a bidentate nitrate entering a saturated sphere must displace ligand
+donors. Mean CN falls 9.76 → 9.31 from control to neutral. Under Amendment 1 that
+competition is the hypothesis, so a gate forbidding it cannot stand.
+
+**Revised G5:** `displaced = cn_ligand(control) − cn_ligand(neutral)` must satisfy
+`−1 ≤ displaced ≤ 2 × n_inner_nitrate`. The bound is the number of coordination sites
+a bidentate nitrate occupies — derived from the binding mode, not fitted to an accept
+rate.
+
+### Why this is not "loosening until it passes"
+
+The pilot contains its own null. Split by how many nitrates actually coordinated:
+
+| inner-sphere nitrates | n | ligand donors displaced (mean) | max |
+|---|---|---|---|
+| **0** | 8 | **+0.00** | **0** |
+| 1 | 35 | +0.60 | 2 |
+| 2 | 6 | +0.17 | 1 |
+
+**When no nitrate coordinates, exactly zero donors are displaced.** The ligand loses
+donors only when a nitrate actually binds, and never more than that nitrate could
+occupy. A gate that had been loosened to fit would not produce that structure.
+
+The revised gate accepts 49/49 of the pilot. Every other gate is unchanged and still
+active — nitrate integrity, protonation, detachment, and covalent connectivity, which
+remains the load-bearing structural check.
+
+### Recorded as a finding in its own right
+
+That **49 % of structures change their measured coordination number under
+re-optimisation alone** is a property of the 3.10 Å hard-cutoff CN measure, not of this
+campaign, and it bears on any re-optimisation in this project. It is reported in the
+results regardless of how campaign 4 turns out.
