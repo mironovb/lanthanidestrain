@@ -219,3 +219,26 @@ def test_withdrawn_numbers_are_not_asserted(token, why):
         f"{token} ({why}) is asserted without a withdrawal marker at "
         f"{offenders}. Strike it through in place, or move it below the "
         f"erratum heading.")
+
+
+def test_campaign3_anchor_reproduces_the_sweep2_anchor():
+    """D0 and A0 are the same configuration and must give the same number.
+
+    Campaign 3 keeps the sweep2 anchor unchanged precisely so the two campaigns
+    are comparable.  Determinism makes that checkable rather than assumed: if
+    these ever diverge, something in the shared training path moved and every
+    cross-campaign comparison in the reports is void.
+    """
+    a = REPORTS / "sweep2_cells.csv"
+    b = REPORTS / "c3_cells.csv"
+    if not (a.exists() and b.exists()):
+        pytest.skip("campaign CSVs not both present")
+    s2 = pd.read_csv(a).query("cell=='A0'")
+    c3 = pd.read_csv(b).query("cell=='D0'")
+    if s2.empty or c3.empty:
+        pytest.skip("anchor row missing")
+    for col in ("tune_adj_binned", "tune_adj_strict", "tune_r2_overall"):
+        assert float(s2[col].iloc[0]) == pytest.approx(
+            float(c3[col].iloc[0]), abs=1e-6), (
+            f"the campaign-3 anchor no longer reproduces the sweep2 anchor on "
+            f"{col}; cross-campaign comparisons are void until this is resolved")
