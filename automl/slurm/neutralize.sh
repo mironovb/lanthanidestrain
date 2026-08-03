@@ -28,6 +28,15 @@ if [[ "${MODE:-run}" == "smoke" ]]; then
   echo "SMOKE DONE $(date -Is)"
   exit 0
 fi
+if [[ "${MODE:-run}" == "charges" ]]; then
+  # second pass: one GFN2 single point per arm, to attach per-atom Mulliken
+  # charges.  Kept separate so the optimisations are never repeated for it.
+  python3 -u -m automl.qc.neutralize --charges \
+      --shard "${SLURM_ARRAY_TASK_ID:-0}" --num-shards "${NSHARDS:-1}" \
+      --workers "${SLURM_CPUS_PER_TASK}"
+  echo "CHARGES DONE $(date -Is)"
+  exit 0
+fi
 if [[ "${MODE:-run}" == "pilot" ]]; then
   python3 -u -m automl.qc.neutralize --pilot "${PILOT:-40}" \
       --workers "${SLURM_CPUS_PER_TASK}" --timeout 14400

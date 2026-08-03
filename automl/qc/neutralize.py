@@ -261,6 +261,75 @@ def neutralize_one(row, *, threads: int = 1, timeout: int = 14400,
     return _write(dest, out)
 
 
+def write_extxyz_with_charges(path: Path, symbols, coords, charges, *,
+                              energy_ev, charge: int, solvent: str) -> None:
+    """extxyz carrying per-atom Mulliken charges.
+
+    ``reoptimize.write_extxyz`` writes only species+pos, which makes
+    ``infer_charge`` return (None, "missing_xtb_properties") downstream.  That
+    omission is precisely why ``automl/qc/conformer_charges.py`` had to exist:
+    a structure set lacking per-atom charges is separable from one that has
+    them, so "charge missing" becomes a marker telling a model which structures
+    were generated.  CAMPAIGN4_PREREGISTRATION section 3 forbids repeating it.
+    """
+    n = len(symbols)
+    head = (f'Properties=species:S:1:pos:R:3:charge:R:1 '
+            f'energy={float(energy_ev):.8f} total_charge={int(charge)} '
+            f'solvent="{solvent}" pbc="F F F"')
+    lines = [str(n), head]
+    for s_, c, q in zip(symbols, coords, charges):
+        lines.append(f"{s_:2s} {c[0]:15.8f} {c[1]:15.8f} {c[2]:15.8f} {float(q):12.6f}")
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text("\n".join(lines) + "\n")
+    os.replace(tmp, path)
+
+
+def add_charges_one(rec_path: Path, *, threads: int = 1, timeout: int = 3600,
+                    overwrite: bool = False) -> dict:
+    """One GFN2 single point per arm, to attach Mulliken charges.
+
+    Run as a separate pass rather than inside the ladder so the expensive
+    optimisations never have to be repeated when this is added or fixed.
+    """
+    rec = json.loads(rec_path.read_text())
+    out = {"geometry_key": rec.get("geometry_key"), "status": "ok"}
+    if rec.get("reject_code") not in (None, "accepted"):
+        out["status"] = "skipped_rejected"; return out
+    if rec.get("charges_done") and not overwrite:
+        out["status"] = "cached"; return out
+    binary = xb.find_xtb()
+    for arm, chg in (("control", int(rec.get("charge_in", 0))), ("neutral", 0)):
+        rel = rec.get(f"{arm}_xyz")
+        if not rel:
+            out["status"] = f"no_{arm}_xyz"; return out
+        path = _REPO_ROOT / rel
+        lines = path.read_text().splitlines()
+        n = int(lines[0].split()[0])
+        sym, xyz = [], []
+        for ln in lines[2:2 + n]:
+            f = ln.split(); sym.append(f[0])
+            xyz.append([float(f[1]), float(f[2]), float(f[3])])
+        xyz = np.asarray(xyz, dtype=float)
+        sp = xb.single_point(sym, xyz, charge=chg, solvent=SOLVENT,
+                             threads=threads, timeout=timeout, binary=binary)
+        q = sp.get("partial_charges")
+        if not sp.get("ok") or q is None or len(q) != n:
+            out["status"] = f"{arm}_sp_failed:{sp.get('reason', 'no_charges')}"
+            return out
+        # the charge sum must recover the charge the SP was run at, or the
+        # electronic structure is not what the label says it is
+        if abs(float(np.sum(q)) - chg) > 0.05:
+            out["status"] = f"{arm}_charge_sum_bad:{float(np.sum(q)):.3f}"
+            return out
+        write_extxyz_with_charges(path, sym, xyz, q,
+                                  energy_ev=sp.get("energy_ev", 0.0),
+                                  charge=chg, solvent=SOLVENT)
+        out[f"{arm}_mulliken_sum"] = float(np.sum(q))
+    rec["charges_done"] = True
+    _write(rec_path, rec)
+    return out
+
+
 def _write(dest: Path, rec: dict) -> dict:
     tmp = dest.with_suffix(".tmp")
     tmp.write_text(json.dumps(rec, indent=1, default=str))
@@ -287,7 +356,28 @@ def main() -> int:
     ap.add_argument("--pilot", type=int, default=0,
                     help="whole ligand families, not random complexes")
     ap.add_argument("--overwrite", action="store_true")
+    ap.add_argument("--charges", action="store_true",
+                    help="second pass: attach per-atom Mulliken charges to every "
+                         "accepted structure. Separate from the ladder so the "
+                         "optimisations never have to be repeated for it.")
     args = ap.parse_args()
+
+    if args.charges:
+        recs = sorted((OUT_ROOT / "records").glob("*.json"))
+        recs = recs[args.shard::args.num_shards]
+        print(f"[charges] {len(recs)} records, {args.workers} workers", flush=True)
+        stats: dict[str, int] = {}
+        with ThreadPoolExecutor(max_workers=args.workers) as ex:
+            futs = [ex.submit(add_charges_one, r, threads=args.threads,
+                              timeout=3600, overwrite=args.overwrite)
+                    for r in recs]
+            for i, f in enumerate(as_completed(futs), 1):
+                st = f.result().get("status", "?")
+                stats[st] = stats.get(st, 0) + 1
+                if i % 50 == 0:
+                    print(f"  [{i}/{len(recs)}] {stats}", flush=True)
+        print(f"[charges] {stats}", flush=True)
+        return 0
 
     jobs = job_table()
     # HNO3 only: placing nitrate on a complex measured in HCl is knowingly wrong
