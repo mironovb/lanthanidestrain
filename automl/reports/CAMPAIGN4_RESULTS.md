@@ -36,8 +36,8 @@ the same molecule at a new level moves it by median 1.87 Å, so without it
 
 | | |
 |---|---|
-| records | 682 of 683 (one structure exceeded the wall clock) |
-| **accepted** | **627 (91.9 %)**, above the pre-registered 80 % floor |
+| records | **683 of 683** |
+| **accepted** | **627 (91.8 %)**, above the pre-registered 80 % floor |
 | family-correlated failure | none — no REVIEW banner |
 | structures carrying per-atom Mulliken charges | 679 |
 
@@ -45,8 +45,9 @@ Rejections, which vindicate the gates rather than merely passing them:
 
 | code | n | what it caught |
 |---|---|---|
-| `LIGAND_MOVED` | 43 | wholesale conformational change past 2.5 Å |
+| `LIGAND_MOVED` | 44 | wholesale conformational change past 2.5 Å |
 | `CN_CHANGED` | 4 | displacement beyond what a bound nitrate can occupy |
+| `CHARGE_UNRECOVERABLE` | 3 | Mulliken sum not an integer; n_add refused rather than guessed |
 | **`NITRATE_PROTONATED`** | **3** | **HNO₃ + deprotonated ligand: same formula, same total charge, converged, and invisible to every composition or charge check** |
 | `NITRATE_PYRAMIDAL` | 1 | |
 | **`CONNECTIVITY_CHANGED`** | **1** | a bond formed or broken inside the ligand |
@@ -120,8 +121,9 @@ pre-registration with its own held-out half, not a result of this one.
   kerosene or dodecane, and the partition itself remains unrepresented.
 - 4 seeds per arm, legitimate only because `--deterministic` makes runs
   bit-identical.
-- One structure exceeded the wall clock and is absent from all three arms
-  equally, so no arm is advantaged.
+- The final structure completed after the assets were built, and was rejected
+  (`LIGAND_MOVED`), so the accepted set is exactly the 627 the assets contain.
+  Nothing eligible is missing from them.
 
 ---
 
