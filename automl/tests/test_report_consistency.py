@@ -66,6 +66,10 @@ CLAIMS = [
      ["CAMPAIGN3_RESULTS.md"]),
     ("campaign3 T3 gain", "c3_cells.csv", "cell=='T3'", "gain_vs_D0",
      ["CAMPAIGN3_RESULTS.md"]),
+    ("campaign4 neutral gain", "c4_cells.csv", "cell=='neutral'",
+     "gain_vs_control", ["CAMPAIGN4_RESULTS.md"]),
+    ("campaign4 shipped gain", "c4_cells.csv", "cell=='shipped'",
+     "gain_vs_control", ["CAMPAIGN4_RESULTS.md"]),
 ]
 
 
@@ -246,6 +250,43 @@ def test_campaign3_reports_a_null_and_spends_no_confirmatory_look():
     assert not (REPORTS / "c3_test.csv").exists(), (
         "c3_test.csv exists, so a confirmatory look was spent -- but no cell "
         "cleared the screening gate that authorises one")
+
+
+def test_campaign4_reports_a_null_and_spends_no_confirmatory_look():
+    """No arm cleared the gate, so no confirmatory contrast may exist.
+
+    The strict-key value (+0.0188) is larger than the gated binned one
+    (+0.0040) and is exactly the number that would be tempting to promote after
+    the fact.  This pins that it was not: if c4_test.csv ever appears, a
+    confirmatory look was spent on an arm that did not earn one, and the
+    report's null plus its intact 29-look budget become false.
+    """
+    cells = REPORTS / "c4_cells.csv"
+    if not cells.exists():
+        pytest.skip("c4_cells.csv not present")
+    d = pd.read_csv(cells)
+    best = d[d["cell"] != "control"]["gain_vs_control"].max()
+    assert best <= 0.005, (
+        f"a campaign-4 arm now clears the +0.005 gate at {best:+.4f}; "
+        f"CAMPAIGN4_RESULTS.md asserts a null and must be revised")
+    assert not (REPORTS / "c4_test.csv").exists(), (
+        "c4_test.csv exists, so a confirmatory look was spent -- but no arm "
+        "cleared the screening gate that authorises one")
+
+
+def test_campaign4_arms_share_one_row_set():
+    """All three arms must be scored on the same complexes.
+
+    The shipped arm once loaded the 956-complex published asset while the others
+    loaded the 627-complex subset, which made every cross-arm contrast a
+    comparison of two different datasets while looking entirely normal.
+    """
+    cells = REPORTS / "c4_cells.csv"
+    if not cells.exists():
+        pytest.skip("c4_cells.csv not present")
+    d = pd.read_csv(cells)
+    assert set(d["cell"]) == {"shipped", "control", "neutral"}
+    assert (d["n_seeds"] == 4).all(), "every arm needs all four seeds"
 
 
 def test_campaign3_anchor_reproduces_the_sweep2_anchor():
