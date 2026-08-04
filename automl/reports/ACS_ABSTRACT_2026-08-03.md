@@ -72,16 +72,19 @@ same extractant under the same conditions. The dataset is 4,746 measurements ove
 162 extractants, 14 lanthanides and 110 papers, one GFN2-xTB optimized complex
 per metal, ligand and inner sphere anion, with whole extractants held out.
 
-A neural encoder over the 3D complex adds +0.035 R2 (interval +0.017 to +0.065)
-to the strongest model without 3D input, and the full combination reaches 0.267
-against 0.226. A matched control with the same architecture and only the 3D
-encoder removed adds +0.006 (-0.017 to +0.018), so the gain is structural rather
-than an ensembling artifact. The effect is not topological: deleting the
-triangles from the Vietoris-Rips complexes costs nothing and a plain distance
-network earns the same slot. Under strict condition blocking the estimate falls
-to +0.018 and is no longer clear of zero, and the noise floor of the metric is
-not identifiable from this data. We report the negative results alongside, since
-the pattern in them constrains what this metric can use.
+A neural encoder over the 3D complex improves adjacent lanthanide separation over
+the strongest model built without 3D input, and the gain carries through to the
+full combination of gradient boosting, a fingerprint network and the encoder. A
+matched control with the same architecture, objective, folds and seeds and only
+the 3D encoder removed gives no such gain, so the improvement is structural
+rather than an ensembling artifact. The effect is not topological: deleting the
+triangles from the Vietoris-Rips complexes costs nothing, and a plain distance
+network with no simplicial structure earns the same slot. The size depends on how
+strictly identical conditions are defined, and under the strictest blocking it is
+no longer clear of zero. We also cannot say what fraction of the attainable
+signal this represents, because the noise floor of the metric is not identifiable
+from this data. We report the negative results alongside, since the pattern in
+them constrains what this metric can and cannot use.
 
 ---
 
