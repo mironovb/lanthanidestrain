@@ -52,7 +52,7 @@ PRETRAIN_SEED = 42
 
 
 # ---------------------------------------------------------------------------
-def geometry_asset(name: str = "shipped", verbose: bool = False):
+def geometry_asset(name: str = "full", verbose: bool = False):
     """The simplicial asset for a geometry set, with its OWN cache.
 
     CAMPAIGN4.  Both ``build_row_table`` (which maps rows to complex indices via
@@ -65,8 +65,14 @@ def geometry_asset(name: str = "shipped", verbose: bool = False):
     its triangle-edge cache only by triangle count, so an asset loaded without
     its own path silently reuses the shipped boundary map.
     """
-    if name == "shipped":
+    if name == "full":
+        # the published 956-complex asset; the default, so nothing existing moves
         return SimplicialComplexes(verbose=verbose)
+    # Every campaign-4 arm -- INCLUDING "shipped" -- is the 627-complex subset.
+    # Returning the published asset for "shipped" was a real bug: that arm would
+    # have trained on 956 complexes and 4,746 rows while control and neutral
+    # trained on 627 and far fewer, so every cross-arm contrast would have
+    # compared two different datasets while looking entirely normal.
     from pathlib import Path as _P
     root = _P(__file__).resolve().parents[2] / "automl/artifacts/vr_neutral" / name
     vr = root / "vietoris_rips_inputs.npz"
@@ -78,7 +84,7 @@ def geometry_asset(name: str = "shipped", verbose: bool = False):
 
 
 def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
-                    match_rows: str = "snn", geometry: str = "shipped") -> tuple[pd.DataFrame, np.ndarray, list[str]]:
+                    match_rows: str = "snn", geometry: str = "full") -> tuple[pd.DataFrame, np.ndarray, list[str]]:
     """Rows backed by this arm's 3D asset, plus their tabular design matrix.
 
     The two arms key off different assets (956 VR complexes vs 953 persistence
@@ -932,8 +938,8 @@ def main() -> int:
                          "scalar level predictions.")
     ap.add_argument("--pair-head-weight", type=float, default=1.0,
                     help="weight on the T2 pairwise loss")
-    ap.add_argument("--geometry", default="shipped",
-                    choices=("shipped", "control", "neutral"),
+    ap.add_argument("--geometry", default="full",
+                    choices=("full", "shipped", "control", "neutral"),
                     help="CAMPAIGN4: which geometry set to train on. 'control' "
                          "is the same complexes re-optimised with no anion; "
                          "'neutral' adds counter-ions to charge-neutralise. "
@@ -1129,7 +1135,7 @@ def main() -> int:
         # ConformerComplexes is a superset wrapper: conformer 0 is the shipped
         # geometry and index_of/__len__ match SimplicialComplexes exactly, so
         # the row set is identical whichever is loaded.
-        if args.geometry != "shipped":
+        if args.geometry != "full":
             S = geometry_asset(args.geometry)
             print(f"[topo] geometry set '{args.geometry}': {len(S)} complexes",
                   flush=True)
@@ -1297,7 +1303,7 @@ def main() -> int:
             + ("_ph" if args.pair_head else "")
             + ("_film" if args.film else "")
             + ("_rec" if args.pair_reconcile else "")
-            + ("" if args.geometry == "shipped" else f"_{args.geometry}")
+            + ("" if args.geometry == "full" else f"_{args.geometry}")
             + ("_xbm" if args.extra_block_mean else "")
             + ("_nang" if args.node_angular else "")
             + ("_arod" if args.angular_readout else "")

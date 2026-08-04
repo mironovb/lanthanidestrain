@@ -56,7 +56,7 @@ CELLS: dict[str, dict] = {
 AXIS = {"shipped": "as published", "control": "re-optimised, no anion",
         "neutral": "neutralised"}
 
-DEFAULTS = {"geometry": "shipped", "pair_head": False,
+DEFAULTS = {"geometry": "full", "pair_head": False,
             "pair_head_weight": 1.0, "film": False, "pair_reconcile": False,
             "preset": "baseline_2d", "node_angular": False,
             "angular_readout": False, "attn_pool": False, "aux_target": None,
