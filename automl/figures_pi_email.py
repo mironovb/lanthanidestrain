@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-"""The three figures that go with `reports/PI_EMAIL_2026-08-03.md`.
+"""The figures that go with `reports/PI_REPLY_2026-08-03.md`.
 
-One figure per claim the email actually makes, in the order it makes them:
+One figure per claim the email makes, lettered so they do not collide with the
+figure numbers already used in the thread:
 
-1. ``email_fig1_result``  -- the levels: what each model scores, and what the
-   deployable combination reaches with and without the 3D arm.
-2. ``email_fig2_control`` -- the three pre-registered contrasts, including the
-   matched control whose null is what makes this a structural result rather
-   than an ensembling one.
-3. ``email_fig3_limits``  -- the two qualifications the email carries: the
-   effect is not topological, and its size depends on how strictly "identical
-   conditions" is defined.
+* ``email_figA_coverage`` -- the row imbalance across the series against the
+  imbalance that survives into the pairs the metric actually scores.
+* ``email_figB_result``   -- the levels: what each model scores, and what the
+  deployable combination reaches with and without the 3D arm.
+* ``email_figC_control``  -- the three pre-registered contrasts, including the
+  matched control whose null is what makes this a structural result rather
+  than an ensembling one.
+* ``email_figD_limits``   -- the two qualifications the email carries: the
+  effect is not topological, and its size depends on how strictly "identical
+  conditions" is defined.
 
 House style is imported from ``automl/figures.py`` rather than redefined, so
 these sit beside the existing plots without a second visual language.
@@ -127,7 +130,7 @@ def fig_result() -> None:
         f"{no3d:.3f} without the 3D arm\nand {ctrl:.3f} when that slot holds a "
         f"model with no 3D input", loc="left", fontsize=11)
     ax.grid(axis="y", visible=False)
-    _save(fig, "email_fig1_result")
+    _save(fig, "email_figB_result")
 
 
 # ---------------------------------------------------------------------------
@@ -174,7 +177,7 @@ def fig_control() -> None:
         loc="left")
     ax.grid(axis="y", visible=False)
     ax.margins(x=0.13)
-    _save(fig, "email_fig2_control")
+    _save(fig, "email_figC_control")
 
 
 # ---------------------------------------------------------------------------
@@ -274,10 +277,47 @@ def fig_limits() -> None:
     ax2.margins(x=0.16)
     ax2.legend(loc="upper left", bbox_to_anchor=(0.0, -0.22), ncol=2,
                fontsize=8.5, columnspacing=1.2, handletextpad=0.5)
-    _save(fig, "email_fig3_limits")
+    _save(fig, "email_figD_limits")
 
 
-FIGS = {"result": fig_result, "control": fig_control, "limits": fig_limits}
+# ---------------------------------------------------------------------------
+def fig_coverage() -> None:
+    """What the row imbalance looks like after the metric's own averaging."""
+    got = _need("pair_coverage.csv")
+    if got is None:
+        print("       run: python3 -m automl.pair_coverage")
+        return
+    d = got[0].sort_values("lanthanide_index")
+    x = np.arange(len(d))
+    row_share = 100 * d["row_share"].to_numpy()
+    pair_share = 100 * d["pair_share_binned"].to_numpy()
+
+    _style()
+    fig, ax = plt.subplots(figsize=(8.6, 3.8))
+    ax.bar(x - 0.19, row_share, width=0.36, color=FCNN,
+           label="share of measurements")
+    ax.bar(x + 0.19, pair_share, width=0.36, color=TOPO,
+           label="share of the adjacent pairs the metric scores")
+    ax.set_xticks(x)
+    ax.set_xticklabels(d["metal"], fontsize=9.5)
+    ax.set_ylabel("% of the modelled dataset")
+
+    r_ratio = float(d["rows"].max() / d["rows"].min())
+    p_ratio = float(d["pairs_binned"].max() / d["pairs_binned"].min())
+    top = d.loc[d["rows"].idxmax()]
+    ax.set_title(
+        f"The imbalance shrinks at the level the metric scores\n"
+        f"{top['metal']} is {100 * float(top['row_share']):.0f} % of the rows "
+        f"but {100 * float(top['pair_share_binned']):.0f} % of the pairs; "
+        f"most-to-least sampled falls from {r_ratio:.1f}x to {p_ratio:.1f}x",
+        loc="left", fontsize=11)
+    ax.legend(loc="upper right")
+    ax.grid(axis="x", visible=False)
+    _save(fig, "email_figA_coverage")
+
+
+FIGS = {"result": fig_result, "control": fig_control, "limits": fig_limits,
+        "coverage": fig_coverage}
 
 
 def main() -> int:
