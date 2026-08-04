@@ -52,9 +52,33 @@ PRETRAIN_SEED = 42
 
 
 # ---------------------------------------------------------------------------
+def geometry_asset(name: str = "shipped", verbose: bool = False):
+    """The simplicial asset for a geometry set, with its OWN cache.
+
+    CAMPAIGN4.  Both ``build_row_table`` (which maps rows to complex indices via
+    ``index_of``) and ``ComplexCache`` (which slices the asset by those indices)
+    must use the SAME asset, or ``_cplx`` indexes a different complex than it
+    names.  That failure is silent -- every row would train on some other
+    molecule and the run would look entirely normal.
+
+    The ``cache=`` argument is equally load-bearing: SimplicialComplexes keys
+    its triangle-edge cache only by triangle count, so an asset loaded without
+    its own path silently reuses the shipped boundary map.
+    """
+    if name == "shipped":
+        return SimplicialComplexes(verbose=verbose)
+    from pathlib import Path as _P
+    root = _P(__file__).resolve().parents[2] / "automl/artifacts/vr_neutral" / name
+    vr = root / "vietoris_rips_inputs.npz"
+    if not vr.exists():
+        raise SystemExit(f"--geometry {name} needs {vr}; build it with "
+                         f"python3 -m automl.topo.build_vr_neutral --arm {name}")
+    return SimplicialComplexes(vr_path=vr, cache=root / "triangle_edges.npz",
+                               verbose=verbose)
+
+
 def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
-                    match_rows: str = "snn"
-                    ) -> tuple[pd.DataFrame, np.ndarray, list[str]]:
+                    match_rows: str = "snn", geometry: str = "shipped") -> tuple[pd.DataFrame, np.ndarray, list[str]]:
     """Rows backed by this arm's 3D asset, plus their tabular design matrix.
 
     The two arms key off different assets (956 VR complexes vs 953 persistence
@@ -74,7 +98,7 @@ def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
     # would compare two different datasets.
     key_arch = match_rows if arch == "tabular" else (
         "snn" if arch == "dist" else arch)
-    asset = (SimplicialComplexes(verbose=False) if key_arch == "snn"
+    asset = (geometry_asset(geometry) if key_arch == "snn"
              else PersistenceImages())
     key = df["geometry_feature_build_id"].astype(str)
     df = df.assign(_cplx=[asset.index_of(k) for k in key])
@@ -908,6 +932,13 @@ def main() -> int:
                          "scalar level predictions.")
     ap.add_argument("--pair-head-weight", type=float, default=1.0,
                     help="weight on the T2 pairwise loss")
+    ap.add_argument("--geometry", default="shipped",
+                    choices=("shipped", "control", "neutral"),
+                    help="CAMPAIGN4: which geometry set to train on. 'control' "
+                         "is the same complexes re-optimised with no anion; "
+                         "'neutral' adds counter-ions to charge-neutralise. "
+                         "Each loads its own triangle-edge cache. These are a "
+                         "REPLACEMENT set, never mixed within a run.")
     ap.add_argument("--pair-reconcile", action="store_true",
                     help="POST-HOC (campaign 3): at inference, adjust the "
                          "level head's per-(block,metal) means so their "
@@ -1011,7 +1042,8 @@ def main() -> int:
         raise SystemExit("--arch tabular --topology-only leaves the model no "
                          "inputs; use --arch snn/picnn --topology-only for the "
                          "topology-only ablation.")
-    df, X, cols = build_row_table(args.preset, args.arch, args.match_rows)
+    df, X, cols = build_row_table(args.preset, args.arch, args.match_rows,
+                                  geometry=args.geometry)
     if args.extra_block_mean:
         # POST-HOC diagnostic for sweep2 A1, not part of the pre-registration.
         #
@@ -1097,8 +1129,13 @@ def main() -> int:
         # ConformerComplexes is a superset wrapper: conformer 0 is the shipped
         # geometry and index_of/__len__ match SimplicialComplexes exactly, so
         # the row set is identical whichever is loaded.
-        S = (ConformerComplexes(verbose=False) if args.conformers > 1
-             else SimplicialComplexes(verbose=False))
+        if args.geometry != "shipped":
+            S = geometry_asset(args.geometry)
+            print(f"[topo] geometry set '{args.geometry}': {len(S)} complexes",
+                  flush=True)
+        else:
+            S = (ConformerComplexes(verbose=False) if args.conformers > 1
+                 else SimplicialComplexes(verbose=False))
         # Independently, so each axis-A cell changes exactly one thing.
         cache = ComplexCache(S, args.filtration_max, args.heavy_only, device,
                              node_angular=bool(args.node_angular),
@@ -1123,6 +1160,7 @@ def main() -> int:
     cfg["pair_head_weight"] = args.pair_head_weight
     cfg["film"] = args.film
     cfg["pair_reconcile"] = args.pair_reconcile
+    cfg["geometry"] = args.geometry
     cfg["node_angular"] = args.node_angular
     cfg["angular_readout"] = args.angular_readout
     cfg["attn_pool"] = args.attn_pool
@@ -1259,6 +1297,7 @@ def main() -> int:
             + ("_ph" if args.pair_head else "")
             + ("_film" if args.film else "")
             + ("_rec" if args.pair_reconcile else "")
+            + ("" if args.geometry == "shipped" else f"_{args.geometry}")
             + ("_xbm" if args.extra_block_mean else "")
             + ("_nang" if args.node_angular else "")
             + ("_arod" if args.angular_readout else "")
@@ -1285,7 +1324,8 @@ def main() -> int:
                                  "level_weight", "block_key",
                                  "no_triangles", "pair_head",
                                  "pair_head_weight", "film",
-                                 "pair_reconcile", "extra_block_mean",
+                                 "pair_reconcile", "geometry",
+                                 "extra_block_mean",
                                  "node_angular",
                                  "angular_readout", "attn_pool",
                                  "radial_bins", "radial_max",
