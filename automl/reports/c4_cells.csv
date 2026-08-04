@@ -1,0 +1,3 @@
+cell,axis,n_seeds,tune_adj_binned,gain_vs_control,tune_adj_strict,tune_r2_overall
+shipped,as published,4,0.22625221960444009,0.004618754200189534,0.1729638966903858,0.3911620056940347
+control,"re-optimised, no anion",4,0.22163346540425055,0.0,0.16752002730402427,0.43919651960478967

@@ -244,10 +244,15 @@ def main() -> int:
                if best is not None else "none")
         print(f"  best cell: {top}, threshold +{MIN_GAIN:.3f}")
         print("""
-  NULL. No cell clears the screening threshold, so the confirmatory run is NOT
-  made. Putting the scored quantity directly into the loss -- the best-motivated
-  architecture change available -- does not move the metric, and neither does
-  making the structural representation depend on the medium.""")
+  NULL. Neither geometry arm clears the screening threshold, so the confirmatory
+  run is NOT made. Modelling the neutral extracted species -- adding counter-ions
+  so the complex carries the charge it actually has in the organic phase -- does
+  not move the adjacent-pair metric relative to the same complexes re-optimised
+  without them.
+
+  That is a statement about the representation, not about the chemistry: 36% of
+  the placed nitrates do coordinate inner-sphere, so the species really did
+  change. The metric simply does not use it.""")
         print(f"\n[c4] wrote {OUT_CELLS}")
         return 0
 
