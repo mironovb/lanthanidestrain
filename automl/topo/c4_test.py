@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Campaign 4: does modelling the NEUTRAL extracted species help?
 
-Pre-registered in ``CAMPAIGN3_PREREGISTRATION.md``, committed before the code.
+Pre-registered in ``CAMPAIGN4_PREREGISTRATION.md``, committed before the code.
 
 Structure follows ``sweep2_test``: screen on the 84 tune extractants against the
 D0 anchor, and only if a cell clears the +0.005 gate spend ONE confirmatory look
@@ -15,7 +15,7 @@ than sweep2's was.  Carrying that forward is the whole point of counting looks.
 Usage
 -----
     python3 -m automl.topo.c4_test --n-boot 400
-    python3 -m automl.topo.c4_test --confirm T2X --n-boot 400
+    python3 -m automl.topo.c4_test --confirm neutral --n-boot 400
 """
 
 from __future__ import annotations
@@ -128,7 +128,7 @@ def load_cells(verbose: bool = True, seeds: list[int] | None = None):
                            for s in sorted(frames)])
         if not np.isfinite(stack).all():
             raise SystemExit(
-                f"[c3] cell {name}: {int((~np.isfinite(stack)).sum())} "
+                f"[c4] cell {name}: {int((~np.isfinite(stack)).sum())} "
                 f"non-finite predictions. Refusing to ensemble.")
         ens = frames[sorted(frames)[0]].loc[idx].copy()
         ens["oof"] = stack.mean(axis=0)
@@ -155,7 +155,7 @@ def confirmatory(name, cells, conf, n_boot, n_seeds) -> int:
             continue
         clo, chi = _corrected(r["delta"], r["lo"], r["hi"], N_LOOKS)
         v, cv = _verdict(r["lo"], r["hi"]), _verdict(clo, chi)
-        print(f"  [{tag:6s}] {name} minus D0: delta={r['delta']:+.4f} "
+        print(f"  [{tag:6s}] {name} minus control: delta={r['delta']:+.4f} "
               f"[{r['lo']:+.4f}, {r['hi']:+.4f}] {v} | "
               f"{N_LOOKS}-look [{clo:+.4f}, {chi:+.4f}] {cv}")
         rows.append({"key": key, "cell": name, "base": "control",
@@ -173,7 +173,7 @@ def confirmatory(name, cells, conf, n_boot, n_seeds) -> int:
         if adds else
         f"SCREENING NOISE. {name} won on the 84 tune extractants and did not "
         f"replicate on the 78 confirm extractants after correction."))
-    print(f"\n[c3] wrote {OUT_TEST}")
+    print(f"\n[c4] wrote {OUT_TEST}")
     return 0
 
 
@@ -185,22 +185,22 @@ def main() -> int:
     args = ap.parse_args()
 
     tune, conf = load_split()
-    print(f"[c3] frozen split: {len(tune)} tune / {len(conf)} confirm")
+    print(f"[c4] frozen split: {len(tune)} tune / {len(conf)} confirm")
     print("\n=== cells ===")
     seed_set = (SEEDS + CONFIRM_SEEDS) if args.confirm else SEEDS
     cells, counts = load_cells(seeds=seed_set, verbose=True)
     if "control" not in cells:
-        print("\nno D0 anchor; nothing can be screened against it.")
+        print("\nthe CONTROL arm has no runs; nothing can be screened against it. The control, not the shipped arm, is the reference -- it is what separates the counter-ion from the re-optimisation.")
         return 1
 
     if args.confirm:
         short = [c for c in ("control", args.confirm)
                  if counts.get(c, 0) < len(seed_set)]
         if short and not args.allow_partial:
-            print(f"\n[c3] {short} have fewer than {len(seed_set)} seeds. The "
+            print(f"\n[c4] {short} have fewer than {len(seed_set)} seeds. The "
                   f"confirmatory contrast is pre-registered at 16 a side, BOTH "
                   f"sides replicated. Submit:\n  automl/slurm/campaign_driver.sh "
-                  f"automl/slurm/campaign3.sh 24 8 30 MODE=confirm "
+                  f"automl/slurm/campaign4.sh 24 8 30 MODE=confirm "
                   f"CELL={args.confirm}")
             return 1
         return confirmatory(args.confirm, cells, conf, args.n_boot,
@@ -208,7 +208,7 @@ def main() -> int:
 
     incomplete = [c for c, n in counts.items() if n < len(SEEDS)]
     if incomplete and not args.allow_partial:
-        print(f"\n[c3] incomplete cells {incomplete}; the screen needs all "
+        print(f"\n[c4] incomplete cells {incomplete}; the screen needs all "
               f"{len(SEEDS)} seeds (--allow-partial for an interim read that "
               f"is NOT the pre-registered screen).")
         return 1
@@ -238,7 +238,7 @@ def main() -> int:
     cand = cf[cf["cell"] != "control"]
     best = cand.loc[cand["gain_vs_control"].idxmax()] if len(cand) else None
     print("\n=== pre-registered decision "
-          "(CAMPAIGN3_PREREGISTRATION.md sec 4) ===")
+          "(CAMPAIGN4_PREREGISTRATION.md sec 4) ===")
     if best is None or float(best["gain_vs_control"]) <= MIN_GAIN:
         top = (f"{best['cell']} at {float(best['gain_vs_control']):+.4f}"
                if best is not None else "none")
@@ -248,7 +248,7 @@ def main() -> int:
   made. Putting the scored quantity directly into the loss -- the best-motivated
   architecture change available -- does not move the metric, and neither does
   making the structural representation depend on the medium.""")
-        print(f"\n[c3] wrote {OUT_CELLS}")
+        print(f"\n[c4] wrote {OUT_CELLS}")
         return 0
 
     name = str(best["cell"])
@@ -257,10 +257,10 @@ def main() -> int:
     print(f"""
   Confirmatory stage authorised, NOT run from these predictions: 16 seeds a
   side is pre-registered and the screen holds only {len(SEEDS)}.
-    automl/slurm/campaign_driver.sh automl/slurm/campaign3.sh 24 8 30 \\
+    automl/slurm/campaign_driver.sh automl/slurm/campaign4.sh 24 8 30 \\
         MODE=confirm CELL={name}
   then: python3 -m automl.topo.c4_test --confirm {name} --n-boot 400""")
-    print(f"\n[c3] wrote {OUT_CELLS}")
+    print(f"\n[c4] wrote {OUT_CELLS}")
     return 0
 
 
