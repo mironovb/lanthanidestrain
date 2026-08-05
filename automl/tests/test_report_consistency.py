@@ -252,6 +252,28 @@ def test_campaign3_reports_a_null_and_spends_no_confirmatory_look():
         "cleared the screening gate that authorises one")
 
 
+def test_campaign5_null_is_not_upgraded_by_dropping_the_correction():
+    """The uncorrected interval excludes zero; the corrected one does not.
+
+    This is the single most temptable number in the study -- an effect that
+    replicated and GREW on the held-out half, defeated only by a 30-look budget
+    carrying four campaigns of looks.  The pre-registration fixed that count
+    before the number existed, so this pins that the reported verdict stays the
+    corrected one.
+    """
+    path = REPORTS / "c5_test.csv"
+    if not path.exists():
+        pytest.skip("c5_test.csv not present")
+    d = pd.read_csv(path)
+    assert (d["verdict_corrected"] == "not distinguishable").all(), (
+        "c5_test.csv now shows a corrected verdict other than 'not "
+        "distinguishable'; CAMPAIGN5_RESULTS.md asserts a null")
+    txt = (REPORTS / "CAMPAIGN5_RESULTS.md").read_text()
+    assert "Null, by the pre-registered rule" in txt
+    # and the honest nuance must survive alongside the null
+    assert "grew" in txt and "30-look" in txt
+
+
 def test_campaign4_reports_a_null_and_spends_no_confirmatory_look():
     """No arm cleared the gate, so no confirmatory contrast may exist.
 
