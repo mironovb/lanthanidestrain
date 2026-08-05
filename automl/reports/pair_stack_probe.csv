@@ -1,0 +1,6 @@
+quantity,value
+best single arm,0.27020782938208954
+row-level nested stack,0.24721667141961712
+pair-level nested stack,0.2669301001723823
+n_tune_pairs,452.0
+n_arms,15.0
