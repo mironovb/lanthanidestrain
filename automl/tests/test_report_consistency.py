@@ -252,6 +252,44 @@ def test_campaign3_reports_a_null_and_spends_no_confirmatory_look():
         "cleared the screening gate that authorises one")
 
 
+def test_stack_fitting_mechanism_holds():
+    """The three predictions the mechanism makes must all still hold.
+
+    If any of them flips, the explanation in STACK_FITTING_RESULTS.md is wrong
+    even if the effect size survives -- and an effect with a broken mechanism is
+    a correlation, not a finding.
+    """
+    path = REPORTS / "arm_profile.csv"
+    if not path.exists():
+        pytest.skip("arm_profile.csv not present")
+    d = pd.read_csv(path)
+    four = d[d["arm"].isin(["G0", "repaired", "CatBoost", "D0"])]
+    if four.empty:
+        pytest.skip("stack arms absent")
+    assert four.sort_values("level_r2", ascending=False).iloc[0]["arm"] == "CatBoost"
+    assert four.sort_values("pair_r2", ascending=False).iloc[0]["arm"] == "D0"
+    assert four.sort_values("level_minus_pair",
+                            ascending=False).iloc[0]["arm"] == "CatBoost"
+
+
+def test_stack_fitting_effect_is_positive_where_the_mechanism_predicts():
+    """Positive with 3+ arms, and NOT with 2 -- the mechanism predicts both."""
+    path = REPORTS / "pair_fit_replication.csv"
+    if not path.exists():
+        pytest.skip("pair_fit_replication.csv not present")
+    d = pd.read_csv(path)
+    multi = d[d["arm_set"] != "2 arms"]
+    assert (multi["delta"] > 0).all(), (
+        "the pair-fitting gain is no longer positive in every multi-arm "
+        "configuration; STACK_FITTING_RESULTS.md must be revised")
+    assert (multi["frac_bootstrap_positive"] > 0.9).all()
+    two = d[d["arm_set"] == "2 arms"]
+    if not two.empty:
+        assert (two["delta"] <= 0).all(), (
+            "the 2-arm case is now positive; the mechanism predicts it should "
+            "not be, since no level-flattered arm is present")
+
+
 def test_campaign5_null_is_not_upgraded_by_dropping_the_correction():
     """The uncorrected interval excludes zero; the corrected one does not.
 
