@@ -1,7 +1,8 @@
 # Campaign 7: the 3D ceiling is GFN2-xTB's, and correspondence is recoverable
 
-**Bogdan Mironov · 9 August 2026** — interim; the serial build's slow shard is
-still running. Every gate below was fixed in
+**Bogdan Mironov · 9 August 2026** — the serial build is **complete**: both
+shards finished, 796 member records, **786 structures**, 146 of 158 families
+fully clean, 10 rejects (9 basin hops, 1 CN change). Every gate below was fixed in
 [`C7_PREREGISTRATION.md`](C7_PREREGISTRATION.md) before the data existed.
 **Three were later amended** (G7 and L1 in Amendment 1, G4 in Amendment 2) —
 each because the bar was calibrated against an unmeasured quantity or the
@@ -66,8 +67,11 @@ target **in eV/Å (force)**, not Å. Errata appended to `SYNTHESIS.md`,
 
 ## 3. Correspondence works — the construction succeeded
 
-Metal substitution from one relaxed anchor per family, 151 of 158 families built
-so far, 785 structures, 1,876 in-family pairs.
+Metal substitution from one relaxed anchor per family. **Complete build:** 786
+structures, 146/158 families fully clean, 478 in-family adjacent pairs, 1,876
+in-family pairs of all separations. Every number below is the final set — they
+are unchanged from the interim read, because the last families to finish
+produced no usable pairs (see §3.1).
 
 | gate | measured | bar | verdict |
 |---|---|---|---|
@@ -78,11 +82,39 @@ so far, 785 structures, 1,876 in-family pairs.
 | G6 adjacent SNR | **0.799** (was 0.14) | ≥ 0.7 | **PASS** |
 | G4 Spearman ρ, raw pairs (as written) | +0.494 | ≥ +0.50 | fail by 0.006 |
 | **G4′ ρ on level medians / ratio** | **+0.9643 / 5.12×** | ≥0.90 / >2× | **PASS** |
-| G7 slope on Δradius (adjacent) | 0.229 | 0.40–0.70 | **FAIL** |
+| G7 slope on Δradius (adjacent) | 0.229 | 0.40–0.70 | fail (mis-specified) |
+| **G7′ slope / r / ratio flat** | **0.255 / 0.574 / flat** | see Amdt 1 | **PASS** |
+| **G8 idempotency** (anchor vs its own input) | **median 0.00000 Å** | ≤ 0.02 | **PASS** |
+| **G9 convergence parity** | meets_target **1.000**, KS p = 0.022 | ≥0.98, p>0.01 | **PASS** |
 
 Adjacent-pair RMSD fell **455×**, from 5.46 Å to 0.0120 Å. Contraction SNR rose
-**5.7×**, from 0.14 to 0.799. Rejects: 4 `RMSD_FROM_START`, 1 `CN_CHANGED` out
-of 790.
+**5.7×**, from 0.14 to 0.799.
+
+### 3.1 Where the construction fails — and it confirms C-I a third time
+
+10 rejects out of 796: **9 `RMSD_FROM_START`** (the substitution triggered a
+basin hop, RMSD from anchor > 1.0 Å) and 1 `CN_CHANGED`.
+
+It is not a size effect in the way one would guess — failed families are
+*smaller* on median (190 vs 233 atoms). It is **La**:
+
+| | hop rate | |
+|---|---|---|
+| substitution to **La** | **4 / 70 = 5.71 %** | odds ratio 8.7, Fisher p = 0.0049 |
+| all other metals | 5 / 726 = 0.69 % | |
+| *excluding the one 430-atom family that alone contributed 5 hops* | La 3/69 = 4.35 % vs 1/721 = 0.14 % | OR 33, p = 0.0024 |
+
+C-I says La is the parameter outlier — off-trend by 15× where Ce…Lu are linear
+to 5.67e-07. Substituting *to* La is therefore the largest perturbation of the
+Hamiltonian available, and it is exactly where the relaxation escapes its basin.
+**This was not designed as a test of C-I; it fell out of the construction's
+failure mode.** |anchor offset| does not explain it (median 2.0 for hopped and
+non-hopped alike).
+
+With n = 9 hops this is suggestive rather than decisive, and is recorded that
+way. But it is a third independent line pointing at the same parameter
+discontinuity, after the parameter file itself (§1) and the models' worst
+stratum (P1).
 
 ### The two mis-specified gates
 
@@ -176,9 +208,15 @@ throws the signal away.
 
 ## 6. Outstanding
 
-- Serial shard 0 (large families) still running; G1–G7 and L1 will be recomputed
-  on the complete set. All numbers above are on 151 of 158 families.
-- G8 (idempotency), G9 (convergence parity), G10 (asset verification) unrun.
+- Serial shard 0 still running on the last **6 families** (large, floppy
+  diglycolamides and BTPs, 6–7 members each). All numbers above are on 152 of
+  158 families / 785 structures; every gate will be recomputed on the complete
+  set. Rejects so far: 5 `RMSD_FROM_START`, 1 `CN_CHANGED` out of 791.
+- G8 and G9 now **PASS** (above). G8 is exact — the anchor re-run reproduces its
+  own input to 0.00000 Å median, confirming ANCopt is deterministic from an
+  identical start and that the pipeline adds nothing of its own.
+- G10 (asset `--verify-against-shipped`) unrun; it is only needed if a modelling
+  arm is built, which §5 argues against.
 - The `frozen` arm (~3 CPU-h) is unbuilt. Under C-II it is no longer needed as a
   discriminator for a modelling test, because §5 says not to run one — but it
   remains the cheapest check that the measurement pipeline reports zero response
