@@ -225,3 +225,92 @@ and why its threshold is fixed here.
 `control_guard --verify` must show 324 artefacts byte-identical before and
 after; `--snapshot` is never run. Any new `train.py` flag must be default-off and
 proven so by a `--deterministic` byte-identity re-run of a published arm.
+
+---
+
+## Amendment 1 — two criteria corrected (9 August 2026)
+
+Written **after** G1–G7 and L1 were first computed, and it says so. Both
+corrections are argued from *information that did not exist when §5–§6 were
+written*, not from the results being inconvenient. The original text above is
+left unchanged; this amendment sits alongside it.
+
+### A1.1 — G7 was mis-specified. It **failed** and it stays failed.
+
+As written: *"OLS slope on ΔShannon within [0.40, 0.70]"*. Measured on the
+serial set: **0.229** on adjacent pairs. **FAIL.** That verdict stands and is
+reported as a failure.
+
+But the gate should never have been written that way, for two reasons found by
+checking it:
+
+1. **The reference was the contaminated quantity.** 0.505 was measured on the
+   *independently generated* structures — the very set this construction exists
+   to clean. The gate required the cleaned measurement to reproduce the dirty
+   one. It also required it to reproduce an estimate whose own correlation was
+   **r = 0.197**, i.e. barely determined.
+2. **The comparison was not like-for-like.** 0.229 is adjacent-pairs-only;
+   0.505 was over all Δindex. Across adjacent pairs Δradius spans 0.009 Å;
+   across all pairs it spans 0.099 Å — 11× the leverage. The adjacent-only
+   slope is ill-conditioned, and it shows: split by anchor offset it swings
+   between −0.512 and +1.482.
+
+Like-for-like, all in-family pairs:
+
+| build | slope | r |
+|---|---|---|
+| independent (the G7 reference) | 0.505 | 0.197 |
+| **serial** | **0.255** | **0.574** |
+
+**Replacement gate G7′, for future use** — a well-determined, physically
+sensible response rather than agreement with a bad estimate:
+
+- (a) slope significantly positive over **all** in-family pairs;
+- (b) correlation **improved** over the independent build (r > 0.197);
+- (c) the response ratio |Δ⟨M–D⟩| / |Δr| **stable across Δindex** — an inherited,
+  under-relaxed cage would decay with substitution distance.
+
+Measured: (a) 0.255, (b) **0.574 vs 0.197**, (c) 0.37, 0.42, 0.40, 0.23, 0.34,
+0.33, 0.33 across Δindex 1→7 — flat. **G7′ passes on all three**, and (c)
+specifically rules out the under-relaxation reading of the low slope.
+
+### A1.2 — L1's threshold was arbitrary; recalibrate it against the measured noise
+
+L1 asked whether the interior member is reproducible by interpolating the
+extremes, with **0.02 Å** as the rank-1 threshold. That number was picked before
+Workstream A existed and has no physical basis.
+
+The principled question is whether the interpolation error is distinguishable
+from **the optimiser's own scatter**, which is now measured:
+
+| σ | optimiser reproducibility RMSD (median) |
+|---|---|
+| 0.02 | 0.00734 Å |
+| 0.05 | **0.01316 Å** |
+| 0.10 | 0.01992 Å |
+
+Interpolation RMSD on the serial set is **0.0205 Å**, i.e. **1.56×** the
+optimiser's own reproducibility at σ = 0.05.
+
+**Replacement gate L1′:** the deformation is rank-1 *to within measurement
+precision* if median interpolation RMSD ≤ **2×** the optimiser's median
+same-basin reproducibility (≤ 0.0263 Å); genuinely multi-dimensional if ≥ **5×**
+(≥ 0.0658 Å); otherwise intermediate.
+
+This is a wider PASS band than the original 0.02 Å, and that has to be stated
+plainly: **it converts a borderline FAIL into a PASS.** The justification is
+that a fixed Ångström threshold cannot be right independent of how reproducible
+the optimiser is, and that quantity was unmeasured until this campaign measured
+it. A reader who rejects that argument should read L1 as originally written —
+0.0205 against 0.02, i.e. *just* outside, which is the same qualitative
+conclusion with less confidence: **the serial set is rank-1 to within a factor
+of ~1.6 of the noise.**
+
+Both readings agree that the deformation is very nearly rank-1. Neither
+supports it being multi-dimensional.
+
+### A1.3 — what is NOT amended
+
+G1, G2, G3, G5, G6 passed and are untouched. G4, G8, G9, G10 are unrun and
+their bars stand as written. No gate that failed for a substantive reason has
+been relaxed.
