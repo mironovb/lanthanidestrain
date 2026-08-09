@@ -568,8 +568,23 @@ Bar: median ≤ 0.005 and P90 ≤ 0.013. Passed by 26× and 20×.
 Whatever caps geometry here, it is not numerical noise. See
 [`NOISE_FLOOR.md`](NOISE_FLOOR.md).
 
-### H2. GFN2-xTB's lanthanide parameters are exactly linear in Z
-**ESTABLISHED** (a read of the shipped parameter file, no computation).
+### H2. GFN2-xTB's lanthanide parameters are linear in Z — **DOCUMENTED BY THE METHOD'S AUTHORS, not discovered here**
+**ESTABLISHED, and NOT novel.** The primary source states it outright:
+
+> **Bannwarth, Ehlert & Grimme, *J. Chem. Theory Comput.* 2019, 15, 1652–1671**
+> (DOI 10.1021/acs.jctc.8b01176), §2.4 Technical Details, p. 1660:
+>
+> *"For the lanthanides, only the parameters for Ce and Lu were freely fitted,
+> while a linear interpolation with the nuclear charge Z has been used for the
+> other elements."*
+>
+> and §2.1, p. 1655:
+>
+> *"As in GFN-xTB, the 'f-in-core' approximation is employed for lanthanides."*
+
+Our contribution is therefore **not** the fact. It is (a) an independent numerical verification that the shipped implementation matches the stated intent, and (b) the consequence for machine learning, which the paper does not draw.
+
+Verification from the shipped parameter file:
 `~/opt/xtb-dist/share/xtb/param_gfn2-xtb.txt`, Ce(58)→Lu(71), n=14: every
 parameter — `lev`, `exp`, `GAM`, `GAM3`, `REPA`, `REPB`, `DPOL`, `QPOL`,
 `POLYS`, `POLYD`, `LPARD`, `KCNS/P/D` — is linear in Z to a worst residual of
@@ -597,3 +612,50 @@ declared before looking that La pairs should be predicted worse by ≥ 0.05.
 The models' two worst strata are exactly the two places the *method* and the
 *dataset construction* are discontinuous — the GFN2 parameter break at La and
 the coordination-number switch at Gd/Tb. Replicates across two architectures.
+
+### H4. Correspondence is recoverable — the conformer problem is fixable
+**ESTABLISHED.** Adjacent-lanthanide structures were generated *independently*
+per (ligand, metal) and land in different conformer basins: median heavy-atom
+RMSD **5.46 Å**, and — decisively — **flat in |Δindex|** (5.46 at Δ=1, 5.77 at
+Δ=7), so La-vs-Ce looks like La-vs-Lu. The difference was ~99 % sampling.
+
+Rebuilding each family from ONE relaxed anchor by metal substitution
+(`automl/qc/serial_metals.py`, 786 structures, 146/158 families clean):
+
+| quantity | independent build | serial build |
+|---|---|---|
+| median adjacent-pair RMSD | 5.46 Å | **0.0120 Å** (455× down) |
+| contraction SNR | 0.14 | **0.799** (5.7× up) |
+| residual sd of Δ⟨M–D⟩ | 0.076 Å | **0.0061 Å** |
+| response correlation r | 0.197 | **0.574** |
+| RMSD vs \|Δindex\| | **flat** (5.46→5.77) | **rises 5.12×** (0.0120→0.0613) |
+
+Seven gates pass as written (G1, G2, G3, G5, G6, G8, G9); G4 and G7 pass under
+amended specifications (see C7_PREREGISTRATION Amendments 1–2, which record the
+original failures alongside). **G8 is exact**: the anchor re-run reproduces its
+own input to 0.00000 Å median, so the entire displacement is the metal
+substitution and none of it is pipeline drift.
+
+**Consequence.** The apparent response slope in the independent set (0.505) was
+roughly **half conformer covariance** — the clean value is 0.255, at 3× better
+correlation. And the practical instruction is: if a method with real f-electron
+structure is ever used for this problem, generate the series *in correspondence*.
+Independent per-metal optimisation throws the signal away.
+
+### H5. The construction's failure mode confirms H2 independently
+**SUPPORTED** (n = 9, suggestive not decisive). Of 10 rejects in 796, nine are
+basin hops. They are **not** a size effect — failed families are *smaller* on
+median (190 vs 233 atoms). They are **La**:
+
+| | hop rate | statistic |
+|---|---|---|
+| substitution to **La** | 4/70 = **5.71 %** | OR 8.7, Fisher one-sided p = 0.0049 |
+| every other metal | 5/726 = 0.69 % | |
+| excluding the one 430-atom family (5 hops alone) | 3/69 vs 1/721 | OR 33, p = 0.0024 |
+
+H2 says La is the parameter outlier, off-trend by 15× where Ce…Lu are linear in
+Z to 5.67e-07. Substituting *to* La is the largest available perturbation of the
+Hamiltonian, and that is exactly where relaxation escapes its basin.
+**This was not designed as a test of H2** — it fell out of the construction's
+failure mode, which is what makes it independent of §1's parameter read and of
+H3's model stratum.

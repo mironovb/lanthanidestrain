@@ -112,7 +112,11 @@ def edge_asset(name: str, verbose: bool = False):
     These assets carry NO triangles by construction (they scale ~r^6), which is
     why main() hard-gates them to --arch dist / --no-triangles.
     """
-    root = EDGE_ROOT / name
+    # vr_serial arms live in their own root; same zero-triangle format.
+    if name in ("serial", "orig"):
+        root = REPO / "automl/artifacts/vr_serial" / name
+    else:
+        root = EDGE_ROOT / name
     vr = root / "vietoris_rips_inputs.npz"
     if not vr.exists():
         raise SystemExit(f"--edge-asset {name} needs {vr}; build it with "

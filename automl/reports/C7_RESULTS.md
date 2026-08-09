@@ -14,7 +14,22 @@ written and are untouched.
 
 ## 1. C-I — GFN2-xTB's lanthanide dependence is one linear scalar
 
-Read from the shipped parameter file, no computation. Ce(58) → Lu(71), n = 14:
+**This is documented by the method's authors. We did not discover it.**
+
+> **Bannwarth, Ehlert & Grimme, *J. Chem. Theory Comput.* 2019, 15, 1652–1671**
+> (DOI 10.1021/acs.jctc.8b01176), §2.4 Technical Details, p. 1660:
+>
+> *"For the lanthanides, only the parameters for Ce and Lu were freely fitted,
+> while a linear interpolation with the nuclear charge Z has been used for the
+> other elements."*
+>
+> and §2.1, p. 1655:
+>
+> *"As in GFN-xTB, the 'f-in-core' approximation is employed for lanthanides."*
+
+What is ours is the *consequence*, which the paper does not draw, plus an independent check that the shipped implementation matches the stated intent.
+
+Verification, read from the shipped parameter file: Ce(58) → Lu(71), n = 14:
 **every** parameter (`lev`, `exp`, `GAM`, `GAM3`, `REPA`, `REPB`, `DPOL`,
 `QPOL`, `POLYS`, `POLYD`, `LPARD`, `KCNS/P/D`) is linear in Z to a worst
 residual of **5.67 × 10⁻⁷** — the file's printed precision. Ce and Lu are fitted
@@ -26,9 +41,11 @@ number.** No f-shell occupation, no crystal field, no nephelauxetic effect, no
 gadolinium break, no tetrad effect. Any geometry it produces carries at most a
 rank-1, linear-in-Z deformation of metal identity.
 
-This **derives** campaign 6's measured effective rank 1.05 of 8, and the
+This **explains** campaign 6's measured effective rank 1.05 of 8, and the
 equality of across-architecture error correlation (0.9864) with within-config
-reseeding correlation (0.9900), from the *method* rather than from our models.
+reseeding correlation (0.9900). The two lines were arrived at independently —
+the encoder measurement came first, without reference to the parameterisation —
+so the agreement is a genuine cross-check rather than a restatement.
 
 ### P1 — its prediction, declared before looking, confirmed on two arms
 

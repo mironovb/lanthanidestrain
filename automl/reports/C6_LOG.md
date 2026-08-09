@@ -56,6 +56,7 @@ itself a result.
 | 8 | `t1_d02_f40` (δ = 0.2) is the best single arm in the study | matched contrast vs δ = 1.0 spans zero on every partition | **withdrawn** |
 | 9 | the 7.5 % subsampling lever is worth +0.079 | +0.044 at 12 seeds | halved |
 | 10 | the tabular family is more internally diverse than the 3D family | error correlation tracks model strength at r = +0.696; only one tabular arm is strong enough to match on | **withdrawn** (§G1b) |
+| 11 | C-I (GFN2 lanthanide parameters linear in Z) presented as our finding | the GFN2-xTB paper states it outright — "only the parameters for Ce and Lu were freely fitted, while a linear interpolation with the nuclear charge Z has been used for the other elements" (JCTC 2019, 15, 1652, §2.4) | **reattributed**: verified independently, but documented by the authors. The contribution is the ML consequence, not the fact |
 
 **The common failure mode in 7, 8 and 9:** a difference of ~0.02 taken at face
 value on an axis whose seed noise is ~0.03. That is E5, and it is why the

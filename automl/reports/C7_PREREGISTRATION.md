@@ -9,6 +9,20 @@ test it.
 
 ## 1. C-I — the motivating fact, already verified
 
+**Correction added 9 August 2026, after reading the primary source:** this parameterisation is stated explicitly by the method's authors. C-I is a rediscovery; the contribution is its consequence for ML, not the fact.
+
+> **Bannwarth, Ehlert & Grimme, *J. Chem. Theory Comput.* 2019, 15, 1652–1671**
+> (DOI 10.1021/acs.jctc.8b01176), §2.4 Technical Details, p. 1660:
+>
+> *"For the lanthanides, only the parameters for Ce and Lu were freely fitted,
+> while a linear interpolation with the nuclear charge Z has been used for the
+> other elements."*
+>
+> and §2.1, p. 1655:
+>
+> *"As in GFN-xTB, the 'f-in-core' approximation is employed for lanthanides."*
+
+
 `~/opt/xtb-dist/share/xtb/param_gfn2-xtb.txt`, elements Ce(58) → Lu(71), n = 14.
 For every parameter, the residual from a straight line in Z:
 
