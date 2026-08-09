@@ -1,0 +1,194 @@
+[
+ {
+  "tag": "c6x_y2_c80_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c80 --filtration-max 8.0 --rbf-bins 128 --rbf-max 8.0 --seed 42"
+ },
+ {
+  "tag": "c6x_y2_c80_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c80 --filtration-max 8.0 --rbf-bins 128 --rbf-max 8.0 --seed 51"
+ },
+ {
+  "tag": "c6x_y2_c80_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c80 --filtration-max 8.0 --rbf-bins 128 --rbf-max 8.0 --seed 67"
+ },
+ {
+  "tag": "c6x_y2_c80_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c80 --filtration-max 8.0 --rbf-bins 128 --rbf-max 8.0 --seed 83"
+ },
+ {
+  "tag": "c6x_y2_c80_s211",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c80 --filtration-max 8.0 --rbf-bins 128 --rbf-max 8.0 --seed 211"
+ },
+ {
+  "tag": "c6x_y2_c80_s223",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c80 --filtration-max 8.0 --rbf-bins 128 --rbf-max 8.0 --seed 223"
+ },
+ {
+  "tag": "c6x_y2_c80_s233",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c80 --filtration-max 8.0 --rbf-bins 128 --rbf-max 8.0 --seed 233"
+ },
+ {
+  "tag": "c6x_y2_c80_s241",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c80 --filtration-max 8.0 --rbf-bins 128 --rbf-max 8.0 --seed 241"
+ },
+ {
+  "tag": "c6x_y1_c60_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --seed 42"
+ },
+ {
+  "tag": "c6x_y1_c60_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --seed 51"
+ },
+ {
+  "tag": "c6x_y1_c60_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --seed 67"
+ },
+ {
+  "tag": "c6x_y1_c60_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --seed 83"
+ },
+ {
+  "tag": "c6x_y1_c60_s211",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --seed 211"
+ },
+ {
+  "tag": "c6x_y1_c60_s223",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --seed 223"
+ },
+ {
+  "tag": "c6x_y1_c60_s233",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --seed 233"
+ },
+ {
+  "tag": "c6x_y1_c60_s241",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --seed 241"
+ },
+ {
+  "tag": "c6x_y0_c50_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c50 --filtration-max 5.0 --rbf-bins 64 --rbf-max 5.0 --seed 42"
+ },
+ {
+  "tag": "c6x_y0_c50_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c50 --filtration-max 5.0 --rbf-bins 64 --rbf-max 5.0 --seed 51"
+ },
+ {
+  "tag": "c6x_y0_c50_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c50 --filtration-max 5.0 --rbf-bins 64 --rbf-max 5.0 --seed 67"
+ },
+ {
+  "tag": "c6x_y0_c50_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c50 --filtration-max 5.0 --rbf-bins 64 --rbf-max 5.0 --seed 83"
+ },
+ {
+  "tag": "c6x_y0_c50_s211",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c50 --filtration-max 5.0 --rbf-bins 64 --rbf-max 5.0 --seed 211"
+ },
+ {
+  "tag": "c6x_y0_c50_s223",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c50 --filtration-max 5.0 --rbf-bins 64 --rbf-max 5.0 --seed 223"
+ },
+ {
+  "tag": "c6x_y0_c50_s233",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c50 --filtration-max 5.0 --rbf-bins 64 --rbf-max 5.0 --seed 233"
+ },
+ {
+  "tag": "c6x_y0_c50_s241",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c50 --filtration-max 5.0 --rbf-bins 64 --rbf-max 5.0 --seed 241"
+ },
+ {
+  "tag": "c6x_w50_f40_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --pair-subsample 0.05 --filtration-max 4.0 --rbf-bins 64 --seed 42"
+ },
+ {
+  "tag": "c6x_w50_f40_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --pair-subsample 0.05 --filtration-max 4.0 --rbf-bins 64 --seed 51"
+ },
+ {
+  "tag": "c6x_w50_f40_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --pair-subsample 0.05 --filtration-max 4.0 --rbf-bins 64 --seed 67"
+ },
+ {
+  "tag": "c6x_w50_f40_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --pair-subsample 0.05 --filtration-max 4.0 --rbf-bins 64 --seed 83"
+ },
+ {
+  "tag": "c6x_w50_f40_s211",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --pair-subsample 0.05 --filtration-max 4.0 --rbf-bins 64 --seed 211"
+ },
+ {
+  "tag": "c6x_w50_f40_s223",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --pair-subsample 0.05 --filtration-max 4.0 --rbf-bins 64 --seed 223"
+ },
+ {
+  "tag": "c6x_w50_f40_s233",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --pair-subsample 0.05 --filtration-max 4.0 --rbf-bins 64 --seed 233"
+ },
+ {
+  "tag": "c6x_w50_f40_s241",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --pair-subsample 0.05 --filtration-max 4.0 --rbf-bins 64 --seed 241"
+ },
+ {
+  "tag": "c6x_y7_c60_w20_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --pair-adj-weight 20.0 --seed 42"
+ },
+ {
+  "tag": "c6x_y7_c60_w20_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --pair-adj-weight 20.0 --seed 51"
+ },
+ {
+  "tag": "c6x_y7_c60_w20_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --pair-adj-weight 20.0 --seed 67"
+ },
+ {
+  "tag": "c6x_y7_c60_w20_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --pair-adj-weight 20.0 --seed 83"
+ },
+ {
+  "tag": "c6x_y7_c60_w20_s211",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --pair-adj-weight 20.0 --seed 211"
+ },
+ {
+  "tag": "c6x_y7_c60_w20_s223",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --pair-adj-weight 20.0 --seed 223"
+ },
+ {
+  "tag": "c6x_y7_c60_w20_s233",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --pair-adj-weight 20.0 --seed 233"
+ },
+ {
+  "tag": "c6x_y7_c60_w20_s241",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --preset baseline_2d_mphys --edge-asset c60 --filtration-max 6.0 --rbf-bins 96 --rbf-max 6.0 --pair-adj-weight 20.0 --seed 241"
+ },
+ {
+  "tag": "c6x_q65_f40_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --level-loss quantile --level-quantile 0.65 --filtration-max 4.0 --rbf-bins 64 --seed 42"
+ },
+ {
+  "tag": "c6x_q65_f40_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --level-loss quantile --level-quantile 0.65 --filtration-max 4.0 --rbf-bins 64 --seed 51"
+ },
+ {
+  "tag": "c6x_q65_f40_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --level-loss quantile --level-quantile 0.65 --filtration-max 4.0 --rbf-bins 64 --seed 67"
+ },
+ {
+  "tag": "c6x_q65_f40_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --level-loss quantile --level-quantile 0.65 --filtration-max 4.0 --rbf-bins 64 --seed 83"
+ },
+ {
+  "tag": "c6x_q65_f40_s211",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --level-loss quantile --level-quantile 0.65 --filtration-max 4.0 --rbf-bins 64 --seed 211"
+ },
+ {
+  "tag": "c6x_q65_f40_s223",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --level-loss quantile --level-quantile 0.65 --filtration-max 4.0 --rbf-bins 64 --seed 223"
+ },
+ {
+  "tag": "c6x_q65_f40_s233",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --level-loss quantile --level-quantile 0.65 --filtration-max 4.0 --rbf-bins 64 --seed 233"
+ },
+ {
+  "tag": "c6x_q65_f40_s241",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --level-loss quantile --level-quantile 0.65 --filtration-max 4.0 --rbf-bins 64 --seed 241"
+ }
+]

@@ -74,7 +74,22 @@ def geometry_asset(name: str = "full", verbose: bool = False):
     # trained on 627 and far fewer, so every cross-arm contrast would have
     # compared two different datasets while looking entirely normal.
     from pathlib import Path as _P
-    root = _P(__file__).resolve().parents[2] / "automl/artifacts/vr_neutral" / name
+    _root2 = _P(__file__).resolve().parents[2]
+    if name in ("water", "octanol"):
+        # GFN2-xTB re-optimised IN SOLVENT.  Built for the water-octanol
+        # reorganisation probe, which tested them as a 22-column TABULAR block
+        # and failed (WO_RESULTS.md).  They have never been given to an encoder
+        # as a geometry VIEW, which is a different question: the tabular probe
+        # asked whether summary statistics of the reorganisation help, this asks
+        # whether the solvent-relaxed structure itself is a better input.
+        root = _root2 / "automl/artifacts/vr_conformers" / name
+        vr = root / "vietoris_rips_inputs.npz"
+        if not vr.exists():
+            raise SystemExit(f"--geometry {name} needs {vr}")
+        return SimplicialComplexes(vr_path=vr,
+                                   cache=root / "triangle_edges.npz",
+                                   verbose=verbose)
+    root = _root2 / "automl/artifacts/vr_neutral" / name
     vr = root / "vietoris_rips_inputs.npz"
     if not vr.exists():
         raise SystemExit(f"--geometry {name} needs {vr}; build it with "
@@ -83,8 +98,34 @@ def geometry_asset(name: str = "full", verbose: bool = False):
                                verbose=verbose)
 
 
+EDGE_ROOT = REPO / "automl/artifacts/vr_cutoff"
+
+
+def edge_asset(name: str, verbose: bool = False):
+    """A neighbour graph rebuilt past the shipped asset's 4.0 A ceiling.
+
+    Same two load-bearing rules as geometry_asset: build_row_table and
+    ComplexCache must see the SAME asset, and the asset must carry its OWN
+    triangle-edge cache, because SimplicialComplexes keys that cache by
+    triangle count alone and would otherwise reuse the shipped boundary map.
+
+    These assets carry NO triangles by construction (they scale ~r^6), which is
+    why main() hard-gates them to --arch dist / --no-triangles.
+    """
+    root = EDGE_ROOT / name
+    vr = root / "vietoris_rips_inputs.npz"
+    if not vr.exists():
+        raise SystemExit(f"--edge-asset {name} needs {vr}; build it with "
+                         f"python3 -m automl.topo.build_neighbor_graph "
+                         f"--name {name} --cutoff ...")
+    return SimplicialComplexes(vr_path=vr, cache=root / "triangle_edges.npz",
+                               verbose=verbose)
+
+
 def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
-                    match_rows: str = "snn", geometry: str = "full") -> tuple[pd.DataFrame, np.ndarray, list[str]]:
+                    match_rows: str = "snn", geometry: str = "full",
+                    edge_asset_name: str | None = None
+                    ) -> tuple[pd.DataFrame, np.ndarray, list[str]]:
     """Rows backed by this arm's 3D asset, plus their tabular design matrix.
 
     The two arms key off different assets (956 VR complexes vs 953 persistence
@@ -104,7 +145,8 @@ def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
     # would compare two different datasets.
     key_arch = match_rows if arch == "tabular" else (
         "snn" if arch == "dist" else arch)
-    asset = (geometry_asset(geometry) if key_arch == "snn"
+    asset = ((edge_asset(edge_asset_name) if edge_asset_name
+              else geometry_asset(geometry)) if key_arch == "snn"
              else PersistenceImages())
     key = df["geometry_feature_build_id"].astype(str)
     df = df.assign(_cplx=[asset.index_of(k) for k in key])
@@ -364,6 +406,40 @@ def _cond_columns(cfg) -> list[int]:
             if str(c).startswith("cond__")]
 
 
+# The 'metal' block, verbatim from dataset.py.  Resolved by NAME like the
+# conditions, so a preset change cannot silently point the interaction head at
+# the wrong columns -- and note dataset.py drops constant columns, so metal_ox
+# is legitimately absent (every row is Ln(III)).
+METAL_COLS = ("Atomic Number_metal", "lanthanide_index", "Ionic Radius_metal",
+              "metal_ox")
+RADIUS_COL = "Ionic Radius_metal"
+LIDX_COL = "lanthanide_index"
+
+
+def _metal_columns(cfg) -> list[int]:
+    """Every column whose value is a property of the METAL, not the ligand.
+
+    The mphys__ block belongs here and its omission was a real defect, found by
+    measuring how block-constant u actually was rather than assuming it: those
+    columns are per-lanthanide lookups, so leaving them in u made u vary within
+    a block and broke the identity the interaction head exists to enforce.
+    They are also precisely the material the phi basis is built from, so
+    leaving them in u would let g read its own argument.
+    """
+    return [i for i, c in enumerate(cfg.get("_cols") or [])
+            if c in METAL_COLS or str(c).startswith("mphys__")]
+
+
+def _named_column(cfg, name: str) -> int:
+    cols = list(cfg.get("_cols") or [])
+    if name not in cols:
+        raise SystemExit(
+            f"--radius-slope needs the column {name!r}, which is not in this "
+            f"preset. It lives in the 'metal' block; --topology-only and any "
+            f"preset without 'metal' cannot use the interaction head.")
+    return cols.index(name)
+
+
 def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
              pretrained_state=None, target_col: str | None = None,
              emb_out: np.ndarray | None = None) -> np.ndarray:
@@ -419,7 +495,21 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
         model = DistanceNet(dim=cfg["dim"], layers=cfg["layers"],
                             dropout=cfg["dropout"], tabular_dim=X.shape[1],
                             head_hidden=cfg["head_hidden"],
-                            rbf_max=float(cfg.get("filtration_max", 3.5)),
+                            rbf_bins=int(cfg.get("rbf_bins") or 32),
+                            # Unset = --filtration-max, which is what every
+                            # published dist run used.  It matters once the
+                            # graph widens: edges past rbf_max all land in the
+                            # saturated tail of the basis and the filter net
+                            # cannot tell 6 A from 9 A.
+                            rbf_max=float(cfg["rbf_max"]
+                                          if cfg.get("rbf_max") is not None
+                                          else cfg.get("filtration_max", 3.5)),
+                            # SWEEP2's C1 cell was SNN-only, so dist has carried
+                            # DistanceNet's own 32 / 8.0 in every run.  Passing
+                            # them through makes the axis testable on the
+                            # encoder that has no triangles to confound it.
+                            radial_bins=int(cfg.get("radial_bins") or 32),
+                            radial_max=float(cfg.get("radial_max") or 8.0),
                             head_embed_mult=2 if cfg.get("block_centre") else 1
                             ).to(device)
     else:
@@ -469,8 +559,88 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
         aux_in = model.embed_dim * getattr(model, "head_embed_mult", 1)
         aux_head = nn.Linear(aux_in, aux_y.shape[1]).to(device)
 
+    # --- CAMPAIGN6: the radius-interaction head ------------------------------
+    #
+    #     pred = f(u) + sum_k g_k(u) * phi_k(metal)
+    #
+    # where u is the row representation made METAL-FREE and phi is a small basis
+    # of clean per-metal scalars.  Within a composition block only phi varies,
+    # so the predicted adjacent difference is exactly sum_k g_k(u) * d phi_k --
+    # one ligand-level selectivity coefficient times a known series step.
+    #
+    # Why this is not --pair-head (T2), which lost at -0.0253/-0.0321/-0.0832:
+    # T2 put 254k parameters on a pathway evaluation never reads, which is why
+    # --pair-reconcile had to be invented and why it then failed at -1.30
+    # ("there is no skill to route").  This head lives INSIDE the level
+    # prediction.  f and g are both trained on every row through the level task,
+    # and the metric reads f + sum g*phi, the same scalar the level head emits.
+    # It CONSTRAINS within-block variation rather than adding a pathway, and
+    # unconstrained within-block variation is the failure mode measured at
+    # -0.3167 (the A1 collapse) and attributed at 93%.
+    #
+    # Why rank K and not a single slope: mean dy by pair index is non-monotone
+    # and changes sign across the series, so g*dr with a near-constant dr cannot
+    # express its shape.  Physically the right form too -- lanthanide strain is
+    # a cavity-mismatch energy ~ k(r-r0)^2, whose derivative 2k(r-r0) IS a
+    # ligand-dependent selectivity slope carrying both a stiffness and a
+    # preferred radius.
+    slope_kind = cfg.get("radius_slope") or "off"
+    slope_u_mode = cfg.get("radius_slope_u") or "block"
+    slope_heads: list[nn.Module] = []
+    slope_basis = None
+    struct_w = model.embed_dim * getattr(model, "head_embed_mult", 1)
+    u_mask = None
+    if slope_kind != "off":
+        if X.shape[1] == 0:
+            raise SystemExit("--radius-slope needs the tabular block; it "
+                             "cannot be combined with --topology-only")
+        r_col = _named_column(cfg, RADIUS_COL)
+        l_col = _named_column(cfg, LIDX_COL)
+        head_in = struct_w + X.shape[1]
+
+        def _slope_mlp() -> nn.Module:
+            return nn.Sequential(
+                nn.LayerNorm(head_in),
+                nn.Linear(head_in, cfg["head_hidden"]), nn.SiLU(),
+                nn.Dropout(cfg["dropout"]),
+                nn.Linear(cfg["head_hidden"], cfg["head_hidden"] // 2),
+                nn.SiLU(),
+                nn.Linear(cfg["head_hidden"] // 2, 1)).to(device)
+
+        # phi, built from columns that are already standardised per fold.  The
+        # quadratic term is the cavity-mismatch one; the |lanthanide_index|
+        # terms give the basis a coordinate that is NOT collinear with radius,
+        # which is what lets it bend where the series does.
+        if slope_kind == "linear":
+            slope_basis = [("r", lambda er: er[:, struct_w + r_col])]
+        elif slope_kind == "quad":
+            slope_basis = [("r", lambda er: er[:, struct_w + r_col]),
+                           ("r2", lambda er: er[:, struct_w + r_col] ** 2)]
+        else:                                              # "basis"
+            slope_basis = [
+                ("r", lambda er: er[:, struct_w + r_col]),
+                ("r2", lambda er: er[:, struct_w + r_col] ** 2),
+                ("l", lambda er: er[:, struct_w + l_col]),
+                ("l2", lambda er: er[:, struct_w + l_col] ** 2),
+            ]
+        slope_heads = [_slope_mlp() for _ in slope_basis]
+        # u is metal-free.  Zeroing the metal COLUMNS is necessary but not
+        # sufficient: each (ligand, metal) is a distinct complex and the encoder
+        # embeds Z, so the structural half is metal-dependent too.  That half is
+        # therefore replaced by its composition-block mean in _slope_terms --
+        # without which the "difference is exactly sum g*dphi" identity, the
+        # only reason to build this head, quietly does not hold.
+        u_mask = torch.ones(head_in, device=device)
+        for c in _metal_columns(cfg):
+            u_mask[struct_w + c] = 0.0
+        print(f"    [radius-slope {slope_kind}/{slope_u_mode}] "
+              f"K={len(slope_basis)} "
+              f"({', '.join(n for n, _ in slope_basis)}), "
+              f"{len(_metal_columns(cfg))} metal columns masked", flush=True)
+
     opt = torch.optim.AdamW(list(model.parameters())
-                            + (list(aux_head.parameters()) if aux_head else []),
+                            + (list(aux_head.parameters()) if aux_head else [])
+                            + [p for h in slope_heads for p in h.parameters()],
                             lr=cfg["lr"],
                             weight_decay=cfg["weight_decay"])
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=cfg["epochs"])
@@ -499,6 +669,19 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                if cfg.get("block_key") else comp_all)
     pair_w = float(cfg.get("pair_loss_weight", 0.0))
     ph_w = float(cfg.get("pair_head_weight") or 0.0)
+    # CAMPAIGN6 contrast-term shape.  Every default reproduces the published
+    # term exactly -- 3.0 was hardcoded, "sq" was the only error, and no run to
+    # date collapsed replicates.  See the loss block for the census that
+    # motivates --pair-metric-align.
+    pair_adj_w = float(cfg.get("pair_adj_weight", 3.0))
+    pair_adj_only = bool(cfg.get("pair_adj_only"))
+    pair_kind = cfg.get("pair_loss_kind") or "sq"
+    pair_delta = float(cfg.get("pair_huber_delta") or 1.0)
+    pair_align = bool(cfg.get("pair_metric_align"))
+    pair_subsample = float(cfg.get("pair_subsample") or 1.0)
+    level_loss = cfg.get("level_loss") or "huber"
+    level_delta = float(cfg.get("level_huber_delta") or 1.0)
+    level_q = float(cfg.get("level_quantile") or 0.5)
     # None = the published objective (Huber on the raw target).  A number turns
     # on the decomposed objective and is the weight on the block-mean term.
     level_w = cfg.get("level_weight")
@@ -571,6 +754,38 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
         means = sums / counts.clamp(min=1.0).unsqueeze(-1)
         return torch.cat([emb_rows, emb_rows - means[idx]], dim=-1)
 
+    def _slope_terms(er: torch.Tensor, blocks: np.ndarray):
+        """sum_k g_k(u) * phi_k for one batch of rows, or None if off."""
+        if not slope_heads:
+            return None
+        u = er * u_mask
+        if slope_u_mode == "block":
+            # Make the STRUCTURAL half metal-free by replacing it with its
+            # composition-block mean.  Zeroing the metal columns handles the
+            # tabular half only; the embedding is a different complex per metal.
+            # Exact here because every call site passes whole blocks.
+            codes, _ = pd.factorize(blocks)
+            bi = torch.as_tensor(codes, device=u.device, dtype=torch.long)
+            n = int(codes.max()) + 1 if len(codes) else 0
+            sums = torch.zeros((n, struct_w), device=u.device, dtype=u.dtype
+                               ).index_add_(0, bi, u[:, :struct_w])
+            cnt = torch.zeros(n, device=u.device, dtype=u.dtype).index_add_(
+                0, bi, torch.ones_like(bi, dtype=u.dtype)).clamp(min=1.0)
+            u = torch.cat([(sums / cnt.unsqueeze(-1))[bi], u[:, struct_w:]],
+                          dim=-1)
+        out = None
+        for h, (_name, phi) in zip(slope_heads, slope_basis):
+            term = h(u).squeeze(-1) * phi(er)
+            out = term if out is None else out + term
+        return out
+
+    def _slope_mode(train: bool) -> None:
+        """The slope MLPs carry Dropout; left in train mode every prediction
+        would be stochastic. aux_head is a bare Linear, which is why it never
+        needed this."""
+        for h in slope_heads:
+            h.train() if train else h.eval()
+
     def _eval_chunks(idx) -> list[np.ndarray]:
         """Positions in ``idx``, grouped so no composition block is ever split.
 
@@ -585,7 +800,11 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
         data, and training (which always sees whole blocks) and inference would
         compute different features from the same rows.
         """
-        if not block_centre:
+        # The interaction head's block-mean u has the same requirement as
+        # --block-centre: a block split across chunks would give a
+        # batch-size-dependent mean, so training and inference would compute
+        # different features from the same rows.
+        if not (block_centre or (slope_heads and slope_u_mode == "block")):
             step = max(cfg["eval_batch"], 1)
             return [np.arange(s, min(s + step, len(idx)))
                     for s in range(0, len(idx), step)]
@@ -603,6 +822,7 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
 
     def _predict(idx, Xs):
         model.eval()
+        _slope_mode(False)
         outs = np.empty(len(idx), dtype=np.float64)
         with torch.no_grad():
             for take in _eval_chunks(idx):
@@ -616,8 +836,12 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                 tab = torch.as_tensor(Xs[take], device=device)
                 if cond_idx and getattr(model, "film", None) is not None:
                     e = model.modulate(e, tab[:, cond_idx])
-                outs[take] = (model.head(torch.cat([e, tab], -1))
-                              .squeeze(-1).cpu().numpy())
+                er = torch.cat([e, tab], -1)
+                p = model.head(er).squeeze(-1)
+                st = _slope_terms(er, blk_all[rows])
+                if st is not None:
+                    p = p + st
+                outs[take] = p.cpu().numpy()
         return outs * ysd + ymu
 
     def _reconcile(level_pred, idx, Xs):
@@ -713,6 +937,7 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
 
     for ep in range(cfg["epochs"]):
         model.train()
+        _slope_mode(True)
         for rows in _batches(rng):
             ids = sorted(set(cplx[rows].tolist()))
             remap = {c: i for i, c in enumerate(ids)}
@@ -735,10 +960,44 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                 e = model.modulate(e, tab[:, cond_idx])
             emb_row = torch.cat([e, tab], -1)
             pred = model.head(emb_row).squeeze(-1)
+            st = _slope_terms(emb_row, blk_all[rows])
+            if st is not None:
+                pred = pred + st
             tgt = torch.as_tensor((y[rows] - ymu) / ysd, device=device)
 
             if level_w is None:
-                loss = nn.functional.huber_loss(pred, tgt, delta=1.0)
+                # The LEVEL term's robustness, never varied in 462 recorded
+                # runs (all Huber, delta 1.0 on the standardised target).
+                # Motivated by the one thing that worked in this campaign:
+                # swapping CatBoost's RMSE for MAE was worth +0.1066 adjacent
+                # AND +0.0115 log D.  The metric is a within-block DIFFERENCE,
+                # so a single badly-measured row corrupts every pair it enters;
+                # bounding each row's influence is exactly what that buys.
+                # Note --pair-loss-kind huber (the PAIR term) did nothing,
+                # which localises the leverage to the level fit.
+                if level_loss == "mae":
+                    loss = nn.functional.l1_loss(pred, tgt)
+                elif level_loss == "mse":
+                    loss = nn.functional.mse_loss(pred, tgt)
+                elif level_loss == "quantile":
+                    # Pinball loss.  alpha=0.5 is MAE up to a factor of 2.
+                    #
+                    # Motivated by a measurement, not by taste: on the tabular
+                    # arm Quantile(0.7) scored +0.2384 against MAE/Quantile(0.5)
+                    # at +0.2188 and RMSE at +0.1594, and log D is strongly
+                    # LEFT-skewed (skew -0.712, mean +0.267 below median +0.352)
+                    # because low values sit near detection limits.  An upper
+                    # quantile down-weights that untrustworthy tail.
+                    #
+                    # A constant offset cannot be the mechanism: the metric
+                    # scores WITHIN-BLOCK DIFFERENCES, in which any shift
+                    # common to a block cancels exactly.
+                    e = tgt - pred
+                    loss = torch.maximum(level_q * e,
+                                         (level_q - 1.0) * e).mean()
+                else:
+                    loss = nn.functional.huber_loss(pred, tgt,
+                                                    delta=level_delta)
             else:
                 # Decomposed objective.
                 #
@@ -790,10 +1049,77 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                 if pi.numel() > 0:
                     dl = torch.as_tensor(np.abs(li[:, None] - li[None, :]),
                                          device=device, dtype=torch.float32)[pi, pj]
-                    w = torch.where(dl <= 1.0, 3.0, 1.0)      # emphasise neighbours
-                    dp = pred[pi] - pred[pj]
-                    dt = tgt[pi] - tgt[pj]
-                    loss = loss + pair_w * (w * (dp - dt) ** 2).mean()
+                    # --- what gets differenced --------------------------------
+                    # Published: raw ROW pairs.  The metric never does that.
+                    # adjacent_pair_arrays averages y and p within (block, metal)
+                    # BEFORE differencing, so a metal measured ten times is one
+                    # point, not ten.  Censused on the modelled rows, the cost of
+                    # the mismatch is not marginal:
+                    #
+                    #   dl == 0 (SAME metal, two replicates) 19,482 pairs, and
+                    #   because it is weighted 3.0 alongside the adjacent pairs
+                    #   and the error is squared, it carries 61.6% of the squared
+                    #   mass inside the "adjacent emphasis" term -- the exact
+                    #   population evaluation averages away.
+                    #   Adjacent row pairs duplicate the metric's 1,349 pairs
+                    #   x13.4, and because pair count is quadratic in block size
+                    #   while the metric is linear in distinct metals, the ten
+                    #   largest blocks take 59.6% of the mass.
+                    #
+                    # evaluation.py:181-192 already records that enumerating raw
+                    # row pairs once produced a figure that INVERTED the
+                    # published result.  The evaluator was fixed; this was not.
+                    #
+                    # --pair-metric-align collapses to (block, metal) cells
+                    # first.  Exact in-batch rather than approximate, because
+                    # _batches emits WHOLE blocks whenever pair_w > 0: every
+                    # replicate of a cell is present, so the in-batch cell mean
+                    # IS the metric's cell mean.
+                    if pair_align:
+                        ccodes, _ = pd.factorize(
+                            pd.MultiIndex.from_arrays([cb, li]))
+                        nC = int(ccodes.max()) + 1
+                        cidx = torch.as_tensor(ccodes, device=device,
+                                               dtype=torch.long)
+                        # block_means is this reduction already, and is module
+                        # level precisely so it can be reused and tested.
+                        P, T = block_means(pred, tgt, cidx, nC)
+                        first = np.unique(ccodes, return_index=True)[1]
+                        cbk, clx = cb[first], li[first]
+                        cs = torch.as_tensor(cbk[:, None] == cbk[None, :],
+                                             device=device)
+                        qi, qj = torch.nonzero(torch.triu(cs, diagonal=1),
+                                               as_tuple=True)
+                        dql = torch.as_tensor(np.abs(clx[:, None] - clx[None, :]),
+                                              device=device,
+                                              dtype=torch.float32)[qi, qj]
+                    else:
+                        P, T, qi, qj, dql = pred, tgt, pi, pj, dl
+                    if pair_adj_only:
+                        keep = dql <= 1.0
+                        qi, qj, dql = qi[keep], qj[keep], dql[keep]
+                    if pair_subsample < 1.0 and qi.numel() > 1:
+                        # DECISIVE TEST for why --pair-metric-align fails.
+                        # Hypothesis: collapsing replicates starves the term
+                        # (18,065 row pairs -> ~1,349 cell pairs), the same
+                        # data-poverty that killed pair_regressor on 905 pairs.
+                        # If starvation is the cause, randomly thinning the
+                        # pair set to the SAME count without collapsing must
+                        # hurt about as much.  If it does not, the damage is
+                        # the collapsing itself and the hypothesis is wrong.
+                        k = max(1, int(round(pair_subsample * qi.numel())))
+                        sel = torch.as_tensor(
+                            rng.choice(qi.numel(), k, replace=False),
+                            device=device, dtype=torch.long)
+                        qi, qj, dql = qi[sel], qj[sel], dql[sel]
+                    if qi.numel() > 0:
+                        w = torch.where(dql <= 1.0, pair_adj_w, 1.0)
+                        dp = P[qi] - P[qj]
+                        dt = T[qi] - T[qj]
+                        err = ((dp - dt) ** 2 if pair_kind == "sq"
+                               else nn.functional.huber_loss(
+                                   dp, dt, delta=pair_delta, reduction="none"))
+                        loss = loss + pair_w * (w * err).mean()
                     # T2: the same pairs, but the difference gets its own
                     # parameters instead of being the difference of two scalar
                     # level predictions.  Restricted to ADJACENT metals, which
@@ -915,6 +1241,56 @@ def main() -> int:
     ap.add_argument("--pair-loss-weight", type=float, default=0.0,
                     help="weight on the within-composition pairwise-difference "
                          "loss; 0 reproduces the plain regression objective")
+    # --- CAMPAIGN6: the shape of the contrast term ---------------------------
+    # Every default below reproduces the published term byte-for-byte.  The
+    # term has never been varied: 391 of 462 recorded runs used weight 2.0, the
+    # adjacent emphasis was a literal 3.0 in the source, and no run has ever
+    # collapsed replicates before differencing.
+    ap.add_argument("--pair-adj-weight", type=float, default=3.0,
+                    help="multiplier on |delta lanthanide_index| <= 1 pairs "
+                         "inside the contrast term. 3.0 is the value hardcoded "
+                         "in every run to date")
+    ap.add_argument("--pair-adj-only", action="store_true",
+                    help="restrict the contrast term to ADJACENT pairs, the "
+                         "population the metric scores. Published behaviour "
+                         "keeps all within-block pairs at weight 1 for gradient "
+                         "stability; this trades that for exact alignment and "
+                         "is much thinner once --pair-metric-align collapses "
+                         "replicates")
+    ap.add_argument("--pair-loss-kind", choices=("sq", "huber"), default="sq",
+                    help="error on the pair difference. 'sq' is published; "
+                         "'huber' stops one mis-measured block dominating")
+    ap.add_argument("--pair-huber-delta", type=float, default=1.0,
+                    help="delta for --pair-loss-kind huber")
+    ap.add_argument("--level-quantile", type=float, default=0.5,
+                    help="alpha for --level-loss quantile (pinball). 0.5 is "
+                         "MAE; the tabular arm peaks ABOVE 0.5 because log D "
+                         "has a heavy left tail")
+    ap.add_argument("--level-loss", choices=("huber", "mae", "mse", "quantile"),
+                    default="huber",
+                    help="error on the per-row LEVEL term. 'huber' with "
+                         "delta 1.0 is what every run to date used. 'mae' is "
+                         "the neural analogue of the CatBoost MAE switch that "
+                         "was this campaign's only held-out win")
+    ap.add_argument("--level-huber-delta", type=float, default=1.0,
+                    help="delta for --level-loss huber; smaller is more "
+                         "MAE-like")
+    ap.add_argument("--pair-subsample", type=float, default=1.0,
+                    help="keep this fraction of within-block pair terms, drawn "
+                         "afresh each epoch and WITHOUT collapsing replicates. "
+                         "The control for --pair-metric-align: 0.075 matches "
+                         "the pair count alignment leaves (1,349 of 18,065), "
+                         "so if thinning hurts as much as aligning, the damage "
+                         "is data poverty; if it does not, the damage is the "
+                         "collapsing itself")
+    ap.add_argument("--pair-metric-align", action="store_true",
+                    help="average prediction AND target within (block, metal) "
+                         "before differencing, exactly as "
+                         "evaluation.adjacent_pair_arrays does. Without it, "
+                         "61.6%% of the squared mass inside the 3x-weighted "
+                         "'adjacent emphasis' term is SAME-METAL replicate "
+                         "pairs -- the population evaluation averages away "
+                         "before it scores anything")
     ap.add_argument("--level-weight", type=float, default=None,
                     help="turn on the DECOMPOSED objective and set the weight "
                          "on its block-mean (level) term. Unset = the published "
@@ -939,7 +1315,8 @@ def main() -> int:
     ap.add_argument("--pair-head-weight", type=float, default=1.0,
                     help="weight on the T2 pairwise loss")
     ap.add_argument("--geometry", default="full",
-                    choices=("full", "shipped", "control", "neutral"),
+                    choices=("full", "shipped", "control", "neutral",
+                             "water", "octanol"),
                     help="CAMPAIGN4: which geometry set to train on. 'control' "
                          "is the same complexes re-optimised with no anion; "
                          "'neutral' adds counter-ions to charge-neutralise. "
@@ -987,6 +1364,39 @@ def main() -> int:
                          "they can only shape the representation")
     ap.add_argument("--aux-weight", type=float, default=0.3,
                     help="weight on the auxiliary loss")
+    ap.add_argument("--radius-slope", choices=("off", "linear", "quad", "basis"),
+                    default="off",
+                    help="fit pred = f(u) + sum_k g_k(u)*phi_k(metal) with u "
+                         "made metal-free, so the predicted within-block "
+                         "adjacent difference is exactly sum_k g_k(u)*d phi_k. "
+                         "'linear' K=1 (radius), 'quad' K=2 (+radius^2, the "
+                         "cavity-mismatch term), 'basis' K=4 (+lanthanide "
+                         "index and its square, which give the basis a "
+                         "coordinate not collinear with radius). Unrelated to "
+                         "the g13__slope FEATURE block in dataset.py")
+    ap.add_argument("--radius-slope-u", choices=("block", "row"),
+                    default="block",
+                    help="how u is made metal-free. 'block' also replaces the "
+                         "structural half by its composition-block mean, which "
+                         "is what makes the difference identity hold; 'row' "
+                         "zeroes only the four metal COLUMNS and is NOT exact "
+                         "under --arch snn/dist, where the embedding is a "
+                         "different complex per metal")
+    ap.add_argument("--edge-asset", default=None,
+                    help="load the neighbour graph from "
+                         "automl/artifacts/vr_cutoff/<NAME> instead of the "
+                         "shipped 4.0 A Vietoris-Rips asset. Carries NO "
+                         "triangles, so it requires --arch dist or "
+                         "--no-triangles. NOTE --filtration-max still "
+                         "thresholds edges at load, so leaving it at 3.5 "
+                         "discards everything the rebuild added")
+    ap.add_argument("--rbf-bins", type=int, default=None,
+                    help="--arch dist: resolution of the Gaussian radial basis "
+                         "on the EDGE distance (hardcoded 32 in every run)")
+    ap.add_argument("--rbf-max", type=float, default=None,
+                    help="--arch dist: range of that basis, in Angstrom. Unset "
+                         "= --filtration-max. This widens the BASIS only; the "
+                         "receptive field is set by --filtration-max")
     ap.add_argument("--block-key", default=None,
                     choices=("composition_key", "strict_composition_key"),
                     help="which blocking the contrast loss, the block-centred "
@@ -1048,8 +1458,41 @@ def main() -> int:
         raise SystemExit("--arch tabular --topology-only leaves the model no "
                          "inputs; use --arch snn/picnn --topology-only for the "
                          "topology-only ablation.")
+    if args.radius_slope != "off":
+        if args.topology_only:
+            raise SystemExit("--radius-slope needs Ionic Radius_metal from the "
+                             "tabular block; --topology-only removes it.")
+        if args.pair_reconcile:
+            # Both set the adjacent increments the metric reads, and
+            # _reconcile overwrites them wholesale -- so the arm would measure
+            # neither head.
+            raise SystemExit("--radius-slope and --pair-reconcile both set the "
+                             "adjacent increments; --pair-reconcile would "
+                             "discard the interaction head's.")
+        if args.pair_head:
+            print("[topo] WARNING: --radius-slope and --pair-head both regress "
+                  "the adjacent difference, and pair_forward reads emb_row, "
+                  "which does not carry the interaction term. Crossing them "
+                  "double-counts.", flush=True)
+    if args.edge_asset:
+        if args.arch != "dist" and not args.no_triangles:
+            raise SystemExit(
+                "--edge-asset carries no 2-simplices; an --arch snn run "
+                "without --no-triangles would be a no-triangles model recorded "
+                "as the full one. Use --arch dist or --no-triangles.")
+        if args.geometry != "full":
+            raise SystemExit("--edge-asset and --geometry are both REPLACEMENT "
+                             "assets; combining them is undefined")
+        if args.conformers > 1:
+            raise SystemExit("--edge-asset has no conformer axis")
+        if args.filtration_max < 4.0:
+            print(f"[topo] WARNING: --edge-asset with --filtration-max "
+                  f"{args.filtration_max} thresholds the rebuilt edges back "
+                  f"down; you almost certainly want --filtration-max >= the "
+                  f"build cutoff", flush=True)
     df, X, cols = build_row_table(args.preset, args.arch, args.match_rows,
-                                  geometry=args.geometry)
+                                  geometry=args.geometry,
+                                  edge_asset_name=args.edge_asset)
     if args.extra_block_mean:
         # POST-HOC diagnostic for sweep2 A1, not part of the pre-registration.
         #
@@ -1135,7 +1578,14 @@ def main() -> int:
         # ConformerComplexes is a superset wrapper: conformer 0 is the shipped
         # geometry and index_of/__len__ match SimplicialComplexes exactly, so
         # the row set is identical whichever is loaded.
-        if args.geometry != "full":
+        if args.edge_asset:
+            S = edge_asset(args.edge_asset)
+            mp = EDGE_ROOT / args.edge_asset / "meta.json"
+            info = json.loads(mp.read_text()) if mp.exists() else {}
+            print(f"[topo] edge asset '{args.edge_asset}': {len(S)} complexes, "
+                  f"{info.get('n_edges', '?')} edges, mean degree "
+                  f"{info.get('mean_degree', '?')}", flush=True)
+        elif args.geometry != "full":
             S = geometry_asset(args.geometry)
             print(f"[topo] geometry set '{args.geometry}': {len(S)} complexes",
                   flush=True)
@@ -1156,6 +1606,15 @@ def main() -> int:
             "epochs", "batch_rows", "eval_batch", "val_every", "patience")}
     cfg["arch"] = args.arch
     cfg["pair_loss_weight"] = args.pair_loss_weight
+    cfg["pair_adj_weight"] = args.pair_adj_weight
+    cfg["pair_adj_only"] = args.pair_adj_only
+    cfg["pair_loss_kind"] = args.pair_loss_kind
+    cfg["pair_huber_delta"] = args.pair_huber_delta
+    cfg["pair_metric_align"] = args.pair_metric_align
+    cfg["pair_subsample"] = args.pair_subsample
+    cfg["level_loss"] = args.level_loss
+    cfg["level_huber_delta"] = args.level_huber_delta
+    cfg["level_quantile"] = args.level_quantile
     cfg["select_on"] = args.select_on
     cfg["level_weight"] = args.level_weight
     cfg["block_key"] = args.block_key
@@ -1170,6 +1629,11 @@ def main() -> int:
     cfg["node_angular"] = args.node_angular
     cfg["angular_readout"] = args.angular_readout
     cfg["attn_pool"] = args.attn_pool
+    cfg["radius_slope"] = args.radius_slope
+    cfg["radius_slope_u"] = args.radius_slope_u
+    cfg["edge_asset"] = args.edge_asset
+    cfg["rbf_bins"] = args.rbf_bins
+    cfg["rbf_max"] = args.rbf_max
     cfg["radial_bins"] = args.radial_bins
     cfg["radial_max"] = args.radial_max
     cfg["aux_target"] = args.aux_target
@@ -1310,7 +1774,28 @@ def main() -> int:
             + ("_attn" if args.attn_pool else "")
             + (f"_aux{args.aux_target}" if args.aux_target else "")
             + (f"_rb{args.radial_bins}" if args.radial_bins else "")
-            + (f"_rm{args.radial_max}" if args.radial_max else ""))
+            + (f"_rm{args.radial_max}" if args.radial_max else "")
+            # CAMPAIGN6.  Empty for every published configuration, so no
+            # existing stem moves and no campaign run can overwrite one.
+            + ("_pal" if args.pair_metric_align else "")
+            + ("" if args.pair_subsample == 1.0
+               else f"_ps{args.pair_subsample}")
+            + ("" if args.level_loss == "huber" else f"_ll{args.level_loss}")
+            + (f"_lq{args.level_quantile}"
+               if args.level_loss == "quantile" else "")
+            + ("" if args.level_huber_delta == 1.0
+               else f"_ld{args.level_huber_delta}")
+            + ("" if args.pair_adj_weight == 3.0
+               else f"_paw{args.pair_adj_weight}")
+            + ("_pao" if args.pair_adj_only else "")
+            + ("" if args.pair_loss_kind == "sq"
+               else f"_pk{args.pair_loss_kind}")
+            + ("" if args.radius_slope == "off" else f"_rs{args.radius_slope}")
+            + ("_rsurow" if args.radius_slope != "off"
+               and args.radius_slope_u == "row" else "")
+            + (f"_ea{args.edge_asset}" if args.edge_asset else "")
+            + (f"_fb{args.rbf_bins}" if args.rbf_bins else "")
+            + (f"_fm{args.rbf_max}" if args.rbf_max else ""))
     pd.DataFrame({
         "safe_exp_id": df["safe_exp_id"].to_numpy(), "y": y, "oof": oof,
         "extractant_group": groups,
@@ -1326,7 +1811,13 @@ def main() -> int:
     rec = {"tag": args.tag, "preset": args.preset, "config": vars(args),
            "resolved": {k: v for k, v in cfg.items()
                         if k in ("arch", "in_channels", "pi_images",
-                                 "pair_loss_weight", "select_on",
+                                 "pair_loss_weight", "pair_adj_weight",
+                                 "pair_adj_only", "pair_loss_kind",
+                                 "pair_huber_delta", "pair_metric_align",
+                                 "pair_subsample",
+                                 "level_loss", "level_huber_delta",
+                                 "level_quantile",
+                                 "select_on",
                                  "level_weight", "block_key",
                                  "no_triangles", "pair_head",
                                  "pair_head_weight", "film",
@@ -1335,6 +1826,8 @@ def main() -> int:
                                  "node_angular",
                                  "angular_readout", "attn_pool",
                                  "radial_bins", "radial_max",
+                                 "rbf_bins", "rbf_max", "edge_asset",
+                                 "radius_slope", "radius_slope_u",
                                  "aux_target", "aux_weight")},
            "n_rows": int(len(df)), "n_complexes": int(df["_cplx"].nunique()),
            "metrics": {k: (None if not np.isfinite(v) else float(v))

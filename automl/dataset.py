@@ -428,6 +428,22 @@ def build_matrix(require_3d: bool = True,
     df = pd.concat([df, qc], axis=1)
     df["qc__geometry_ok"] = df["geometry_ok"].astype(np.int8)
 
+    # CAMPAIGN6 block mphys: aqueous-phase and f-shell constants per lanthanide.
+    # Selectivity is Delta(complexation) - Delta(DEHYDRATION) and the feature set
+    # carried no aqueous-phase quantity at all; the three incumbent metal columns
+    # are all monotone in the same thing, so a model built on them can express a
+    # monotone series trend and nothing else, while mean dy across the series is
+    # non-monotone and changes sign twice.  Pre-screened before use: see
+    # automl/reports/c6_prescreen.csv -- mphys__dG_hyd correlates with dy at
+    # 0.215, ABOVE the incumbent Ionic Radius_metal's 0.171 and above the best
+    # of A1's 119 geometry columns (0.183).
+    #
+    # Adding columns cannot change an existing preset: BLOCK_PRESETS selects by
+    # name and no existing preset names "mphys".
+    from automl.metal_physics import attach as _attach_mphys
+    mphys_cols = _attach_mphys(df)
+    info["mphys_columns"] = len(mphys_cols)
+
     # ---- block definitions -------------------------------------------------
     blocks = Blocks()
     cols = list(df.columns)
@@ -448,6 +464,7 @@ def build_matrix(require_3d: bool = True,
     blocks.add("g10", [c for c in cols if c.startswith("g10__")])
     blocks.add("g11", [c for c in cols if c.startswith("g11__")])
     blocks.add("g12", [c for c in cols if c.startswith("g12__")])
+    blocks.add("mphys", [c for c in cols if c.startswith("mphys__")])
     blocks.add("g13", [c for c in cols if c.startswith("g13__")])
     blocks.add("g14", [c for c in cols if c.startswith("g14__")])
     blocks.add("g15", [c for c in cols if c.startswith("g15__")])
@@ -530,6 +547,10 @@ ALL_3D_BLOCKS = ("p3d_phys", "p3d_poly") + NEW_3D_BLOCKS + ("g11",)
 BLOCK_PRESETS: dict[str, tuple[str, ...]] = {
     # --- reference points ---------------------------------------------------
     "baseline_2d":      BASE_2D,
+    # --- CAMPAIGN6: aqueous-phase and f-shell metal constants ---------------
+    # baseline_2d is untouched, so the A/B is exact: same rows, same folds,
+    # same seeds, one block added.
+    "baseline_2d_mphys": BASE_2D + ("mphys",),
     # --- reference xTB energetics (ENERGY_PREREGISTRATION.md) ---------------
     # baseline_2d is untouched, so the A/B is exact: same rows, same folds,
     # same seeds, one block added.

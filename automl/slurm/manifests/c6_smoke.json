@@ -1,0 +1,50 @@
+[
+ {
+  "tag": "c6smoke_s_align",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --pair-metric-align"
+ },
+ {
+  "tag": "c6smoke_s_adjonly",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --pair-metric-align --pair-adj-only"
+ },
+ {
+  "tag": "c6smoke_s_huber",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --pair-loss-kind huber --pair-adj-weight 10.0"
+ },
+ {
+  "tag": "c6smoke_s_slope_lin",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --radius-slope linear"
+ },
+ {
+  "tag": "c6smoke_s_slope_bas",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --radius-slope basis"
+ },
+ {
+  "tag": "c6smoke_s_slope_row",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --radius-slope basis --radius-slope-u row"
+ },
+ {
+  "tag": "c6smoke_s_mphys",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --preset baseline_2d_mphys"
+ },
+ {
+  "tag": "c6smoke_s_mphys_bas",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --preset baseline_2d_mphys --radius-slope basis --pair-metric-align"
+ },
+ {
+  "tag": "c6smoke_s_rbf",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --rbf-bins 64 --rbf-max 5.0 --radial-bins 128"
+ },
+ {
+  "tag": "c6smoke_s_f40",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --filtration-max 4.0"
+ },
+ {
+  "tag": "c6smoke_snn_align",
+  "args": "--arch snn --no-triangles --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --pair-metric-align --radius-slope quad"
+ },
+ {
+  "tag": "c6smoke_tabular",
+  "args": "--arch tabular --match-rows snn --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --radius-slope basis --preset baseline_2d_mphys"
+ }
+]

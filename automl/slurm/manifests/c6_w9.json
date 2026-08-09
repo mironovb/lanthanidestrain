@@ -1,0 +1,130 @@
+[
+ {
+  "tag": "c6_x0_mae_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mae --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7"
+ },
+ {
+  "tag": "c6_x0_mae_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mae --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 11"
+ },
+ {
+  "tag": "c6_x0_mae_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mae --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 23"
+ },
+ {
+  "tag": "c6_x0_mae_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mae --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 37"
+ },
+ {
+  "tag": "c6_x1_d05_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.5 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7"
+ },
+ {
+  "tag": "c6_x1_d05_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.5 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 11"
+ },
+ {
+  "tag": "c6_x1_d05_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.5 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 23"
+ },
+ {
+  "tag": "c6_x1_d05_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.5 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 37"
+ },
+ {
+  "tag": "c6_x2_d02_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7"
+ },
+ {
+  "tag": "c6_x2_d02_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 11"
+ },
+ {
+  "tag": "c6_x2_d02_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 23"
+ },
+ {
+  "tag": "c6_x2_d02_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 37"
+ },
+ {
+  "tag": "c6_x3_mse_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mse --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7"
+ },
+ {
+  "tag": "c6_x3_mse_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mse --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 11"
+ },
+ {
+  "tag": "c6_x3_mse_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mse --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 23"
+ },
+ {
+  "tag": "c6_x3_mse_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mse --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 37"
+ },
+ {
+  "tag": "c6_x4_mae_mphys_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --preset baseline_2d_mphys --level-loss mae --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7"
+ },
+ {
+  "tag": "c6_x4_mae_mphys_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --preset baseline_2d_mphys --level-loss mae --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 11"
+ },
+ {
+  "tag": "c6_x4_mae_mphys_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --preset baseline_2d_mphys --level-loss mae --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 23"
+ },
+ {
+  "tag": "c6_x4_mae_mphys_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --preset baseline_2d_mphys --level-loss mae --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 37"
+ },
+ {
+  "tag": "c6_x5_d02_mphys_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --preset baseline_2d_mphys --level-huber-delta 0.2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7"
+ },
+ {
+  "tag": "c6_x5_d02_mphys_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --preset baseline_2d_mphys --level-huber-delta 0.2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 11"
+ },
+ {
+  "tag": "c6_x5_d02_mphys_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --preset baseline_2d_mphys --level-huber-delta 0.2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 23"
+ },
+ {
+  "tag": "c6_x5_d02_mphys_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --preset baseline_2d_mphys --level-huber-delta 0.2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 37"
+ },
+ {
+  "tag": "c6_x6_mae_f40_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mae --filtration-max 4.0 --rbf-bins 64 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7"
+ },
+ {
+  "tag": "c6_x6_mae_f40_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mae --filtration-max 4.0 --rbf-bins 64 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 11"
+ },
+ {
+  "tag": "c6_x6_mae_f40_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mae --filtration-max 4.0 --rbf-bins 64 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 23"
+ },
+ {
+  "tag": "c6_x6_mae_f40_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-loss mae --filtration-max 4.0 --rbf-bins 64 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 37"
+ },
+ {
+  "tag": "c6_x7_d02_w10_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.2 --pair-adj-weight 10.0 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7"
+ },
+ {
+  "tag": "c6_x7_d02_w10_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.2 --pair-adj-weight 10.0 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 11"
+ },
+ {
+  "tag": "c6_x7_d02_w10_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.2 --pair-adj-weight 10.0 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 23"
+ },
+ {
+  "tag": "c6_x7_d02_w10_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --level-huber-delta 0.2 --pair-adj-weight 10.0 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 37"
+ }
+]

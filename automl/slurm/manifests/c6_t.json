@@ -1,0 +1,194 @@
+[
+ {
+  "tag": "c6t_t0_mae_f40_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 7"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 11"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 23"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 37"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 42"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 51"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 67"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 83"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s211",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 211"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s223",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 223"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s233",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 233"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s241",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 241"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s251",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 251"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s263",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 263"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s271",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 271"
+ },
+ {
+  "tag": "c6t_t0_mae_f40_s281",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 281"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 7"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 11"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 23"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 37"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 42"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 51"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 67"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 83"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s211",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 211"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s223",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 223"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s233",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 233"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s241",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 241"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s251",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 251"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s263",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 263"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s271",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 271"
+ },
+ {
+  "tag": "c6t_t1_d02_f40_s281",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-huber-delta 0.2 --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 281"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 7"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 11"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 23"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 37"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 42"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 51"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 67"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 83"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s211",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 211"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s223",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 223"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s233",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 233"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s241",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 241"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s251",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 251"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s263",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 263"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s271",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 271"
+ },
+ {
+  "tag": "c6t_t2_mae_only_s281",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --level-loss mae --folds 5 --repeats 3 --seed 281"
+ }
+]

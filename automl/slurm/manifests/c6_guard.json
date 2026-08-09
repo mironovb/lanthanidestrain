@@ -1,0 +1,6 @@
+[
+ {
+  "tag": "d0_dist_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 3 --seed 7"
+ }
+]

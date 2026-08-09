@@ -1,0 +1,2 @@
+which,variant,adj_r2,n_pairs,logD_r2,seconds,seeds,params
+fcnn,lr3e3,0.2120357910319165,905,0.31596705392347446,3241.6,16,"{""hidden"": [256, 128], ""alpha"": 0.001, ""lr"": 0.003}"

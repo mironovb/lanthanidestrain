@@ -1,0 +1,98 @@
+[
+ {
+  "tag": "c6sm_sm_full_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry full --filtration-max 4.0 --rbf-bins 64 --seed 7"
+ },
+ {
+  "tag": "c6sm_sm_full_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry full --filtration-max 4.0 --rbf-bins 64 --seed 11"
+ },
+ {
+  "tag": "c6sm_sm_full_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry full --filtration-max 4.0 --rbf-bins 64 --seed 23"
+ },
+ {
+  "tag": "c6sm_sm_full_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry full --filtration-max 4.0 --rbf-bins 64 --seed 37"
+ },
+ {
+  "tag": "c6sm_sm_full_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry full --filtration-max 4.0 --rbf-bins 64 --seed 42"
+ },
+ {
+  "tag": "c6sm_sm_full_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry full --filtration-max 4.0 --rbf-bins 64 --seed 51"
+ },
+ {
+  "tag": "c6sm_sm_full_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry full --filtration-max 4.0 --rbf-bins 64 --seed 67"
+ },
+ {
+  "tag": "c6sm_sm_full_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry full --filtration-max 4.0 --rbf-bins 64 --seed 83"
+ },
+ {
+  "tag": "c6sm_sm_water_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry water --filtration-max 4.0 --rbf-bins 64 --seed 7"
+ },
+ {
+  "tag": "c6sm_sm_water_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry water --filtration-max 4.0 --rbf-bins 64 --seed 11"
+ },
+ {
+  "tag": "c6sm_sm_water_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry water --filtration-max 4.0 --rbf-bins 64 --seed 23"
+ },
+ {
+  "tag": "c6sm_sm_water_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry water --filtration-max 4.0 --rbf-bins 64 --seed 37"
+ },
+ {
+  "tag": "c6sm_sm_water_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry water --filtration-max 4.0 --rbf-bins 64 --seed 42"
+ },
+ {
+  "tag": "c6sm_sm_water_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry water --filtration-max 4.0 --rbf-bins 64 --seed 51"
+ },
+ {
+  "tag": "c6sm_sm_water_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry water --filtration-max 4.0 --rbf-bins 64 --seed 67"
+ },
+ {
+  "tag": "c6sm_sm_water_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry water --filtration-max 4.0 --rbf-bins 64 --seed 83"
+ },
+ {
+  "tag": "c6sm_sm_octanol_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry octanol --filtration-max 4.0 --rbf-bins 64 --seed 7"
+ },
+ {
+  "tag": "c6sm_sm_octanol_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry octanol --filtration-max 4.0 --rbf-bins 64 --seed 11"
+ },
+ {
+  "tag": "c6sm_sm_octanol_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry octanol --filtration-max 4.0 --rbf-bins 64 --seed 23"
+ },
+ {
+  "tag": "c6sm_sm_octanol_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry octanol --filtration-max 4.0 --rbf-bins 64 --seed 37"
+ },
+ {
+  "tag": "c6sm_sm_octanol_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry octanol --filtration-max 4.0 --rbf-bins 64 --seed 42"
+ },
+ {
+  "tag": "c6sm_sm_octanol_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry octanol --filtration-max 4.0 --rbf-bins 64 --seed 51"
+ },
+ {
+  "tag": "c6sm_sm_octanol_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry octanol --filtration-max 4.0 --rbf-bins 64 --seed 67"
+ },
+ {
+  "tag": "c6sm_sm_octanol_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/solvent_matched_extractants.txt --geometry octanol --filtration-max 4.0 --rbf-bins 64 --seed 83"
+ }
+]

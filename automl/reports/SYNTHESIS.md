@@ -245,3 +245,13 @@ rule stated in this document — an arm earns a slot only if it is both accurate
 the scored metric and decorrelated from its partner — survives intact and is the
 transferable contribution. The claim about the *complex* does not. Full account:
 [`ENCODER_RESULTS.md`](ENCODER_RESULTS.md).
+
+---
+
+> **Erratum (9 August 2026).** The "~0.04 Å optimisation-noise floor" cited above was
+> never measured. It has now been measured directly — 390 perturbed-restart
+> GFN2-xTB optimisations over 30 structures — and the true reproducibility floor
+> is **≈ 0.0002 Å**, 200× smaller. The 0.013 Å adjacent-lanthanide step is
+> therefore **~68× above** the floor, not below it. The empirical nulls in this
+> report stand; the explanation offered for them does not.
+> See [`NOISE_FLOOR.md`](NOISE_FLOOR.md) and `SCIENTIFIC_FINDINGS.md` §H1.

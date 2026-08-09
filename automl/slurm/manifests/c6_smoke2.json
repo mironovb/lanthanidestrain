@@ -1,0 +1,14 @@
+[
+ {
+  "tag": "c6smoke_c50",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --preset baseline_2d_mphys --edge-asset c50 --filtration-max 5.0 --rbf-bins 64 --rbf-max 5.0"
+ },
+ {
+  "tag": "c6smoke_c80",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --preset baseline_2d_mphys --edge-asset c80 --filtration-max 8.0 --rbf-bins 128 --rbf-max 8.0"
+ },
+ {
+  "tag": "c6smoke_k24",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --folds 5 --repeats 1 --epochs 2 --restrict-groups /home/gridsan/bmironov/lanthanidestrain/automl/artifacts/c6_split/screen_select_extractants.txt --seed 7 --preset baseline_2d_mphys --edge-asset k24 --filtration-max 12.0 --rbf-bins 96 --rbf-max 8.0"
+ }
+]

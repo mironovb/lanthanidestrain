@@ -110,3 +110,13 @@ built; no feature added, removed or retuned after seeing a result.
 ---
 
 *Signed off before any fit — B. Mironov, 21 July 2026.*
+
+---
+
+> **Erratum (9 August 2026).** The "~0.04 Å optimisation-noise floor" cited above was
+> never measured. It has now been measured directly — 390 perturbed-restart
+> GFN2-xTB optimisations over 30 structures — and the true reproducibility floor
+> is **≈ 0.0002 Å**, 200× smaller. The 0.013 Å adjacent-lanthanide step is
+> therefore **~68× above** the floor, not below it. The empirical nulls in this
+> report stand; the explanation offered for them does not.
+> See [`NOISE_FLOOR.md`](NOISE_FLOOR.md) and `SCIENTIFIC_FINDINGS.md` §H1.
