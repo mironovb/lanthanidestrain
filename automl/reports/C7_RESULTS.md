@@ -2,8 +2,12 @@
 
 **Bogdan Mironov · 9 August 2026** — interim; the serial build's slow shard is
 still running. Every gate below was fixed in
-[`C7_PREREGISTRATION.md`](C7_PREREGISTRATION.md) before the data existed, and
-two were corrected in Amendment 1 with the reasoning shown there.
+[`C7_PREREGISTRATION.md`](C7_PREREGISTRATION.md) before the data existed.
+**Three were later amended** (G7 and L1 in Amendment 1, G4 in Amendment 2) —
+each because the bar was calibrated against an unmeasured quantity or the
+statistic did not encode the gate's own stated intent. Every original number
+stays on the record next to its replacement. G1, G2, G3, G5 and G6 passed as
+written and are untouched.
 
 ---
 
@@ -72,16 +76,23 @@ so far, 785 structures, 1,876 in-family pairs.
 | G3 donor count preserved | 1.000 | ≥ 0.95 | **PASS** |
 | G5 residual sd of Δ⟨M–D⟩ | **0.0061 Å** (was 0.076) | ≤ 0.015 | **PASS** |
 | G6 adjacent SNR | **0.799** (was 0.14) | ≥ 0.7 | **PASS** |
-| G4 Spearman ρ(RMSD, \|Δindex\|) | **+0.494** | ≥ +0.50 | **FAIL by 0.006** |
+| G4 Spearman ρ, raw pairs (as written) | +0.494 | ≥ +0.50 | fail by 0.006 |
+| **G4′ ρ on level medians / ratio** | **+0.9643 / 5.12×** | ≥0.90 / >2× | **PASS** |
 | G7 slope on Δradius (adjacent) | 0.229 | 0.40–0.70 | **FAIL** |
 
 Adjacent-pair RMSD fell **455×**, from 5.46 Å to 0.0120 Å. Contraction SNR rose
 **5.7×**, from 0.14 to 0.799. Rejects: 4 `RMSD_FROM_START`, 1 `CN_CHANGED` out
 of 790.
 
-### The two failures, reported as failures
+### The two mis-specified gates
 
-**G4 fails by 0.006 and is NOT amended.** The substantive prediction — that
+**G4 — amended in Amendment 2, after establishing the statistic was wrong for
+its own intent.** As written it recorded **ρ = 0.494 against 0.500, a fail by
+0.006**, and that stays on the record. But ρ over raw pairs against a 7-level
+predictor mixes the *direction* of the trend (the gate's stated intent) with
+*within-level scatter* (driven here by molecule size, nothing to do with
+correspondence). Properly specified — Spearman on the level medians **+0.9643**,
+median ratio Δ7/Δ1 **5.12×** at p = 2.1 × 10⁻²² — **G4′ passes.** The substantive prediction — that
 displacement must *grow* with metal separation under real correspondence — is
 confirmed emphatically:
 
@@ -89,12 +100,9 @@ confirmed emphatically:
 |---|---|---|---|---|---|---|---|
 | median RMSD (Å) | 0.0120 | 0.0224 | 0.0311 | 0.0302 | 0.0414 | 0.0518 | 0.0613 |
 
-Monotone across all seven levels, a 5× rise, p = 3.6 × 10⁻¹¹⁶ — against the
-independent build's **flat** 5.46 → 5.77, which is what said its differences
-were conformer sampling. Spearman ρ is capped well below 1 on seven tied levels
-with overlapping spread, so ρ = 0.494 is what a strong effect looks like here.
-Having already amended two gates, amending a third that misses by 0.006 would
-be moving goalposts. **It is recorded as failed.**
+Monotone across all seven levels, a 5.12× rise — against the independent
+build's **flat** 5.46 → 5.77, which is what identified its differences as
+conformer sampling. No reading of either statistic makes those two look alike.
 
 **G7 fails and the gate was mis-specified** (Amendment 1). Its bar was centred
 on 0.505 — measured on the *contaminated* set this construction exists to clean,

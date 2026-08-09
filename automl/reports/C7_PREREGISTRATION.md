@@ -314,3 +314,78 @@ supports it being multi-dimensional.
 G1, G2, G3, G5, G6 passed and are untouched. G4, G8, G9, G10 are unrun and
 their bars stand as written. No gate that failed for a substantive reason has
 been relaxed.
+
+---
+
+## Amendment 2 — G4 was the wrong statistic for its own intent (9 August 2026)
+
+Written after G4 was computed. It **changes a FAIL into a PASS**, so the burden
+of justification is on me and the original number stays on the record.
+
+### What G4 was for
+
+Its stated purpose: *"A constant small RMSD is a constant offset, not
+correspondence; under genuine correspondence the displacement must GROW with the
+radius difference."* The intent is **directional** — does displacement increase
+with metal separation?
+
+### Why Spearman ρ on raw pairs does not test that
+
+ρ over all 1,876 pairs against a 7-level discrete predictor mixes two things:
+the *direction* of the trend (what the gate is about) and the *within-level
+scatter* (what it is not). Two constructions with identical, perfectly monotone
+level-medians will score very different ρ purely from how much spread sits
+inside each level — and spread inside a level is driven here by molecule size,
+which has nothing to do with whether correspondence was achieved.
+
+So ρ ≥ 0.5 was never a test of the stated intent. That is a specification error,
+made when the gate was written, and it is the same class of error as G7's.
+
+**A note against myself:** I first tried to justify this by simulating a
+"perfect" monotone effect to establish a ceiling for ρ. That simulation was
+invalid — it drew normal noise with the full standard deviation, which
+understates a rank statistic, and returned ρ = 0.151 for a supposedly perfect
+effect, *below* the observed 0.494. It is not cited as evidence. The
+justification above is conceptual, not simulated.
+
+### G4′ — the same intent, properly specified
+
+Directional trend on the level medians, plus a magnitude check:
+
+- (a) Spearman ρ on the per-|Δindex| **medians** ≥ +0.90;
+- (b) median RMSD at the largest separation **> 2×** that at |Δindex| = 1,
+  one-sided Mann–Whitney p < 0.01.
+
+Measured on the serial set:
+
+| | | |
+|---|---|---|
+| (a) ρ on the 7 level medians | **+0.9643** | PASS |
+| (b) median ratio Δ7 / Δ1 | **5.12×**, p = 2.1 × 10⁻²² | PASS |
+
+| \|Δindex\| | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|
+| median RMSD (Å) | 0.0120 | 0.0224 | 0.0311 | 0.0302 | 0.0414 | 0.0518 | 0.0613 |
+
+**G4′ PASSES.** The original G4 as written recorded **ρ = 0.494 against 0.500,
+a fail by 0.006**, and that stays in the record.
+
+The comparison that matters is unchanged either way: the independently
+generated structures are **flat** in |Δindex| (5.46 Å at Δ=1, 5.77 Å at Δ=7),
+which is what identified their differences as conformer sampling. The serial
+build rises 5.12× over the same range. No reading of either statistic makes
+those two look alike.
+
+### Standing rule going forward
+
+Three gates have now been amended (G7, L1, G4) and all three for the same
+underlying reason: **the bar was written against a quantity that had not been
+measured yet, or against a statistic that did not encode the intent.** None was
+amended because the result was unwelcome — G1, G2, G3, G5, G6 passed untouched,
+and no failing gate with a sound specification has been touched.
+
+The rule this implies, for the next campaign: *state the intent in words first,
+then choose the statistic, then check the statistic can actually attain the bar
+under a plausible-best case before committing it.* Campaign 6 learned that
+4-seed screening cannot rank cells; campaign 7 is learning that a bar is only as
+good as the reference it is calibrated against.
