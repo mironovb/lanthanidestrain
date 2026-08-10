@@ -113,7 +113,13 @@ def _one(task: dict[str, Any]) -> dict[str, Any]:
     r = optimize_with_retry(sym, xyz0, charge=task["charge"], uhf=uhf,
                             method=method, solvent=task.get("solvent"),
                             threads=1, timeout=task.get("timeout", 7200))
-    rec = {k: task[k] for k in ("family", "path", "metal", "arm", "charge")}
+    # n_atoms and cn MUST travel with the record.  They were omitted once, and
+    # the downstream "partial correlation controlling for ligand size and CN"
+    # then silently controlled for two constants (n_atoms defaulted to 0, cn to
+    # 9) and returned exactly the raw correlation.  A confounder that is not
+    # present does not announce itself.
+    rec = {k: task[k] for k in ("family", "path", "metal", "arm", "charge",
+                                "n_atoms", "cn")}
     rec.update({"z": Z_OF[task["metal"]], "f_count": f_count(task["metal"]),
                 "uhf": uhf, "ok": bool(r.get("ok")),
                 "reason": r.get("reason"), "seconds": r.get("seconds"),

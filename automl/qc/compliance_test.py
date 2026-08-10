@@ -93,6 +93,31 @@ def load_series(tags: list[str]) -> list[dict]:
     return recs
 
 
+def family_meta() -> dict[str, dict]:
+    """n_atoms and coreCN per family, recovered from the serial records.
+
+    Runs made before the propagation fix did not carry these, and re-running
+    2130 optimisations to recover two integers would be absurd.  They are
+    properties of the family, so they are looked up rather than refitted.
+    """
+    import glob
+    out: dict[str, dict] = {}
+    for p in glob.glob(str(_REPO / "automl/artifacts/serial_metals/records/"
+                          "serial__*.json")):
+        try:
+            r = json.loads(Path(p).read_text())
+        except Exception:                                          # noqa: BLE001
+            continue
+        if not (r.get("ok") and r.get("mode") == "serial"):
+            continue
+        f = r.get("family")
+        cur = out.get(f)
+        if cur is None or r.get("n_atoms", 1e9) < cur["n_atoms"]:
+            out[f] = {"n_atoms": int(r.get("n_atoms") or 0),
+                      "cn": int(r.get("cn") or 9)}
+    return out
+
+
 def compliance(recs: list[dict]) -> pd.DataFrame:
     """One c_L per (ligand, arm): slope of <M-donor> on the Shannon radius.
 
@@ -104,11 +129,16 @@ def compliance(recs: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame(recs)
     if df.empty:
         return pd.DataFrame()
+    meta = family_meta()
     for (fam, arm), g in df.groupby(["family", "arm"]):
         g = g[g.f_count >= 1]
         if len(g) < 8:
             continue
-        cn = int(g.iloc[0].get("cn") or 9)
+        fm = meta.get(fam, {})
+        rec_cn = g.iloc[0].get("cn")
+        cn = int(rec_cn if rec_cn is not None and not pd.isna(rec_cn)
+                 else fm.get("cn", 9))
+        n_at = int(g.iloc[0].get("n_atoms") or fm.get("n_atoms", 0))
         sh = SHANNON.get(cn, SHANNON[9])
         x = g.metal.map(sh).to_numpy(dtype=float)
         y = g.mean_m_donor.to_numpy(dtype=float)
@@ -120,7 +150,7 @@ def compliance(recs: list[dict]) -> pd.DataFrame:
         ss = ((y[ok] - y[ok].mean()) ** 2).sum()
         rows.append({"ligand": fam.split("||")[0], "family": fam, "arm": arm,
                      "c_L": float(c), "n_metals": int(ok.sum()),
-                     "cn": cn, "n_atoms": int(g.iloc[0].get("n_atoms") or 0),
+                     "cn": cn, "n_atoms": n_at,
                      "fit_r2": float(1 - ((y[ok] - pred) ** 2).sum() / ss)
                                 if ss > 0 else np.nan,
                      "resid_sd_ang": float(np.std(y[ok] - pred, ddof=1))})
@@ -169,7 +199,19 @@ def _spearman(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def _partial(x: np.ndarray, y: np.ndarray, Z: np.ndarray) -> float:
-    """Correlation of x and y after regressing both on the confounders Z."""
+    """Correlation of x and y after regressing both on the confounders Z.
+
+    Returns NaN if a confounder is constant.  This is not defensive padding:
+    the first run of this test reported a partial correlation identical to the
+    raw one, because n_atoms was 0 for every row and cn was 9 for every row --
+    two constants, controlling for nothing, and the number looked entirely
+    plausible.  A degenerate control must fail loudly, not agree with you.
+    """
+    if np.ndim(Z) == 1:
+        Z = Z[:, None]
+    const = [j for j in range(Z.shape[1]) if np.std(Z[:, j]) == 0]
+    if const:
+        return float("nan")
     Z = np.column_stack([Z, np.ones(len(x))])
     rx = x - Z @ np.linalg.lstsq(Z, x, rcond=None)[0]
     ry = y - Z @ np.linalg.lstsq(Z, y, rcond=None)[0]
