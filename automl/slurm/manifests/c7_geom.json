@@ -1,0 +1,66 @@
+[
+ {
+  "tag": "c7_serial_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset serial --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 7 --deterministic"
+ },
+ {
+  "tag": "c7_serial_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset serial --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 11 --deterministic"
+ },
+ {
+  "tag": "c7_serial_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset serial --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 23 --deterministic"
+ },
+ {
+  "tag": "c7_serial_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset serial --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 37 --deterministic"
+ },
+ {
+  "tag": "c7_serial_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset serial --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 42 --deterministic"
+ },
+ {
+  "tag": "c7_serial_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset serial --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 51 --deterministic"
+ },
+ {
+  "tag": "c7_serial_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset serial --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 67 --deterministic"
+ },
+ {
+  "tag": "c7_serial_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset serial --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 83 --deterministic"
+ },
+ {
+  "tag": "c7_orig_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset orig --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 7 --deterministic"
+ },
+ {
+  "tag": "c7_orig_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset orig --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 11 --deterministic"
+ },
+ {
+  "tag": "c7_orig_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset orig --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 23 --deterministic"
+ },
+ {
+  "tag": "c7_orig_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset orig --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 37 --deterministic"
+ },
+ {
+  "tag": "c7_orig_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset orig --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 42 --deterministic"
+ },
+ {
+  "tag": "c7_orig_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset orig --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 51 --deterministic"
+ },
+ {
+  "tag": "c7_orig_s67",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset orig --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 67 --deterministic"
+ },
+ {
+  "tag": "c7_orig_s83",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --edge-asset orig --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --seed 83 --deterministic"
+ }
+]
