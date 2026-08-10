@@ -778,3 +778,50 @@ If it does *not* survive relaxation, then I2 is a true but useless result — th
 extra physics lives in the wavefunction and never reaches the coordinates — and
 the honest conclusion is that geometry-only 3D modelling of adjacent-lanthanide
 selectivity is capped regardless of the electronic-structure method.
+
+
+### I4. GFN2-xTB underestimates the lanthanide contraction by 2.5×; g-xTB reproduces it
+**ESTABLISHED**, 71 distinct ligands × 15 lanthanides × 2 Hamiltonians, one
+binary, one protocol, gas phase, 2130 optimisations. Per-ligand compliance
+`c_L = d⟨M–donor⟩ / d r_Shannon`, where **1.00 is exact agreement with the
+Shannon (1976) effective ionic radii**:
+
+| arm | c_L | vs experiment | t vs 1.0 |
+|---|---|---|---|
+| **GFN2** | **0.405 ± 0.145** | **under by 2.47×** | −34.5, p = 1.1e−45 |
+| **g-xTB** | **1.078 ± 0.094** | over by 1.08× | +7.0, p = 1.4e−09 |
+
+Paired difference **+0.673**, improving on **71 of 71 ligands**
+(t = +43.0, p = 4.9e−52; Wilcoxon p = 2.4e−13). Reproduced independently in
+solvent (GFN2 0.398, g-xTB 1.313) and on the 6-ligand pilot (0.386 / 1.142).
+
+This is externally validated against experiment rather than an internal
+contrast, and it is the explanation for a long run of null 3D results: **the
+geometries the models are given barely encode the lanthanide contraction at
+all.** GFN2's per-ligand slope is also mostly noise — cv 0.358 with only 23 %
+of its non-linear response shared across ligands, against g-xTB's 96 %.
+
+*Falsifying test:* run a third Hamiltonian with explicit f electrons; if it
+lands near 0.4 rather than 1.0, the effect is not about f-in-valence.
+
+### I5. Per-ligand compliance does NOT predict measured selectivity
+**ESTABLISHED (null)**, 71 ligands, 44 matched to measured separations.
+
+| arm | Pearson r | p | partial (size, CN) |
+|---|---|---|---|
+| GFN2 | +0.110 | 0.48 | +0.194 |
+| g-xTB | **−0.020** | 0.90 | +0.092 |
+
+n = 44 needs |r| ≈ 0.30 for p < 0.05. Both null; g-xTB's is essentially zero.
+
+This closes the last mechanism by which better geometry could have helped.
+Adjacent-lanthanide selectivity *is* ligand-dependent discrimination, so if
+geometry carried it, the per-ligand compliance was where it had to live. It
+does not. Note also that g-xTB makes c_L **more** uniform, not less
+(cv 0.358 → 0.087): the better Hamiltonian moves the response closer to one
+universal constant times the tabular ionic radius, which is the quantity the
+model already has.
+
+*Falsifying test:* the C8 training contrast. If g-xTB geometries raise
+`sel_adj_logSF_r2`, then geometry carries something this scalar summary misses
+and I5 is too strong a reading.
