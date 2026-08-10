@@ -61,7 +61,7 @@ SERIAL = _REPO / "automl/artifacts/serial_metals"
 OUT = _REPO / "automl/artifacts/gxtb_series"
 
 
-def pick_anchors(n: int) -> list[dict[str, Any]]:
+def pick_anchors(n: int, max_atoms: int | None = None) -> list[dict[str, Any]]:
     """One anchor per ligand family, chosen for diversity of ligand and CN.
 
     Anchors are *already-relaxed* structures.  Starting from a converged
@@ -93,6 +93,8 @@ def pick_anchors(n: int) -> list[dict[str, Any]]:
         if lig in seen_lig:
             continue
         member = min(fam[key], key=lambda x: x.get("n_atoms", 1e9))
+        if max_atoms is not None and member.get("n_atoms", 0) > max_atoms:
+            continue
         seen_lig.add(lig)
         out.append({"family": key, "path": member["path"],
                     "charge": int(member.get("charge", 3)),
@@ -139,13 +141,25 @@ def main() -> int:
     ap.add_argument("--timeout", type=int, default=7200)
     ap.add_argument("--arms", default="gfn2,gxtb_hs,gxtb_cs")
     ap.add_argument("--tag", default="opt")
+    ap.add_argument("--max-atoms", type=int, default=None)
+    ap.add_argument("--shard", type=int, default=0)
+    ap.add_argument("--num-shards", type=int, default=1)
     args = ap.parse_args()
 
-    anchors = pick_anchors(args.anchors)
+    anchors = pick_anchors(args.anchors, max_atoms=args.max_atoms)
     arms = [a for a in args.arms.split(",") if a]
+    # Shard BY ANCHOR, never by task: a compliance coefficient is a fit across
+    # the whole 15-metal series, so a family split across jobs could come back
+    # half-finished and be silently fitted on a partial series.
+    if args.num_shards > 1:
+        anchors = [a for i, a in enumerate(anchors)
+                   if i % args.num_shards == args.shard]
     tasks = [dict(a, metal=m, arm=arm, solvent=args.solvent,
                   timeout=args.timeout)
              for a in anchors for m in LANTHANIDES for arm in arms]
+    # Cheapest first, so a job that runs out of wall clock loses the fewest
+    # complete series rather than a random subset.
+    tasks.sort(key=lambda t: t.get("n_atoms", 0))
     print(f"[gxtb_series] {len(anchors)} anchors x {len(LANTHANIDES)} metals "
           f"x {len(arms)} arms = {len(tasks)} optimisations", flush=True)
     for a in anchors:
