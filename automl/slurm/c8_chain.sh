@@ -54,6 +54,21 @@ PYEOF
 # The unsuffixed pair must be rebuilt last: the loop above overwrote them.
 python3 -u -m automl.topo.build_vr_gxtb --both --cutoff 4.0 || exit 1
 
+# Pre-build every triangle-edge cache SERIALLY.  SimplicialComplexes writes
+# triangle_edges.tmp.npz and atomically renames it; two cells starting on the
+# same asset at once race, one wins the rename and the other dies with
+# FileNotFoundError on its own temp file.  That already cost a cell in the
+# snapshot run.  Building them here, one at a time, means every campaign cell
+# finds a warm cache and never creates one.
+for ARM in gxtb ship gxtbh shiph; do
+  python3 - "${ARM}" <<'PYEOF'
+import sys
+from automl.topo.train import edge_asset
+a = edge_asset(sys.argv[1])
+print(f"[c8chain] triangle cache warm for {sys.argv[1]}")
+PYEOF
+done
+
 OUT="${REPO}/automl/artifacts/topo_c8"
 mkdir -p "${OUT}"
 # Preliminary cells were run on a 406-complex subset; their sentinels must not

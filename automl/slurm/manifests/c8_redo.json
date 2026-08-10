@@ -1,0 +1,6 @@
+[
+ {
+  "tag": "c8s_topo_gxtbs_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset gxtbs --seed 7"
+ }
+]
