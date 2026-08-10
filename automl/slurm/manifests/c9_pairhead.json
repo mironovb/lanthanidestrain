@@ -1,0 +1,98 @@
+[
+ {
+  "tag": "c9_ctrl_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic"
+ },
+ {
+  "tag": "c9_ph_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head"
+ },
+ {
+  "tag": "c9_phrec_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile"
+ },
+ {
+  "tag": "c9_phrec2_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0"
+ },
+ {
+  "tag": "c9_ctrl_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic"
+ },
+ {
+  "tag": "c9_ph_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head"
+ },
+ {
+  "tag": "c9_phrec_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile"
+ },
+ {
+  "tag": "c9_phrec2_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0"
+ },
+ {
+  "tag": "c9_ctrl_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic"
+ },
+ {
+  "tag": "c9_ph_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head"
+ },
+ {
+  "tag": "c9_phrec_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile"
+ },
+ {
+  "tag": "c9_phrec2_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0"
+ },
+ {
+  "tag": "c9_ctrl_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic"
+ },
+ {
+  "tag": "c9_ph_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head"
+ },
+ {
+  "tag": "c9_phrec_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile"
+ },
+ {
+  "tag": "c9_phrec2_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0"
+ },
+ {
+  "tag": "c9_ctrl_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic"
+ },
+ {
+  "tag": "c9_ph_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head"
+ },
+ {
+  "tag": "c9_phrec_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile"
+ },
+ {
+  "tag": "c9_phrec2_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0"
+ },
+ {
+  "tag": "c9_ctrl_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic"
+ },
+ {
+  "tag": "c9_ph_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head"
+ },
+ {
+  "tag": "c9_phrec_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile"
+ },
+ {
+  "tag": "c9_phrec2_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0"
+ }
+]

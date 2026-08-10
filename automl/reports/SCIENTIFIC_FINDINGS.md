@@ -869,3 +869,46 @@ scale-free check.
 *Falsifying test:* the full-asset 72-cell campaign (953 complexes, hops-kept
 and hops-dropped, three config variants). If the scale-free Δ turns positive
 there, I6 is too strong.
+
+
+### I7. The metric is NOT noise-limited — the ceiling is ~+0.53 and we are at +0.18
+**ESTABLISHED.** This is the number that says where the remaining headroom is.
+
+Raw scatter of `log_D` within a (block, metal) group is **0.72–0.95** — larger
+than the entire spread of adjacent separations (sd 0.2236). Taken at face value
+that implies a *negative* ceiling and would make the measured +0.183
+impossible, so the naive noise model is wrong.
+
+It is wrong because **condition effects are shared between the two metals in a
+pair and cancel on differencing.** Measured directly: the same
+(composition, adjacent pair) measured in ≥2 independent strict blocks (n = 203)
+reproduces its separation to a pooled sd of **0.1533**, against the 0.72–0.95
+scatter of the underlying levels — a 6× reduction.
+
+| | value |
+|---|---|
+| reproducibility of a separation | 0.1533 |
+| spread of separations | 0.2236 |
+| **implied ceiling on `sel_adj_logSF_r2`** | **≈ +0.53** |
+| current best (C7 orig, 8 seeds) | +0.183 |
+
+We are at roughly **35 % of what the labels permit**. The metric is not near its
+noise floor, and ~0.35 of R² is genuinely available — but not in geometry,
+which explains ~1 % of adjacent-separation variance under either Hamiltonian
+(I6). This is a *lower* bound on the ceiling: part of the 0.1533 is real
+condition-dependence of selectivity rather than noise, and a model that sees
+conditions could capture some of it.
+
+**Where to spend instead.** The differencing structure is the lever the geometry
+work was never going to reach: the pipeline predicts levels — which carry the
+0.72–0.95 condition scatter — and differences them, when the quantity being
+scored reproduces 6× tighter than the levels do. `--pair-head` predicts the
+difference directly from [h_i, h_j, h_i−h_j] and **has never been run with the
+modern configuration** (0 runs across topo_runs, topo_c6, topo_c7 carry
+`pair_head=True`). Also unexploited: prediction of adjacent differences is
+systematically over-dispersed, α ≈ 0.88 < 1 on every arm measured, worth about
++0.005 from calibration alone.
+
+*Falsifying test:* if a direct pair head plus reconciliation does not move
+`sel_adj_logSF_r2`, then the differencing structure is not the constraint
+either, and the gap to +0.53 is in the features rather than the objective.
