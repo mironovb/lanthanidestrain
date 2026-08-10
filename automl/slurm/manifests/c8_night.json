@@ -1,0 +1,226 @@
+[
+ {
+  "tag": "c8_main_gxtb_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 7"
+ },
+ {
+  "tag": "c8_main_ship_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 7"
+ },
+ {
+  "tag": "c8_main_gxtb_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 11"
+ },
+ {
+  "tag": "c8_main_ship_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 11"
+ },
+ {
+  "tag": "c8_main_gxtb_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 23"
+ },
+ {
+  "tag": "c8_main_ship_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 23"
+ },
+ {
+  "tag": "c8_main_gxtb_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 37"
+ },
+ {
+  "tag": "c8_main_ship_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 37"
+ },
+ {
+  "tag": "c8_main_gxtb_s42",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 42"
+ },
+ {
+  "tag": "c8_main_ship_s42",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 42"
+ },
+ {
+  "tag": "c8_main_gxtb_s51",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 51"
+ },
+ {
+  "tag": "c8_main_ship_s51",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 51"
+ },
+ {
+  "tag": "c8_main_gxtb_s67",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 67"
+ },
+ {
+  "tag": "c8_main_ship_s67",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 67"
+ },
+ {
+  "tag": "c8_main_gxtb_s83",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 83"
+ },
+ {
+  "tag": "c8_main_ship_s83",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 83"
+ },
+ {
+  "tag": "c8_topo_gxtb_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset gxtb --seed 7"
+ },
+ {
+  "tag": "c8_topo_ship_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset ship --seed 7"
+ },
+ {
+  "tag": "c8_topo_gxtb_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset gxtb --seed 11"
+ },
+ {
+  "tag": "c8_topo_ship_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset ship --seed 11"
+ },
+ {
+  "tag": "c8_topo_gxtb_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset gxtb --seed 23"
+ },
+ {
+  "tag": "c8_topo_ship_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset ship --seed 23"
+ },
+ {
+  "tag": "c8_topo_gxtb_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset gxtb --seed 37"
+ },
+ {
+  "tag": "c8_topo_ship_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset ship --seed 37"
+ },
+ {
+  "tag": "c8_topo_gxtb_s42",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset gxtb --seed 42"
+ },
+ {
+  "tag": "c8_topo_ship_s42",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset ship --seed 42"
+ },
+ {
+  "tag": "c8_topo_gxtb_s51",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset gxtb --seed 51"
+ },
+ {
+  "tag": "c8_topo_ship_s51",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset ship --seed 51"
+ },
+ {
+  "tag": "c8_topo_gxtb_s67",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset gxtb --seed 67"
+ },
+ {
+  "tag": "c8_topo_ship_s67",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset ship --seed 67"
+ },
+ {
+  "tag": "c8_topo_gxtb_s83",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset gxtb --seed 83"
+ },
+ {
+  "tag": "c8_topo_ship_s83",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset ship --seed 83"
+ },
+ {
+  "tag": "c8_f45_gxtb_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.5 --rbf-bins 64 --edge-asset gxtb --seed 7"
+ },
+ {
+  "tag": "c8_f45_ship_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.5 --rbf-bins 64 --edge-asset ship --seed 7"
+ },
+ {
+  "tag": "c8_f45_gxtb_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.5 --rbf-bins 64 --edge-asset gxtb --seed 11"
+ },
+ {
+  "tag": "c8_f45_ship_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.5 --rbf-bins 64 --edge-asset ship --seed 11"
+ },
+ {
+  "tag": "c8_f45_gxtb_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.5 --rbf-bins 64 --edge-asset gxtb --seed 23"
+ },
+ {
+  "tag": "c8_f45_ship_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.5 --rbf-bins 64 --edge-asset ship --seed 23"
+ },
+ {
+  "tag": "c8_f45_gxtb_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.5 --rbf-bins 64 --edge-asset gxtb --seed 37"
+ },
+ {
+  "tag": "c8_f45_ship_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.5 --rbf-bins 64 --edge-asset ship --seed 37"
+ },
+ {
+  "tag": "c8_rbf32_gxtb_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 32 --edge-asset gxtb --seed 7"
+ },
+ {
+  "tag": "c8_rbf32_ship_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 32 --edge-asset ship --seed 7"
+ },
+ {
+  "tag": "c8_rbf32_gxtb_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 32 --edge-asset gxtb --seed 11"
+ },
+ {
+  "tag": "c8_rbf32_ship_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 32 --edge-asset ship --seed 11"
+ },
+ {
+  "tag": "c8_rbf32_gxtb_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 32 --edge-asset gxtb --seed 23"
+ },
+ {
+  "tag": "c8_rbf32_ship_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 32 --edge-asset ship --seed 23"
+ },
+ {
+  "tag": "c8_rbf32_gxtb_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 32 --edge-asset gxtb --seed 37"
+ },
+ {
+  "tag": "c8_rbf32_ship_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 32 --edge-asset ship --seed 37"
+ },
+ {
+  "tag": "c8_plw4_gxtb_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 7"
+ },
+ {
+  "tag": "c8_plw4_ship_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 7"
+ },
+ {
+  "tag": "c8_plw4_gxtb_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 11"
+ },
+ {
+  "tag": "c8_plw4_ship_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 11"
+ },
+ {
+  "tag": "c8_plw4_gxtb_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 23"
+ },
+ {
+  "tag": "c8_plw4_ship_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 23"
+ },
+ {
+  "tag": "c8_plw4_gxtb_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtb --seed 37"
+ },
+ {
+  "tag": "c8_plw4_ship_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 37"
+ }
+]
