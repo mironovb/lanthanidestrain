@@ -1,0 +1,98 @@
+[
+ {
+  "tag": "c9b_ctrl_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --seed 7"
+ },
+ {
+  "tag": "c9b_ph_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --seed 7"
+ },
+ {
+  "tag": "c9b_phrec_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --seed 7"
+ },
+ {
+  "tag": "c9b_phrec2_s7",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0 --seed 7"
+ },
+ {
+  "tag": "c9b_ctrl_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --seed 11"
+ },
+ {
+  "tag": "c9b_ph_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --seed 11"
+ },
+ {
+  "tag": "c9b_phrec_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --seed 11"
+ },
+ {
+  "tag": "c9b_phrec2_s11",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0 --seed 11"
+ },
+ {
+  "tag": "c9b_ctrl_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --seed 23"
+ },
+ {
+  "tag": "c9b_ph_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --seed 23"
+ },
+ {
+  "tag": "c9b_phrec_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --seed 23"
+ },
+ {
+  "tag": "c9b_phrec2_s23",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0 --seed 23"
+ },
+ {
+  "tag": "c9b_ctrl_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --seed 37"
+ },
+ {
+  "tag": "c9b_ph_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --seed 37"
+ },
+ {
+  "tag": "c9b_phrec_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --seed 37"
+ },
+ {
+  "tag": "c9b_phrec2_s37",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0 --seed 37"
+ },
+ {
+  "tag": "c9b_ctrl_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --seed 42"
+ },
+ {
+  "tag": "c9b_ph_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --seed 42"
+ },
+ {
+  "tag": "c9b_phrec_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --seed 42"
+ },
+ {
+  "tag": "c9b_phrec2_s42",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0 --seed 42"
+ },
+ {
+  "tag": "c9b_ctrl_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --seed 51"
+ },
+ {
+  "tag": "c9b_ph_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --seed 51"
+ },
+ {
+  "tag": "c9b_phrec_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --seed 51"
+ },
+ {
+  "tag": "c9b_phrec2_s51",
+  "args": "--arch dist --pair-loss-weight 2.0 --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-head --pair-reconcile --pair-head-weight 2.0 --seed 51"
+ }
+]

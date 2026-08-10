@@ -523,7 +523,11 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                             # encoder that has no triangles to confound it.
                             radial_bins=int(cfg.get("radial_bins") or 32),
                             radial_max=float(cfg.get("radial_max") or 8.0),
-                            head_embed_mult=2 if cfg.get("block_centre") else 1
+                            head_embed_mult=2 if cfg.get("block_centre") else 1,
+                            # Was omitted, silently disabling --pair-head on
+                            # every --arch dist run while still recording
+                            # pair_head=True in the config.
+                            pair_head=bool(cfg.get("pair_head")),
                             ).to(device)
     else:
         from automl.topo.simplicial_data import N_ANGULAR_BINS
@@ -1196,6 +1200,13 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                     blk_all[rows])
                 emb_out[rows] = e.cpu().numpy()
     out = _predict(te_idx, Xte)
+    # A requested pair head that the model does not have is a SILENT no-op that
+    # still records pair_head=True -- exactly how --arch dist ran four arms to
+    # six identical decimal places.  Fail instead.
+    if cfg.get("pair_head") and getattr(model, "pair_head", None) is None:
+        raise SystemExit("--pair-head was requested but this architecture built "
+                         "no pair head; the run would be a silent no-op "
+                         "recorded as pair_head=True.")
     if cfg.get("pair_reconcile") and getattr(model, "pair_head", None) is not None:
         out = _reconcile(out, te_idx, Xte)
     return out

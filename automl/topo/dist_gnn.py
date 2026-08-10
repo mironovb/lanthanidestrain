@@ -128,7 +128,7 @@ class DistanceNet(nn.Module):
                  n_z: int = 32, node_feat_dim: int = 5,
                  radial_bins: int = 32, radial_max: float = 8.0,
                  head_embed_mult: int = 1, rbf_bins: int = 32,
-                 rbf_max: float = 5.0):
+                 rbf_max: float = 5.0, pair_head: bool = False):
         super().__init__()
         self.dim = dim
         self.z_emb = nn.Embedding(n_z, dim)
@@ -157,6 +157,21 @@ class DistanceNet(nn.Module):
         self.tabular_dim = tabular_dim
         self.head_embed_mult = int(head_embed_mult)
         head_in = self.head_embed_mult * self.embed_dim + tabular_dim
+        # CAMPAIGN3 T2, absent here until now.  The class docstring claimed the
+        # signature matched SimplicialNet, but ``pair_head`` was never a
+        # parameter -- so ``--pair-head`` on an --arch dist run was accepted,
+        # recorded as pair_head=True in results.jsonl, and did NOTHING.
+        # ``--pair-reconcile`` then also no-opped, because it is gated on
+        # ``getattr(model, "pair_head", None) is not None``.  Every modern run
+        # uses --arch dist, so the flag has never once been exercised; a
+        # 24-cell campaign returned four arms agreeing to six decimal places,
+        # which is what exposed it.  Identical construction to SimplicialNet so
+        # the two architectures remain comparable.
+        self.use_pair_head = bool(pair_head)
+        self.pair_head = (nn.Sequential(
+            nn.Linear(3 * head_in, head_hidden), nn.SiLU(), nn.Dropout(dropout),
+            nn.Linear(head_hidden, head_hidden // 2), nn.SiLU(),
+            nn.Linear(head_hidden // 2, 1)) if self.use_pair_head else None)
         self.head = nn.Sequential(
             nn.LayerNorm(head_in),
             nn.Linear(head_in, head_hidden), nn.SiLU(), nn.Dropout(dropout),
@@ -208,3 +223,17 @@ class DistanceNet(nn.Module):
                 raise ValueError("model built with tabular_dim>0 but none given")
             emb = torch.cat([emb, tabular], dim=-1)
         return self.head(emb).squeeze(-1)
+
+    def pair_forward(self, emb: torch.Tensor, i: torch.Tensor,
+                     j: torch.Tensor) -> torch.Tensor:
+        """Predict the pair difference directly -- see SimplicialNet.pair_forward.
+
+        Byte-for-byte the same construction, so a dist-vs-snn comparison of the
+        pair head measures the encoder and not two different heads.  [h_i, h_j,
+        h_i - h_j] is antisymmetric-friendly: the difference term flips sign
+        with pair order, which is the symmetry the target has.
+        """
+        if self.pair_head is None:
+            raise ValueError("model built without --pair-head")
+        z = torch.cat([emb[i], emb[j], emb[i] - emb[j]], dim=-1)
+        return self.pair_head(z).squeeze(-1)
