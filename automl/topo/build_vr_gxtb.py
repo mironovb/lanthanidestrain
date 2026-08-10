@@ -147,18 +147,66 @@ def basin_report(verbose: bool = True) -> dict:
     return rep
 
 
+def eligible(drop_hops: bool = True, verbose: bool = True) -> list[str]:
+    """The complex set BOTH arms will use, resolved once.
+
+    Two ways the arms drift apart if each build decides for itself, and the
+    first build attempt hit both:
+
+    * the re-optimisation is still writing records, so a second ``build()``
+      call sees complexes the first did not -- the arms then differ by whatever
+      landed in between;
+    * ``donor_indices`` runs on each arm's own coordinates and can succeed for
+      one arm and fail for the other, silently dropping a complex from one side.
+
+    Either produces a contrast between two different datasets rather than two
+    geometries, which is the single way this experiment could return a
+    confident wrong answer.  So the set is fixed here, from a single snapshot,
+    and requires the donor shell to resolve under BOTH coordinate sets.
+    """
+    ro = load_reopt()
+    cn_map = _core_cn()
+    _, ship_ids, pos, get = _shipped_index()
+    keep, no_donor = [], 0
+    for bid in ship_ids:                            # SHIPPED order, always
+        if bid not in ro:
+            continue
+        sym, xyz_s, _ = get(bid)
+        xyz_g = np.asarray(ro[bid]["coords"], dtype=float)
+        if xyz_g.shape != xyz_s.shape:
+            continue
+        metal = next((s for s in sym if s in LANTH), None)
+        if metal is None:
+            continue
+        cn = cn_map.get(bid, 9)
+        mi_s, _ = donor_indices(sym, xyz_s, metal, cn)
+        mi_g, _ = donor_indices(sym, xyz_g, metal, cn)
+        if mi_s is None or mi_g is None:
+            no_donor += 1
+            continue
+        keep.append(bid)
+    if drop_hops:
+        hops = set(basin_report(verbose=False)["hops"])
+        before = len(keep)
+        keep = [b for b in keep if b not in hops]
+        if verbose:
+            print(f"[eligible] {before} resolvable in both arms, "
+                  f"{before - len(keep)} basin hops dropped from BOTH, "
+                  f"{no_donor} donor-shell failures -> {len(keep)}")
+    elif verbose:
+        print(f"[eligible] {len(keep)} complexes ({no_donor} donor failures)")
+    return keep
+
+
 def build(arm: str, cutoff: float = 4.0, drop_hops: bool = True,
-          verbose: bool = True) -> Path:
+          verbose: bool = True, keep: list[str] | None = None) -> Path:
     import ase.data as ad
     ro = load_reopt()
     cn_map = _core_cn()
     z, ship_ids, pos, get = _shipped_index()
-
-    keep = [b for b in ship_ids if b in ro]        # SHIPPED order, always
-    if drop_hops:
-        rep = basin_report(verbose=False)
-        hops = set(rep["hops"])
-        keep = [b for b in keep if b not in hops]
+    if keep is None:
+        keep = eligible(drop_hops, verbose=verbose)
+    keep = [b for b in keep if b in ro]
 
     co, zs, pc, im, idn, nptr, bids = [], [], [], [], [], [0], []
     e_idx, e_filt, e_ptr = [], [], [0]
@@ -253,8 +301,9 @@ def main() -> int:
         return verify()
     drop = not args.keep_hops
     if args.both:
-        build("gxtb", args.cutoff, drop)
-        build("ship", args.cutoff, drop)
+        shared = eligible(drop)                     # ONE snapshot, both arms
+        build("gxtb", args.cutoff, drop, keep=list(shared))
+        build("ship", args.cutoff, drop, keep=list(shared))
         return verify()
     if not args.arm:
         raise SystemExit("give --arm, --both, --verify or --basin-report")
