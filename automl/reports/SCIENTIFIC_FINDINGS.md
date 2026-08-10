@@ -825,3 +825,47 @@ model already has.
 *Falsifying test:* the C8 training contrast. If g-xTB geometries raise
 `sel_adj_logSF_r2`, then geometry carries something this scalar summary misses
 and I5 is too strong a reading.
+
+
+### I6. Correct contraction physics does NOT become a better score — and the apparent gain was calibration
+**ESTABLISHED (null)**, 737 matched complexes, 8 paired deterministic seeds,
+arms verified identical in build_ids / node_ptr / atomic_numbers / is_metal.
+
+| arm | Δ `sel_adj_logSF_r2` | seeds up |
+|---|---|---|
+| with tabular block | **−0.0150** | 2/5 |
+| geometry only (`--topology-only`) | +0.0333 | 7/8, p = 0.020 |
+
+The geometry-only arm clears the pre-registered bar (Δ ≥ +0.02, ≥6/8 up) and
+**is still not a result.** Within the same runs `sel_adj_pearson` moves the
+other way: **−0.0170, 2/8 up.** Both arms sit at negative R², where shrinking
+predictions toward the mean raises R² without predicting better — and that is
+exactly what happens: predicted-separation sd is 0.0889 (g-xTB) vs 0.1102
+(shipped) against a true sd of 0.2729, so both are ~0.33–0.40× dispersed and
+g-xTB is 19 % more shrunk.
+
+R² after optimal affine rescaling is Pearson², which removes all calibration:
+
+| | as scored | scale-free |
+|---|---|---|
+| g-xTB | −0.0582 | 0.00721 |
+| shipped | −0.0916 | 0.01078 |
+| Δ | **+0.0333** | **−0.00357** |
+
+**The advantage reverses once the scale is free.** Geometry alone explains ~1 %
+of adjacent-separation variance under either Hamiltonian.
+
+So: a method that reproduces the lanthanide contraction to within 8 % of
+experiment, replacing one that underestimates it 2.5× (I4), does not improve
+adjacent-lanthanide selectivity prediction. The bottleneck is not geometric
+fidelity.
+
+**Methodological.** Reporting the pre-registered primary metric alone would
+have published a positive 3D result that is an artefact of prediction variance.
+The R²/Pearson disagreement *within the same runs* is what caught it. On a
+negative-R² baseline, no single headline metric is trustworthy without a
+scale-free check.
+
+*Falsifying test:* the full-asset 72-cell campaign (953 complexes, hops-kept
+and hops-dropped, three config variants). If the scale-free Δ turns positive
+there, I6 is too strong.
