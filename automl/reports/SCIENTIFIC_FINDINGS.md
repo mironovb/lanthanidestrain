@@ -659,3 +659,122 @@ Hamiltonian, and that is exactly where relaxation escapes its basin.
 **This was not designed as a test of H2** — it fell out of the construction's
 failure mode, which is what makes it independent of §1's parameter read and of
 H3's model stratum.
+
+---
+
+## I. The ceiling is the Hamiltonian's, and a better one removes it
+
+### I0. Correspondence makes the geometry 455× cleaner and prediction slightly WORSE
+**ESTABLISHED**, 8 paired seeds, `--deterministic`, identical rows and build
+ids; the two assets differ **only** in where the atoms are (verified: identical
+`build_ids`, `node_ptr`, `atomic_numbers`, `is_metal`).
+
+| metric | serial (in correspondence) | original | Δ |
+|---|---|---|---|
+| `sel_adj_logSF_r2` | +0.1702 | +0.1831 | **−0.0129** (t = −2.67, 2/8 seeds up) |
+| `sel_adj_pearson` | +0.4228 | +0.4390 | −0.0162 (t = −2.48, 2/8 up) |
+| `sel_adj_sign_accuracy` | +0.6455 | +0.6379 | +0.0076 (n.s.) |
+
+The serial construction was a large success *as geometry*: adjacent-pair
+heavy-atom RMSD fell 5.46 → 0.0120 Å (455×), the contraction signal-to-noise
+rose 0.14 → 0.799 (5.7×), and the response correlation with the Shannon radius
+step went 0.197 → 0.574. None of it transfers. The cleaner set predicts
+**worse**, consistently.
+
+This is the sharpest available confirmation of H2/C-I, and it is a *positive*
+scientific statement rather than another null: geometric noise was never the
+binding constraint. Under GFN2 the metal enters as one linear-in-Z scalar, that
+scalar is already supplied to the model as the tabular ionic radius, and so
+removing 99 % of the conformer noise around it adds nothing — it only costs the
+regulariser the incidental diversity the noisy set happened to provide.
+
+I had explicitly reserved judgement here: "one degree of freedom" and "no usable
+signal" are different claims, and a single *clean* degree of freedom might have
+been worth more than a noisy one. It is not. The claim is now tested rather
+than assumed.
+
+*Falsifying test:* rerun the same contrast on geometries from a Hamiltonian
+whose metal response is **not** rank-1 (§I3). If correspondence still fails
+there, the problem is the representation; if it succeeds, the problem was the
+Hamiltonian all along.
+
+### I1. g-xTB is usable on these complexes at ~2× GFN2 cost
+**ESTABLISHED.** `grimme-lab/g-xtb` (GPL-3.0, `xtb-6.7.1-gxtb-140526`,
+sha256 verified against the published checksum). Parameters are compiled into
+the binary; no external files. On a 58-atom Ce complex `--opt tight` converged
+in 44 cycles, **20.2 s vs GFN2's 10.8 s**, with **analytical** gradients. The
+same binary runs GFN2, so every comparison below carries no build confound.
+A full re-optimisation of all 956 complexes is therefore ~900 CPU-h ≈ 10 h wall.
+
+Two operational facts that would silently corrupt a campaign:
+
+| | |
+|---|---|
+| `--alpb water` | **hard error** — no ALPB/GBSA parameters for g-xTB |
+| `--cosmo water` | works (NH₄⁺ shifts −67 kcal/mol vs GFN2/ALPB's −91) |
+| `--cpcmx water` | **accepted and silently ignored** — energy bit-identical to gas phase |
+
+The production set was built with ALPB, so a g-xTB arm is *not* a drop-in
+replacement: it changes the solvation model as well as the Hamiltonian, and any
+comparison has to be matched on both.
+
+*Falsifying test:* re-run the checksum; run `--cpcmx` on a charged species and
+show a non-zero solvation shift.
+
+### I2. GFN2's lanthanide response is flat; g-xTB's has reproducible f-shell structure
+**ESTABLISHED**, one anchor (104-atom Nd nitrate complex), all 15 lanthanides
+substituted at **fixed geometry**, so every difference is electronic structure
+and nothing else. Ln(III) run at the Hund high-spin `uhf` under g-xTB, `uhf 0`
+under GFN2 (correct there — f is in the core). 15/15 SCF converged in both arms.
+
+Residual of the HOMO–LUMO gap after removing the linear-in-Z trend, Ce→Lu
+(La excluded — it is a separate GFN2 anchor, H2):
+
+| arm | residual sd | reproducibility gas↔water |
+|---|---|---|
+| GFN2 | **0.00075 eV** | r = +0.41 |
+| g-xTB | **0.278 eV** — 370× | **r = +0.97** |
+
+The gas-phase and water runs are independent SCF solutions, so that r = +0.97
+is the control that matters: g-xTB's departure from linearity is *physics*, not
+SCF noise, while GFN2 has essentially nothing to reproduce.
+
+**The gadolinium break.** Mean gap for f⁷–f¹⁴ minus f¹–f⁶:
+
+| arm | gas | water |
+|---|---|---|
+| GFN2 | +0.0115 eV | +0.0048 eV |
+| g-xTB | **+1.151 eV** | **+1.220 eV** |
+
+GFN2's "break" is not a break at all — its gap is a smooth monotone ramp
+(2.146 → 2.166 eV over the whole series) and splitting a straight line in the
+middle trivially yields a difference. g-xTB shows a genuine discontinuity at the
+half-filled shell, ~100× larger, reproduced in two independent runs.
+
+The metal Mulliken charge tells the same story: GFN2 spans **0.0065 e** across
+Ce→Lu (i.e. constant), g-xTB spans **0.66 e** (gas) / **0.97 e** (water), and
+that variation reproduces at r = +0.99 between the two.
+
+*Falsifying test:* repeat on other ligand families; if the break is anchor-
+specific it is a property of that complex, not of the Hamiltonian.
+
+### I3. Open question — does the structure survive into the *geometry*?
+**RUNNING**, and this is the one that matters. Models are given coordinates, not
+wavefunctions. I2 is an electronic result and does not by itself buy anything.
+
+270 optimisations: 6 diverse anchors (93–130 atoms, CN 8 and 9, distinct ligand
+classes) × 15 lanthanides × 3 arms — GFN2, g-xTB high-spin, and **g-xTB forced
+closed-shell as a deliberate wrong-physics control**: if the geometric break is
+f-shell in origin, `uhf 0` should damage it. Run in gas and in solvent.
+
+The claim under test: *is the optimised M–donor response to lanthanide identity
+more than one linear-in-Z scalar under g-xTB?* Under GFN2 it provably is not
+(H2), which is the rank-1 ceiling that made eight 3D encoders interchangeable
+at effective rank 1.05 (G1, G2). If g-xTB's relaxed geometry carries structure
+GFN2 cannot represent, then re-generating the set is justified and the ceiling
+is a property of the method, not of the problem.
+
+If it does *not* survive relaxation, then I2 is a true but useless result — the
+extra physics lives in the wavefunction and never reaches the coordinates — and
+the honest conclusion is that geometry-only 3D modelling of adjacent-lanthanide
+selectivity is capped regardless of the electronic-structure method.
