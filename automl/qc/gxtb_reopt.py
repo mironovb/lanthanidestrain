@@ -132,6 +132,10 @@ def main() -> int:
     ap.add_argument("--timeout", type=int, default=14400)
     ap.add_argument("--max-atoms", type=int, default=None)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--resume", action="store_true",
+                    help="skip build_ids that already have a good record")
+    ap.add_argument("--largest-first", action="store_true",
+                    help="invert the ordering so a second job on the same\n                          shard collides with the first as little as possible")
     args = ap.parse_args()
 
     cx = load_complexes()
@@ -143,7 +147,36 @@ def main() -> int:
     # every shard's output can be reassembled by build_id without ordering
     # assumptions.
     mine = [c for c in cx if c["index"] % args.num_shards == args.shard]
-    mine.sort(key=lambda c: c["n_atoms"])          # cheapest first
+    if args.resume:
+        # Skip complexes that already have a successful record.  Records are
+        # one atomic file per build_id, so this is safe to run against a
+        # directory another job is still writing into: the worst case is that
+        # two workers redo the same complex and the second write replaces an
+        # identical result.  It lets a freed node pick up leftovers without
+        # having to reason about which shard owns what.
+        done = {p.name[len("gxtb__"):-len(".json")]
+                for p in (OUT / "records").glob("gxtb__*.json")}
+        keep = []
+        for c in mine:
+            if c["build_id"] not in done:
+                keep.append(c)
+                continue
+            try:
+                r = json.loads((OUT / "records"
+                                / f"gxtb__{c['build_id']}.json").read_text())
+            except Exception:                                     # noqa: BLE001
+                keep.append(c)
+                continue
+            # Retry anything that failed for a transient reason; never retry a
+            # structural rejection, which will fail again identically.
+            if not r.get("ok") and r.get("reason") not in (
+                    "CHARGE_MISSING", "CHARGE_NOT_INTEGRAL", "NO_LANTHANIDE"):
+                keep.append(c)
+        print(f"[gxtb_reopt] resume: {len(mine) - len(keep)} already done, "
+              f"{len(keep)} to run", flush=True)
+        mine = keep
+    mine.sort(key=lambda c: c["n_atoms"],
+              reverse=args.largest_first)          # cheapest first by default
     for c in mine:
         c["timeout"] = args.timeout
     print(f"[gxtb_reopt] shard {args.shard}/{args.num_shards}: {len(mine)} of "

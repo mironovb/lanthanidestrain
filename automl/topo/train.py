@@ -115,6 +115,10 @@ def edge_asset(name: str, verbose: bool = False):
     # vr_serial arms live in their own root; same zero-triangle format.
     if name in ("serial", "orig"):
         root = REPO / "automl/artifacts/vr_serial" / name
+    # vr_gxtb: the same complexes relaxed under g-xTB, and their matched
+    # shipped-coordinate control.  Same zero-triangle format again.
+    elif name in ("gxtb", "ship"):
+        root = REPO / "automl/artifacts/vr_gxtb" / name
     else:
         root = EDGE_ROOT / name
     vr = root / "vietoris_rips_inputs.npz"
