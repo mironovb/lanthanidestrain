@@ -117,7 +117,12 @@ def edge_asset(name: str, verbose: bool = False):
         root = REPO / "automl/artifacts/vr_serial" / name
     # vr_gxtb: the same complexes relaxed under g-xTB, and their matched
     # shipped-coordinate control.  Same zero-triangle format again.
-    elif name in ("gxtb", "ship"):
+    elif name in ("gxtb", "ship", "gxtbh", "shiph"):
+        # *h arms keep the basin hops; the unsuffixed pair drops them.  Both
+        # policies are run because the choice is a real trade-off: dropping
+        # hops makes the contrast cleaner (same conformer both sides) but costs
+        # ~17 % of the complexes, and at 406 complexes BOTH arms collapse to a
+        # negative R2, so complex count is not a free parameter here.
         root = REPO / "automl/artifacts/vr_gxtb" / name
     else:
         root = EDGE_ROOT / name

@@ -64,6 +64,70 @@
   "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset ship --seed 83"
  },
  {
+  "tag": "c8_hops_gxtbh_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtbh --seed 7"
+ },
+ {
+  "tag": "c8_hops_shiph_s7",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset shiph --seed 7"
+ },
+ {
+  "tag": "c8_hops_gxtbh_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtbh --seed 11"
+ },
+ {
+  "tag": "c8_hops_shiph_s11",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset shiph --seed 11"
+ },
+ {
+  "tag": "c8_hops_gxtbh_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtbh --seed 23"
+ },
+ {
+  "tag": "c8_hops_shiph_s23",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset shiph --seed 23"
+ },
+ {
+  "tag": "c8_hops_gxtbh_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtbh --seed 37"
+ },
+ {
+  "tag": "c8_hops_shiph_s37",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset shiph --seed 37"
+ },
+ {
+  "tag": "c8_hops_gxtbh_s42",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtbh --seed 42"
+ },
+ {
+  "tag": "c8_hops_shiph_s42",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset shiph --seed 42"
+ },
+ {
+  "tag": "c8_hops_gxtbh_s51",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtbh --seed 51"
+ },
+ {
+  "tag": "c8_hops_shiph_s51",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset shiph --seed 51"
+ },
+ {
+  "tag": "c8_hops_gxtbh_s67",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtbh --seed 67"
+ },
+ {
+  "tag": "c8_hops_shiph_s67",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset shiph --seed 67"
+ },
+ {
+  "tag": "c8_hops_gxtbh_s83",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset gxtbh --seed 83"
+ },
+ {
+  "tag": "c8_hops_shiph_s83",
+  "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --edge-asset shiph --seed 83"
+ },
+ {
   "tag": "c8_topo_gxtb_s7",
   "args": "--arch dist --select-on adjacent --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --filtration-max 4.0 --rbf-bins 64 --topology-only --edge-asset gxtb --seed 7"
  },

@@ -33,6 +33,27 @@ if [[ ${rc} -ne 0 ]]; then
 fi
 python3 -u -m automl.topo.build_vr_gxtb --basin-report
 
+# Hops-kept variant (gxtbh/shiph).  Dropping basin hops makes the contrast
+# cleaner but costs ~17% of the complexes, and the preliminary run showed BOTH
+# arms collapse to a negative R2 at 406 complexes -- so complex count is not a
+# free parameter and the trade-off is measured rather than assumed.
+python3 -u - <<'PYEOF'
+import sys; sys.argv=['x']
+from automl.topo.build_vr_gxtb import eligible, build, OUT_ROOT
+import shutil, numpy as np
+keep = eligible(drop_hops=False)
+for arm, src in (("gxtbh","gxtb"), ("shiph","ship")):
+    build(src, 4.0, False, keep=list(keep), verbose=False)
+    d = OUT_ROOT/arm; d.mkdir(parents=True, exist_ok=True)
+    shutil.copy(OUT_ROOT/src/"vietoris_rips_inputs.npz", d/"vietoris_rips_inputs.npz")
+    shutil.copy(OUT_ROOT/src/"meta.json", d/"meta.json")
+a=np.load(OUT_ROOT/"gxtbh/vietoris_rips_inputs.npz"); b=np.load(OUT_ROOT/"shiph/vietoris_rips_inputs.npz")
+assert np.array_equal(a["build_ids"], b["build_ids"]), "hops-kept arms not matched"
+print(f"[c8chain] hops-kept: {len(a['build_ids'])} complexes, arms matched")
+PYEOF
+# The unsuffixed pair must be rebuilt last: the loop above overwrote them.
+python3 -u -m automl.topo.build_vr_gxtb --both --cutoff 4.0 || exit 1
+
 OUT="${REPO}/automl/artifacts/topo_c8"
 mkdir -p "${OUT}"
 # Preliminary cells were run on a 406-complex subset; their sentinels must not
