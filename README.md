@@ -1,159 +1,190 @@
-# Lanthanide extraction: 3D topology for `log D` and adjacent-lanthanide selectivity
+# Lanthanide extraction: what limits adjacent-lanthanide selectivity prediction
 
-**Result as of 22 July 2026.** Predicting the distribution coefficient `log D`
-of lanthanide(III) extraction complexes, and in particular the **separation of
-*adjacent* lanthanides** — the hardest and industrially most valuable case,
-where neighbouring ionic radii differ by only ~0.013 Å.
+**As of 10 August 2026.** Predicting the distribution coefficient `log D` of
+lanthanide(III) extraction complexes, and in particular the **separation of
+*adjacent* lanthanides** — the industrially valuable case, where neighbouring
+ionic radii differ by ~0.013 Å.
 
-Dataset: **4,746 measurements · 162 extractants · 14 lanthanides · 953 unique
-Architector / GFN2-xTB complexes.** Every number below is
-**leave-extractants-out** cross-validation (5 folds × 3 repeats), so an
-extractant never appears in both train and test.
+Dataset: **4,746 measurements · 162 extractants · 14 lanthanides · 956 unique
+Architector / GFN2-xTB complexes.** Every number is **leave-extractants-out**
+cross-validation (5 folds × 3 repeats), so an extractant never appears in both
+train and test.
+
+The project has produced two things: a **modelling result** (3D topology
+contributes, by complementarity) and — more recently — an **explanation of why
+it contributes so little**, which turns out to be a property of the
+electronic-structure method rather than of the models.
 
 ---
 
-## The claim
+## 1. The chemistry result: GFN2-xTB gets the lanthanide contraction wrong
 
-> **Message passing over a Vietoris–Rips complex of the 3D structure supplies
-> adjacent-lanthanide selectivity information that 2D fingerprint models do not
-> have.** Adding it to the best combination that has no 3D model raises adjacent-pair
-> log-separation-factor R² from **+0.2263 to +0.2672**, while *also* improving
+**GFN2-xTB underestimates the lanthanide contraction in coordination complexes
+by 2.47×. g-xTB reproduces it to within 8 % of experiment.**
+
+Per-ligand compliance `c_L = d⟨M–donor⟩ / d r_Shannon`, where **1.00 is exact
+agreement with Shannon (1976) effective ionic radii**. 71 distinct ligands × 15
+lanthanides × 2 Hamiltonians, one binary, one protocol, 2,130 optimisations:
+
+| | c_L | vs experiment | t vs 1.0 |
+|---|---|---|---|
+| **GFN2-xTB** | 0.405 ± 0.145 | **under by 2.47×** | −34.5, p = 1.1e−45 |
+| **g-xTB** | 1.078 ± 0.094 | over by 1.08× | +7.0, p = 1.4e−09 |
+
+Improves on **71 of 71 ligands** (paired p = 4.9e−52). Reproduced in solvent and
+on an independent 6-ligand pilot. GFN2's per-ligand slope is not merely too
+small — it is mostly *noise*: cv 0.358, with only **23 %** of its non-linear
+response shared across ligands, against g-xTB's **96 %**.
+
+The cause is documented in GFN2's own parameter file: every lanthanide parameter
+from Ce(58) to Lu(71) is **linear interpolation between two fitted anchors**
+(max residual 5e−7). Metal identity therefore enters a GFN2 geometry as *one
+linear-in-Z scalar*, by construction — no f-shell, no crystal field, no
+gadolinium break. That retrodicts the measured **effective rank 1.05 of 8**
+across eight independent 3D encoders.
+
+Under g-xTB, which puts the f electrons in the valence, the same complexes show
+a **+1.15 eV half-shell (gadolinium) break** against GFN2's +0.012 eV, and 370×
+more departure from linear-in-Z, reproducing at r = +0.97 across independent
+runs.
+
+**Why this matters beyond this project:** it explains a long run of null 3D
+results for lanthanide selectivity. The geometries these models are given barely
+encode the contraction, and what they do encode is ligand-inconsistent.
+
+## 2. Fixing the chemistry does *not* improve the score
+
+Better geometry was tested directly and does not help — four independent ways,
+any of which could have gone the other way:
+
+| test | result |
+|---|---|
+| structures rebuilt **in correspondence** (455× cleaner, SNR 0.14 → 0.80) | **−0.0129**, t = −2.67, 2/8 seeds |
+| g-xTB geometries, with tabular features | **−0.0150**, 2/5 seeds |
+| g-xTB geometries, **geometry-only** | +0.0333 — **an artefact, see below** |
+| per-ligand compliance vs measured selectivity (n = 44) | r = +0.11 (GFN2), **−0.02** (g-xTB) |
+
+**96.1 %** of g-xTB's new structure is a *pure function of metal identity*,
+which the model already has — metal identity is recoverable at R² = 0.9995. And
+g-xTB makes the response **more** uniform across ligands (cv 0.358 → 0.087),
+i.e. closer to one universal constant × the tabular ionic radius.
+
+### The one positive arm was calibration, not information
+
+The geometry-only arm cleared its pre-registered bar (Δ ≥ +0.02, ≥6/8 seeds) at
+p = 0.020. It is still not real, and the checks that killed it are worth reusing:
+
+- within the same runs `sel_adj_pearson` moved the **other way** (−0.0170, 2/8);
+- both arms sit at **negative R²**, where shrinking toward the mean raises R²;
+- R² after optimal rescaling (= Pearson²) **reverses**: 0.0072 vs 0.0108;
+- **a single scalar applied to the OLD geometry recovers 237 % of the "gain"** —
+  the rescaled shipped arm beats g-xTB on **8/8 seeds** (p = 0.0006).
+
+Reporting the pre-registered primary metric alone would have published a
+positive 3D result that is an artefact of prediction variance.
+
+## 3. Where the remaining headroom is
+
+**The metric is not noise-limited.** Raw `log_D` scatter within a (block, metal)
+group is 0.72–0.95 — larger than the entire spread of adjacent separations
+(0.2236), which would imply a negative ceiling. That naive model is wrong:
+condition effects are **shared between the two metals of a pair and cancel on
+differencing**. Measured on 203 repeated (composition, adjacent-pair) cases, a
+separation reproduces to **0.1533** — 6× tighter than the levels it is computed
+from.
+
+| | |
+|---|---|
+| reproducibility of a separation | 0.1533 |
+| spread of separations | 0.2236 |
+| **ceiling on `sel_adj_logSF_r2`** | **≈ +0.53** |
+| current best | **+0.183** |
+
+We are at ~35 % of what the labels permit, and that is a *lower* bound. Roughly
+0.35 of R² is genuinely available — but **not in geometry**, which explains ~1 %
+of adjacent-separation variance under either Hamiltonian.
+
+Tested and not the answer either: a **direct pair head** predicting the
+difference from `[h_i, h_j, h_i − h_j]` gives **+0.0123 (4/6 seeds, p = 0.30,
+n.s.)**, and *reconciling* the level head to it is **catastrophic**: −1.16,
+0/6 seeds, p = 0.002.
+
+## 4. The modelling result (unchanged)
+
+The topology campaign's headline stands and is preserved in full in
+[`docs/README_2026-07-22.md`](docs/README_2026-07-22.md):
+
+> Adding a simplicial network over a Vietoris–Rips complex to the best
+> combination without a 3D model raises adjacent-pair log-SF R² from **+0.2263
+> to +0.2672** (+0.0381, 90 % CI [+0.0191, +0.0495]), while also improving
 > overall `log D` accuracy.
 
-**Best model — CatBoost + scaling-corrected fingerprint network + simplicial
-network**, nested
-per-extractant weights 0.20 / 0.30 / **0.50**:
+It earns its place by **complementarity**, not by strength — alone it loses, and
+four pre-registered attempts to show otherwise failed.
 
-| model | adjacent-pair log SF R² | overall `log D` R² |
-|---|---|---|
-| **combination including the simplicial network** | **+0.2672** | **+0.4369** |
-| combination without 3D (CatBoost + fingerprint network) | +0.2263 | +0.4328 |
-| same combination, 3D model replaced by a matched 2D control | +0.2208 | +0.4288 |
-| CatBoost alone | +0.1422 | +0.4987 |
-| fingerprint network, scaling corrected | +0.2206 | +0.3218 |
-| fingerprint network as originally configured | +0.0048 | +0.3872 |
+**One claim in that document is now corrected.** It described the
+adjacent-lanthanide geometric contrast as sitting "below the ~0.04 Å
+optimisation-noise floor". That number was never measured; it traces to an
+asserted conformer scatter and coincides exactly with the `tight` convergence
+target in **eV/Å (force)**, not Å (distance). Measured directly by perturbed
+restarts: **0.0002 Å**, ~200× smaller, with 0 % basin escape at σ = 0.05 Å. The
+contrast is redundant with the tabular ionic radius for the reason in §1, not
+because it is below a noise floor.
 
-### Significance
+## 5. Portable findings
 
-Paired cluster bootstrap resampling whole extractants, 400 draws:
-
-| contrast | Δ adjacent-pair R² | 90 % CI | multiplicity-corrected |
-|---|---|---|---|
-| add the simplicial network to the best 2D-only combination | **+0.0381** | [+0.0191, +0.0495] | **[+0.0166, +0.0595]** (5-test) |
-| simplicial network vs a matched 2D control in the same slot | **+0.0446** | [+0.0298, +0.0544] | **[+0.0272, +0.0621]** (5-test) |
-
-Both also survive a **multiplicity-respecting** cluster bootstrap (one that does
-not collapse duplicate clusters) applied *simultaneously* with the Bonferroni
-penalty: **[+0.0136, +0.0613]** and **[+0.0225, +0.0651]**.
-
-### Replication
-
-| check | result |
-|---|---|
-| **Split-half** — two disjoint 8-seed ensembles | both add: **+0.0393** and **+0.0375** |
-| **Filtration radius 3.0 Å** | adds: **+0.0382** [+0.0178, +0.0503]; 7-look corrected [+0.0141, +0.0624] |
-| **Filtration radius 4.0 Å** | adds: **+0.0327** [+0.0140, +0.0435]; 7-look corrected [+0.0108, +0.0547] |
-| Re-run of the whole analysis | reproduces bit-for-bit |
-
-The radii give genuinely different complexes (relative to 3.5 Å: 0.59× and 2.29×
-the triangles), so **3.5 Å is not a tuned radius**.
-
----
-
-## What the claim is *not*
-
-Each limit was measured, not assumed. These are why the result above is
-credible.
-
-1. **Demonstrated for one representation family, not for "3D topology" as a
-   whole.** The effect replicates across filtration radii, so it is not a tuned
-   radius. A persistence-image CNN did not add (−0.0041, n.s.), and that arm has
-   now been **tuned across 57 constructions** and tested on held-out extractants
-   ([`PI_SWEEP_RESULTS.md`](automl/reports/PI_SWEEP_RESULTS.md)). The
-   pre-registered endpoint returns **+0.0171 [−0.0143, +0.0327]** — positive but
-   spanning zero — behind a passing positive control. Resolution, spread,
-   birth–death window and H0/H1 channel split are inert; the one axis that
-   matters is feature weighting, where *equal* weighting beats
-   weighting-by-persistence (ordering replicates out of selection at 3.3 σ;
-   the gain over the shipped setting is **+0.0080**, n.s.). **Tuning the
-   construction does not make persistence images contribute** — what disqualifies
-   them is redundancy with the fingerprints, which no construction choice
-   addressed.
-2. **Not "topology beats the baseline."** Alone it does not — **four**
-   pre-registered attempts failed. It earns its place by *complementarity*.
-3. **Not a selectivity signal readable from the geometry.** The
-   adjacent-lanthanide contrast is redundant with the tabular ionic radius and
-   sits below the ~0.04 Å optimisation-noise floor — four independent null tests.
-4. **Not transferable to representations.** Handing a downstream learner the
-   *embedding* rather than the *prediction* fails by construction: out-of-fold
-   embeddings from *k* folds are *k* different latent bases (fold identity is
-   predictable from the embedding at **100 %** accuracy).
-
-### The mechanism, which predicted rather than explained
-
-A model improves a combination only if it is **both strong on the scored
-metric and decorrelated from its partners**:
-
-| model | adjacent-pair R² | error correlation with baseline | adds? |
-|---|---|---|---|
-| simplicial, 3.0–4.0 Å | +0.232 – +0.238 | 0.897 – 0.907 | **yes, all radii** |
-| **persistence-image CNN** | +0.210 | 0.933 | no — and still no when tuned across 57 constructions |
-| matched 2D control | +0.203 | 0.928 | no |
-| CatBoost | +0.144 | 0.880 | no (contributes accuracy instead) |
-
-Stated after the persistence-image failure, this **predicted in advance** that
-the filtration variants would add. They did — and the effect declines
-monotonically with radius (+0.0382 → +0.0381 → +0.0327) as error correlation
-rises (0.898 → 0.897 → 0.907).
-
----
-
-## Portable findings from the negative results
-
-Arguably more transferable than the headline.
+Arguably more transferable than any headline.
 
 | finding | evidence |
 |---|---|
-| **Train the contrast, not the absolute value.** Selectivity is a within-block contrast; conventional models optimise absolute `log D`. | +0.030 tabular, +0.042 PI-CNN, +0.186 SNN |
-| **Rank transforms destroy separation-factor signal.** `QuantileTransformer` preserves order and destroys *spacing*; a separation factor **is** spacing. Trees are immune, so it goes unnoticed. | one line took the original fingerprint network from **+0.005 to +0.221** |
-| **Baselines need the same variance control the candidate models get.** | a single-seed baseline spanned 0.11 across seed conventions |
-| **Model variance and ensembling are substitutes.** Reducing single-model variance cannibalises the ensemble's own gain. | SD −37 %, ensemble *worse*; every lever hurt |
-| **Stack predictions, not representations.** | fold identity recoverable from embeddings at 100 % |
+| **Train the contrast, not the absolute value.** | +0.030 tabular, +0.042 PI-CNN, +0.186 SNN |
+| **MAE instead of RMSE nearly doubles the tabular arm's selectivity.** | +0.107 — the largest single gain in the project |
+| **Rank transforms destroy separation-factor signal.** A separation factor *is* spacing; `QuantileTransformer` preserves order and destroys spacing. Trees are immune, so it goes unnoticed. | one line: **+0.005 → +0.221** |
+| **A metric on a negative-R² baseline needs a scale-free check.** R² can rise purely by shrinking predictions. | a +0.0333 result reversed to −0.0036 once the scale was free |
+| **A flag that is silently ignored reads exactly like a real null.** | `--pair-head` was a no-op on `--arch dist` for the whole study while recording `pair_head=True` |
+| **A degenerate control must fail loudly.** | a "partial correlation controlling for size and CN" controlled for two constants and returned the raw correlation |
+| **Stack predictions, not representations.** | fold identity recoverable from out-of-fold embeddings at 100 % |
 | **A cluster bootstrap that collapses duplicates isn't one.** | published intervals were 12–29 % too narrow |
-| **Test against the champion, not the convenience baseline.** | four separate signals vanished or reversed when the baseline was strengthened |
+| **Test against the champion, not the convenience baseline.** | four signals vanished or reversed when the baseline was strengthened |
 
----
-
-## Reading order
+## 6. Reading order
 
 | document | contents |
 |---|---|
-| [`automl/reports/SYNTHESIS.md`](automl/reports/SYNTHESIS.md) | **start here** — the whole picture, positive and negative |
-| [`automl/reports/STACK_RESULTS.md`](automl/reports/STACK_RESULTS.md) | the positive result, its controls and corrections |
-| [`automl/reports/FILT_RESULTS.md`](automl/reports/FILT_RESULTS.md) | replication across filtration radii |
-| [`automl/reports/CONTROL_RESULTS.md`](automl/reports/CONTROL_RESULTS.md) | the 2×2 control that reframed the original claim |
-| [`S2_RESULTS.md`](automl/reports/S2_RESULTS.md) · [`WO_RESULTS.md`](automl/reports/WO_RESULTS.md) · [`S0X_RESULTS.md`](automl/reports/S0X_RESULTS.md) · [`EMBEDDING_RESULTS.md`](automl/reports/EMBEDDING_RESULTS.md) | the negatives, each with its own diagnosis |
-| [`automl/README.md`](automl/README.md) | the AutoML study this grew out of |
+| [`automl/reports/CAMPAIGN_SUMMARY_gxtb.md`](automl/reports/CAMPAIGN_SUMMARY_gxtb.md) | **start here** — the g-xTB campaign, the null, and the ceiling |
+| [`automl/reports/SCIENTIFIC_FINDINGS.md`](automl/reports/SCIENTIFIC_FINDINGS.md) | standing register: every claim with its status and its falsifying test |
+| [`automl/reports/C8_RESULTS.md`](automl/reports/C8_RESULTS.md) | why the one positive 3D arm was calibration |
+| [`automl/reports/NOISE_FLOOR.md`](automl/reports/NOISE_FLOOR.md) | the 200× correction to the noise-floor claim |
+| [`automl/reports/SYNTHESIS.md`](automl/reports/SYNTHESIS.md) | the topology campaign, positive and negative |
+| [`docs/README_2026-07-22.md`](docs/README_2026-07-22.md) | the archived README for the topology result |
 
 Every confirmatory test has a **pre-registration committed before its data
 existed** (`*_PREREGISTRATION.md`), stating the endpoint, the decision rule and
 the consequence of each outcome in advance.
 
----
-
-## Reproducing
+## 7. Reproducing
 
 ```bash
 module load anaconda/Python-ML-2025a
 export PYTHONPATH=$PWD
 
+# the modelling result
 python3 -m automl.topo.stack_test    --n-boot 400   # the pre-registered result
-python3 -m automl.topo.best_stack    --n-boot 400   # the deployable 3-model combination
 python3 -m automl.topo.filt_test     --n-boot 400   # replication across radii
 python3 -m automl.topo.control_guard --verify       # nothing published moved
+
+# the chemistry result (needs the g-xTB binary; see automl/qc/gxtb_probe.py)
+python3 -m automl.qc.gxtb_probe   --anchor <xyz> --method both
+python3 -m automl.qc.gxtb_series  --anchors 6 --workers 48
+python3 -m automl.qc.compliance_test --tags cf_shard0,cf_shard1
 ```
 
 `control_guard` pins **324 artefacts** by SHA-256 — every published out-of-fold
 parquet, result table and figure — and verifies them byte-identical. `data/` is
 read-only throughout: no geometry was regenerated and no shipped table modified.
 All derived artefacts live under `automl/artifacts/` and `automl/reports/`.
+
+Any change to `train.py` is proven inert by re-running a published arm under
+`--deterministic` and requiring `max |Δoof| = 0`. The most recent such change
+(giving `DistanceNet` a working pair head) passed at **0.000e+00** across all
+4,746 rows.
