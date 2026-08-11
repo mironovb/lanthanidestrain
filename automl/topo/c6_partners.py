@@ -99,6 +99,17 @@ CAT_GRID = {
     "q80": dict(depth=7, lr=0.04, l2=3.0, rsm=0.6, loss="Quantile:alpha=0.8"),
     "q85": dict(depth=7, lr=0.04, l2=3.0, rsm=0.6, loss="Quantile:alpha=0.85"),
     "q90": dict(depth=7, lr=0.04, l2=3.0, rsm=0.6, loss="Quantile:alpha=0.9"),
+    # C6 located the optimum at q60 (+0.2579 > q65 +0.2430 > q70 +0.2321), but
+    # depth/lr/l2/rsm were re-gridded around MAE, never around the quantile that
+    # actually wins -- the same gap the mae_* block was added to close for MAE.
+    "q60_deep":    dict(depth=9, lr=0.04, l2=3.0, rsm=0.6, loss="Quantile:alpha=0.6"),
+    "q60_shallow": dict(depth=5, lr=0.04, l2=3.0, rsm=0.6, loss="Quantile:alpha=0.6"),
+    "q60_slow":    dict(depth=7, lr=0.015, l2=3.0, rsm=0.6, iters=4000, loss="Quantile:alpha=0.6"),
+    "q60_rsm03":   dict(depth=7, lr=0.04, l2=3.0, rsm=0.3, loss="Quantile:alpha=0.6"),
+    "q60_l2_10":   dict(depth=7, lr=0.04, l2=10.0, rsm=0.6, loss="Quantile:alpha=0.6"),
+    "q60_rsm03_deep": dict(depth=9, lr=0.04, l2=3.0, rsm=0.3, loss="Quantile:alpha=0.6"),
+    "q60_slow_deep":  dict(depth=9, lr=0.015, l2=3.0, rsm=0.6, iters=4000, loss="Quantile:alpha=0.6"),
+    "q55":         dict(depth=7, lr=0.04, l2=3.0, rsm=0.6, loss="Quantile:alpha=0.55"),
 }
 
 
