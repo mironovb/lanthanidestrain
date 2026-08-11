@@ -528,6 +528,7 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                             # every --arch dist run while still recording
                             # pair_head=True in the config.
                             pair_head=bool(cfg.get("pair_head")),
+                            film_dim=(len(cond_idx) if cfg.get("film") else 0),
                             ).to(device)
     else:
         from automl.topo.simplicial_data import N_ANGULAR_BINS

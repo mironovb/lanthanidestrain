@@ -22,5 +22,5 @@ OUT="${REPO}/automl/artifacts/topo_c9"
 python3 -u -m automl.topo.train --arch dist --pair-loss-weight 2.0 \
     --select-on adjacent --filtration-max 4.0 --rbf-bins 64 \
     --folds 5 --repeats 1 --deterministic --seed 7 \
-    --tag c9ident_new --out-dir "${OUT}"
+    --tag c10ident_film --out-dir "${OUT}"
 echo "C9IDENT_RC=$?"

@@ -128,7 +128,8 @@ class DistanceNet(nn.Module):
                  n_z: int = 32, node_feat_dim: int = 5,
                  radial_bins: int = 32, radial_max: float = 8.0,
                  head_embed_mult: int = 1, rbf_bins: int = 32,
-                 rbf_max: float = 5.0, pair_head: bool = False):
+                 rbf_max: float = 5.0, pair_head: bool = False,
+                 film_dim: int = 0):
         super().__init__()
         self.dim = dim
         self.z_emb = nn.Embedding(n_z, dim)
@@ -167,6 +168,18 @@ class DistanceNet(nn.Module):
         # 24-cell campaign returned four arms agreeing to six decimal places,
         # which is what exposed it.  Identical construction to SimplicialNet so
         # the two architectures remain comparable.
+        # CAMPAIGN3 T3, also absent here until now (same cause as pair_head:
+        # DistanceNet is built by its own call and never received film_dim, so
+        # --film was a silent no-op on --arch dist).  The 64 condition columns --
+        # 45 diluents, 9 acids, concentrations, temperature -- otherwise enter
+        # only AFTER pooling, so kerosene and nitrobenzene give byte-identical
+        # structural embeddings.  Worth having because separations are measurably
+        # condition-dependent: the same (composition, adjacent pair) measured in
+        # different strict blocks reproduces to 0.1533 against a spread of 0.2236.
+        self.film_dim = int(film_dim or 0)
+        self.film = (nn.Sequential(
+            nn.Linear(self.film_dim, dim), nn.SiLU(),
+            nn.Linear(dim, 2 * self.embed_dim)) if self.film_dim else None)
         self.use_pair_head = bool(pair_head)
         self.pair_head = (nn.Sequential(
             nn.Linear(3 * head_in, head_hidden), nn.SiLU(), nn.Dropout(dropout),
@@ -237,3 +250,15 @@ class DistanceNet(nn.Module):
             raise ValueError("model built without --pair-head")
         z = torch.cat([emb[i], emb[j], emb[i] - emb[j]], dim=-1)
         return self.pair_head(z).squeeze(-1)
+
+    def modulate(self, e: torch.Tensor, cond: torch.Tensor) -> torch.Tensor:
+        """FiLM the pooled embedding on the condition columns.
+
+        Residual form (1 + gamma), identical to SimplicialNet: at initialisation
+        the transform is close to the identity, so turning FiLM on does not throw
+        away the representation the rest of the study is built on.
+        """
+        if self.film is None:
+            raise ValueError("model built without --film")
+        g, b = self.film(cond).chunk(2, dim=-1)
+        return (1.0 + g) * e + b
