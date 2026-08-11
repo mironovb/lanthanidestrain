@@ -1200,6 +1200,25 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                     blk_all[rows])
                 emb_out[rows] = e.cpu().numpy()
     out = _predict(te_idx, Xte)
+    # Any flag the chosen architecture cannot honour must fail here.  DistanceNet
+    # does not accept film_dim / angular_readout / attn_pool / node_feat_dim, and
+    # train.py builds it with a separate call, so these were accepted, recorded
+    # as enabled in results.jsonl, and silently ignored on --arch dist -- the
+    # architecture every modern run uses.  No published claim depended on them
+    # (checked: zero dist runs set any of them), but a future one would have,
+    # and the failure looks exactly like a real null.
+    import inspect as _inspect
+    _accepts = set(_inspect.signature(type(model).__init__).parameters)
+    for _flag, _param in (("film", "film_dim"),
+                          ("angular_readout", "angular_readout"),
+                          ("attn_pool", "attn_pool"),
+                          ("node_angular", "node_feat_dim")):
+        if cfg.get(_flag) and _param not in _accepts:
+            raise SystemExit(
+                f"--{_flag.replace('_', '-')} is not supported by "
+                f"{type(model).__name__}; the run would be a silent no-op "
+                f"recorded as {_flag}=True.")
+
     # A requested pair head that the model does not have is a SILENT no-op that
     # still records pair_head=True -- exactly how --arch dist ran four arms to
     # six identical decimal places.  Fail instead.
