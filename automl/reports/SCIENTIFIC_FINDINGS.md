@@ -912,3 +912,49 @@ systematically over-dispersed, α ≈ 0.88 < 1 on every arm measured, worth abou
 *Falsifying test:* if a direct pair head plus reconciliation does not move
 `sel_adj_logSF_r2`, then the differencing structure is not the constraint
 either, and the gap to +0.53 is in the features rather than the objective.
+
+
+### I8. `--pair-head` was a silent no-op on every modern run — and now that it works, it is worth ~+0.012
+**ESTABLISHED (bug + result).** The differencing structure was the highest-value
+remaining lever (I7), so the direct-difference head was the obvious thing to
+test. It could not be tested, and nobody could have known from the logs.
+
+`DistanceNet.__init__` never accepted a `pair_head` parameter. Its docstring
+claims the signature matches `SimplicialNet`, but `train.py` has two
+construction calls and only the SNN one passed it. So on `--arch dist` — which
+every modern run uses — `--pair-head` was accepted, **recorded as
+`pair_head=True` in `results.jsonl`**, and did nothing; `--pair-reconcile` then
+also no-opped, being gated on `getattr(model, "pair_head", None)`.
+
+Caught only because 24 cells returned four arms agreeing to six decimal places.
+Reading `results.jsonl` would have said the lever was tried and failed.
+
+Fixed (identical head and `pair_forward` to `SimplicialNet`, plus a gate that
+raises when a pair head is requested and none was built). **Byte-identity with
+the flag off: max |Δoof| = 0.000e+00** over 4,746 rows, so no published run
+moves.
+
+With it actually working, 6 paired deterministic seeds:
+
+| arm | `sel_adj_logSF_r2` | Δ vs control | seeds up |
+|---|---|---|---|
+| control | +0.1893 | — | — |
+| `--pair-head` (auxiliary loss) | +0.2016 | **+0.0123** | 4/6, t = +1.17 |
+| `+ --pair-reconcile` | −0.9027 | **−1.0914** | 0/4, t = −5.11 |
+| `+ --pair-reconcile`, weight 2 | −1.0842 | −1.2729 | 0/4, t = −4.84 |
+
+Two results. The auxiliary pair loss gives a small, **not significant**
+improvement (p ≈ 0.29) — comparable to the best 3D gains ever measured and
+obtained for free. And **reconciliation is catastrophic**: overwriting the level
+head's block means with the pair head's predictions costs more than a full unit
+of R², consistently, across every seed. Its docstring argues the pair head's
+skill "never reaches the metric" without it; that is true and it is still the
+wrong repair, because the pair head is far worse at the levels than the level
+head is.
+
+So the differencing structure is *not* the easy win I7 pointed to. The gap from
++0.19 to the ~+0.53 ceiling is not closed by giving the difference its own
+parameters.
+
+*Falsifying test:* a pair head trained with the level head frozen, or
+reconciliation applied as a shrunk blend rather than wholesale replacement.
