@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=c9ident
-#SBATCH --partition=debug-gpu
+#SBATCH --partition=xeon-g6-volta
 #SBATCH --gres=gpu:volta:1
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=8

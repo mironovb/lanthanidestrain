@@ -1,2 +1,2 @@
 which,variant,adj_r2,n_pairs,logD_r2,seconds,seeds,params
-catboost,q75,0.19565062090580176,905,0.47169903004238956,1986.3,16,"{""depth"": 7, ""lr"": 0.04, ""l2"": 3.0, ""rsm"": 0.6, ""loss"": ""Quantile:alpha=0.75""}"
+catboost,q60_rsm03_deep,0.2784301612674219,905,0.507490928812478,1650.7,8,"{""depth"": 9, ""lr"": 0.04, ""l2"": 3.0, ""rsm"": 0.3, ""loss"": ""Quantile:alpha=0.6""}"
