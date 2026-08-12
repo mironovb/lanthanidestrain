@@ -976,3 +976,42 @@ The snapshot's **+0.0333 fell to +0.0041** — an eighth — while Pearson went
 *negative on 0/8 seeds*. A real effect does not shrink eightfold when the
 population is completed; a variance artefact does. I6 is confirmed rather than
 merely argued.
+
+
+### I10. The published contrast weight is below its optimum — one float is worth +0.027
+**ESTABLISHED (selected, replicated, not held-out confirmed).** 8 paired
+deterministic seeds, identical rows, full published population.
+
+`--pair-loss-weight 4.0` against the published 2.0:
+
+| metric | 2.0 | 4.0 | Δ | up | p |
+|---|---|---|---|---|---|
+| `sel_adj_logSF_r2` | +0.1892 | **+0.2162** | **+0.0270** | 7/8 | 0.021 |
+| `sel_adj_pearson` | +0.4472 | +0.4790 | +0.0318 | 7/8 | |
+| `r2_overall` | +0.3008 | +0.3124 | +0.0115 | 5/8 | |
+
+Wilcoxon p = 0.016. **It survives the scale-free test that killed I6**: R² after
+optimal rescaling (= Pearson²) is **+0.0289, p = 0.015 — larger than the raw
+gain** — and the predictions are 8 % *less* shrunk than the control, where the
+I6 artefact was 19 % *more* shrunk. Pearson rising 7/8 alongside R² says the
+same.
+
+For scale, the entire simplicial-network contribution is +0.038. This is 70 %
+of it from one float.
+
+**The gains do not stack.** C10 found three axes at ~+0.02 on 4 seeds; at 8
+seeds `combo2` ≈ `plw4`, and `q0.7` — which looked like +0.0168 on 4/4 seeds —
+is **+0.0019**. That is E5's winner's curse caught in the act, and the reason
+`plw4` is believable is that it moved the other way on more seeds
+(+0.0252 → +0.0270).
+
+The sweep traces a smooth interior optimum through the published value
+(plw 1/2/4/8 → −0.0132 / — / +0.0252 / +0.0094), and the adjacent-emphasis axis
+has the same shape (1/3/6/10 → −0.021 / — / +0.014 / +0.012). Both hardcoded
+defaults sit below their optimum. A1 established that training the contrast is
+the largest lever here; this says the published run under-weighted that very
+term.
+
+*Falsifying test:* a single pre-registered look at an unspent partition. The
+`report` third was spent on C11 and must not be re-entered casually; until then
+this is strong, internally consistent and **selected**, not confirmed.
