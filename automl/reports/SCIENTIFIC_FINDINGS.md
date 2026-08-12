@@ -958,3 +958,21 @@ parameters.
 
 *Falsifying test:* a pair head trained with the level head frozen, or
 reconciliation applied as a shrunk blend rather than wholesale replacement.
+
+
+### I9. C8 confirmed on the full asset — and the artefact did not reproduce
+**ESTABLISHED (null, well powered).** The snapshot ran on a 737-complex asset
+that was missing 52 large complexes (median 340 atoms vs 214) because a sweeper
+job had failed silently. Rebuilt from all 956 re-optimisations → **802 matched
+complexes**, 40 cells, 8 paired seeds per arm:
+
+| arm | Δ | seeds up | p | Δ pearson |
+|---|---|---|---|---|
+| with tabular block | +0.0050 | 3/8 | 0.68 | +0.0102 |
+| geometry only | **+0.0041** | 6/8 | 0.64 | **−0.0574 (0/8)** |
+| hops kept | −0.0031 | 2/4 | 0.82 | −0.0095 |
+
+The snapshot's **+0.0333 fell to +0.0041** — an eighth — while Pearson went
+*negative on 0/8 seeds*. A real effect does not shrink eightfold when the
+population is completed; a variance artefact does. I6 is confirmed rather than
+merely argued.

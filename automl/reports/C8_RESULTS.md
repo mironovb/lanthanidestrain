@@ -86,3 +86,33 @@ have published a positive 3D result that is an artefact of prediction variance.
 The disagreement between R² and Pearson **within the same runs** is what
 exposed it. A single headline metric on a negative-R² baseline cannot be
 trusted without a scale-free check.
+
+
+---
+
+## Confirmation on the full asset — the artefact diagnosis holds
+
+The snapshot above ran on 737 complexes, from a re-optimisation that was still
+missing 52 large ones (median 340 atoms vs 214) because the sweeper job had
+failed silently. With that fixed, the asset is **802 matched complexes** built
+from all 956 re-optimisations, and the whole contrast was re-run: 40 cells,
+8 paired deterministic seeds per arm.
+
+| arm | Δ `sel_adj_logSF_r2` | seeds up | p | Δ `sel_adj_pearson` |
+|---|---|---|---|---|
+| with tabular block | +0.0050 | 3/8 | 0.68 | +0.0102 |
+| **geometry only** | **+0.0041** | 6/8 | 0.64 | **−0.0574 (0/8 up)** |
+| hops kept | −0.0031 | 2/4 | 0.82 | −0.0095 |
+
+**The +0.0333 did not reproduce.** On the complete asset the geometry-only
+effect is +0.0041 — an eighth of the snapshot value, indistinguishable from
+zero — while its Pearson correlation is *negative on 0 of 8 seeds*. That is
+precisely what §3 predicted: the snapshot's R² gain was prediction-variance
+shrinkage, not information, and shrinkage does not survive a change of
+population the way a real effect would.
+
+**Final verdict, now well powered:** a Hamiltonian that reproduces the
+lanthanide contraction to within 8 % of experiment, replacing one that
+underestimates it 2.5×, leaves adjacent-lanthanide selectivity prediction
+unchanged. Three arms, 40 cells, no arm significant, and the one arm that
+looked positive is the one whose correlation went down.
