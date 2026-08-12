@@ -1015,3 +1015,33 @@ term.
 *Falsifying test:* a single pre-registered look at an unspent partition. The
 `report` third was spent on C11 and must not be re-entered casually; until then
 this is strong, internally consistent and **selected**, not confirmed.
+
+
+### I11. FiLM on the distance encoder is strongly harmful
+**ESTABLISHED (negative).** Recorded precisely because I implemented the
+capability in this session and it would be easy to leave unreported.
+
+`--film` conditions the pooled structural embedding on the 64 `cond__` columns
+(45 diluents, 9 acids, concentrations, temperature), which otherwise reach only
+the head — so without it kerosene and nitrobenzene give byte-identical
+structural embeddings. The motivation was sound: separations are measurably
+condition-dependent (I7).
+
+| arm | `sel_adj_logSF_r2` | Δ | seeds up | p |
+|---|---|---|---|---|
+| control | +0.1928 | — | — | — |
+| `--film` | **+0.0815** | **−0.1142** | 0/5 | **0.003** |
+| `--film` + C10's best objective | +0.1040 | −0.0888 | 0/5 | 0.084 |
+
+It does not merely fail to help — it costs more than half the adjacent signal,
+on every seed. The residual form (1 + γ) is near-identity at initialisation, so
+this is not a bad initialisation; the conditions are being given the power to
+modulate a representation that is shared across every row of a complex, and
+that appears to destroy the within-block contrast the metric is built on.
+
+Note the asymmetry with I10: the same session found one objective change worth
+**+0.027** and one representation change worth **−0.114**. The lever in this
+problem is the objective, not the representation — consistent with A1, I6 and I9.
+
+*Falsifying test:* FiLM applied to node channels rather than the pooled
+embedding, or gated to the level head only.
