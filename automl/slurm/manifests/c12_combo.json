@@ -1,0 +1,194 @@
+[
+ {
+  "tag": "c12_ctrl_s7",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 7"
+ },
+ {
+  "tag": "c12_plw4_s7",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 7"
+ },
+ {
+  "tag": "c12_q7_s7",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --level-loss quantile --level-quantile 0.7 --seed 7"
+ },
+ {
+  "tag": "c12_adjw6_s7",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 6.0 --seed 7"
+ },
+ {
+  "tag": "c12_combo2_s7",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --seed 7"
+ },
+ {
+  "tag": "c12_combo3_s7",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --pair-adj-weight 6.0 --seed 7"
+ },
+ {
+  "tag": "c12_ctrl_s11",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 11"
+ },
+ {
+  "tag": "c12_plw4_s11",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 11"
+ },
+ {
+  "tag": "c12_q7_s11",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --level-loss quantile --level-quantile 0.7 --seed 11"
+ },
+ {
+  "tag": "c12_adjw6_s11",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 6.0 --seed 11"
+ },
+ {
+  "tag": "c12_combo2_s11",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --seed 11"
+ },
+ {
+  "tag": "c12_combo3_s11",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --pair-adj-weight 6.0 --seed 11"
+ },
+ {
+  "tag": "c12_ctrl_s23",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 23"
+ },
+ {
+  "tag": "c12_plw4_s23",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 23"
+ },
+ {
+  "tag": "c12_q7_s23",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --level-loss quantile --level-quantile 0.7 --seed 23"
+ },
+ {
+  "tag": "c12_adjw6_s23",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 6.0 --seed 23"
+ },
+ {
+  "tag": "c12_combo2_s23",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --seed 23"
+ },
+ {
+  "tag": "c12_combo3_s23",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --pair-adj-weight 6.0 --seed 23"
+ },
+ {
+  "tag": "c12_ctrl_s37",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 37"
+ },
+ {
+  "tag": "c12_plw4_s37",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 37"
+ },
+ {
+  "tag": "c12_q7_s37",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --level-loss quantile --level-quantile 0.7 --seed 37"
+ },
+ {
+  "tag": "c12_adjw6_s37",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 6.0 --seed 37"
+ },
+ {
+  "tag": "c12_combo2_s37",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --seed 37"
+ },
+ {
+  "tag": "c12_combo3_s37",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --pair-adj-weight 6.0 --seed 37"
+ },
+ {
+  "tag": "c12_ctrl_s42",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 42"
+ },
+ {
+  "tag": "c12_plw4_s42",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 42"
+ },
+ {
+  "tag": "c12_q7_s42",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --level-loss quantile --level-quantile 0.7 --seed 42"
+ },
+ {
+  "tag": "c12_adjw6_s42",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 6.0 --seed 42"
+ },
+ {
+  "tag": "c12_combo2_s42",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --seed 42"
+ },
+ {
+  "tag": "c12_combo3_s42",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --pair-adj-weight 6.0 --seed 42"
+ },
+ {
+  "tag": "c12_ctrl_s51",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 51"
+ },
+ {
+  "tag": "c12_plw4_s51",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 51"
+ },
+ {
+  "tag": "c12_q7_s51",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --level-loss quantile --level-quantile 0.7 --seed 51"
+ },
+ {
+  "tag": "c12_adjw6_s51",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 6.0 --seed 51"
+ },
+ {
+  "tag": "c12_combo2_s51",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --seed 51"
+ },
+ {
+  "tag": "c12_combo3_s51",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --pair-adj-weight 6.0 --seed 51"
+ },
+ {
+  "tag": "c12_ctrl_s67",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 67"
+ },
+ {
+  "tag": "c12_plw4_s67",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 67"
+ },
+ {
+  "tag": "c12_q7_s67",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --level-loss quantile --level-quantile 0.7 --seed 67"
+ },
+ {
+  "tag": "c12_adjw6_s67",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 6.0 --seed 67"
+ },
+ {
+  "tag": "c12_combo2_s67",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --seed 67"
+ },
+ {
+  "tag": "c12_combo3_s67",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --pair-adj-weight 6.0 --seed 67"
+ },
+ {
+  "tag": "c12_ctrl_s83",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 83"
+ },
+ {
+  "tag": "c12_plw4_s83",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 83"
+ },
+ {
+  "tag": "c12_q7_s83",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --level-loss quantile --level-quantile 0.7 --seed 83"
+ },
+ {
+  "tag": "c12_adjw6_s83",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 6.0 --seed 83"
+ },
+ {
+  "tag": "c12_combo2_s83",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --seed 83"
+ },
+ {
+  "tag": "c12_combo3_s83",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --pair-adj-weight 6.0 --seed 83"
+ }
+]
