@@ -1,0 +1,66 @@
+[
+ {
+  "tag": "c14_ctrl_s101",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 101"
+ },
+ {
+  "tag": "c14_plw4_s101",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 101"
+ },
+ {
+  "tag": "c14_ctrl_s113",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 113"
+ },
+ {
+  "tag": "c14_plw4_s113",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 113"
+ },
+ {
+  "tag": "c14_ctrl_s127",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 127"
+ },
+ {
+  "tag": "c14_plw4_s127",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 127"
+ },
+ {
+  "tag": "c14_ctrl_s139",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 139"
+ },
+ {
+  "tag": "c14_plw4_s139",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 139"
+ },
+ {
+  "tag": "c14_ctrl_s151",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 151"
+ },
+ {
+  "tag": "c14_plw4_s151",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 151"
+ },
+ {
+  "tag": "c14_ctrl_s163",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 163"
+ },
+ {
+  "tag": "c14_plw4_s163",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 163"
+ },
+ {
+  "tag": "c14_ctrl_s177",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 177"
+ },
+ {
+  "tag": "c14_plw4_s177",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 177"
+ },
+ {
+  "tag": "c14_ctrl_s191",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 191"
+ },
+ {
+  "tag": "c14_plw4_s191",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --seed 191"
+ }
+]
