@@ -1045,3 +1045,36 @@ problem is the objective, not the representation — consistent with A1, I6 and 
 
 *Falsifying test:* FiLM applied to node channels rather than the pooled
 embedding, or gated to the level head only.
+
+
+### I10-CORRECTION. plw4 does not replicate on independent seeds
+**I10 above overstates the effect. The corrected value is +0.0145, not
+significant.**
+
+C14 re-ran the contrast on 6 seeds disjoint from every seed that had touched it:
+
+| seed set | Δ | up |
+|---|---|---|
+| C10 selection seeds (7,11,23,37) | +0.0252 | 4/4 |
+| C12 additional seeds (42,51,67,83) | +0.0288 | 3/4 |
+| **C14 fully independent (101–191)** | **−0.0021** | 4/6 |
+| **pooled, 14 seeds** | **+0.0145** | 11/14, t = +1.91, **p = 0.079** |
+
+The p = 0.021 in I10 came from a seed set that overlapped the selection. On
+seeds that never chose it the effect is **zero**. Per-seed sd is 0.0285 — larger
+than the effect — so eight seeds was never enough to separate +0.027 from
++0.014, and I should have computed that before claiming significance.
+
+**What survives:** 11 of 14 seeds up is unlikely by chance (binomial p ≈ 0.03),
+and the C10 grid shows a monotone interior optimum through the published value.
+So a small real effect around **+0.015** is plausible; **+0.027 is not
+supported**, and neither is any claim of significance.
+
+**Power, computed after the fact and stated here so the next run does not repeat
+the error:** detecting Δ = 0.0145 at σ = 0.0285 with 80 % power needs
+**≈ 30 paired seeds**, not 8. Every seed-paired claim in this project at n = 8
+can resolve ~0.028 at best; smaller effects need proportionally more.
+
+This is I6 and q0.7 happening a third time in one session, in three different
+guises: a positive that looked clean at n = 4–8 and dissolved when tested
+properly. The pattern is now the finding.

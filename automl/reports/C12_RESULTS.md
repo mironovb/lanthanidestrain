@@ -78,3 +78,29 @@ third was spent on C11 this session and should not be re-entered casually.
 The clean confirmation is a single pre-registered look at an unspent partition,
 or a fresh split. Until then this is **strong, internally consistent, and
 selected** — reported as such.
+
+
+---
+
+## CORRECTION — the effect does not replicate on independent seeds
+
+C14 re-ran the contrast on seeds disjoint from every seed that had touched it:
+
+| seed set | Δ | up |
+|---|---|---|
+| C10 selection seeds | +0.0252 | 4/4 |
+| C12 additional seeds | +0.0288 | 3/4 |
+| **C14 fully independent** | **−0.0021** | 4/6 |
+| **pooled, 14 seeds** | **+0.0145** | 11/14, p = 0.079 |
+
+The headline above (+0.0270, p = 0.021) is **not supported**. It came from a
+seed set overlapping the one that selected the configuration; on seeds that
+never chose it, the effect is zero. Per-seed sd is 0.0285, so n = 8 could never
+have separated +0.027 from +0.014 — a power calculation I should have run
+before claiming p = 0.021.
+
+What survives is weaker and worth stating exactly: 11/14 seeds up (binomial
+p ≈ 0.03) plus a monotone interior optimum in the C10 grid make a small real
+effect around **+0.015** plausible. It is not established, and the scale-free
+check — which correctly distinguished this from the C8 artefact — tests the
+*nature* of an effect, not its *existence*.
