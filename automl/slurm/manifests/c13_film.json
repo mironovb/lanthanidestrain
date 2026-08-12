@@ -1,0 +1,74 @@
+[
+ {
+  "tag": "c13_noflm_s7",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 7"
+ },
+ {
+  "tag": "c13_film_s7",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --film --seed 7"
+ },
+ {
+  "tag": "c13_filmc_s7",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --film --seed 7"
+ },
+ {
+  "tag": "c13_noflm_s11",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 11"
+ },
+ {
+  "tag": "c13_film_s11",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --film --seed 11"
+ },
+ {
+  "tag": "c13_filmc_s11",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --film --seed 11"
+ },
+ {
+  "tag": "c13_noflm_s23",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 23"
+ },
+ {
+  "tag": "c13_film_s23",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --film --seed 23"
+ },
+ {
+  "tag": "c13_filmc_s23",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --film --seed 23"
+ },
+ {
+  "tag": "c13_noflm_s37",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 37"
+ },
+ {
+  "tag": "c13_film_s37",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --film --seed 37"
+ },
+ {
+  "tag": "c13_filmc_s37",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --film --seed 37"
+ },
+ {
+  "tag": "c13_noflm_s42",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 42"
+ },
+ {
+  "tag": "c13_film_s42",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --film --seed 42"
+ },
+ {
+  "tag": "c13_filmc_s42",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --film --seed 42"
+ },
+ {
+  "tag": "c13_noflm_s51",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 51"
+ },
+ {
+  "tag": "c13_film_s51",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --film --seed 51"
+ },
+ {
+  "tag": "c13_filmc_s51",
+  "args": "--arch dist --select-on adjacent --filtration-max 4.0 --rbf-bins 64 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --level-loss quantile --level-quantile 0.7 --film --seed 51"
+ }
+]
