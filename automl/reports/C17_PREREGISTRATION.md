@@ -152,3 +152,54 @@ This is the fourth default-related trap in this project after `--pair-head`
 (silent no-op), `--film`/`--attn-pool`/`--node-angular` (silent no-ops) and the
 `n_atoms`/`cn` confounders that were constants. **A flag that is not stated
 explicitly is not a control.**
+
+
+---
+
+## AMENDMENT 2 — two of the four arms are axes C6 already falsified
+
+Recorded at 18 paired seeds, before any C17 result is claimed.
+
+`C6_RESULTS.md` §4, "Axes that moved on selection data and did not survive":
+
+| axis | C6 screening Δ | **C6 report third** |
+|---|---|---|
+| `mphys` — aqueous/f-shell metal constants | +0.0853 | **−0.0044 vs D0** |
+| adjacent emphasis 10 | +0.0519 | **−0.0014 vs D0** |
+
+Both are C17 arms. Exploration correctly reported they had never run on `snn`
+— they were run on `dist` — but "never run on this encoder" is not the same as
+"untested", and I planned them as though it were. The failure C6 documents is a
+property of the **descriptors and the selection process**, not of the encoder.
+
+C17's interim numbers at 18 paired seeds are `mphys` **+0.0286 (17/18,
+p = 0.0001)** and `combo` **+0.0277 (15/17)**. C6 saw `mphys` at **+0.0853** on
+screening data and **−0.0044** on the held-out third. **C17 scores on the full
+population, which contains the screening extractants**, so these are
+selection-contaminated in exactly the way C6 warns about, and they are *smaller*
+than the screening figure that then evaporated.
+
+C6's explicit recommendation, written after three axes cleared +0.02 four times
+over and none survived: **a screening gate well above +0.02.** `mphys` and
+`combo` clear +0.02 by a hair and therefore do not clear that gate.
+
+### Consequences
+
+1. **`mphys` and `adjw10` are demoted to descriptive.** They cannot be reported
+   as gains on this evidence; the prior held-out evidence is against them.
+2. **`combo` is confounded** — it contains `mphys` and `adjw10`, so its +0.0277
+   is not attributable to the objective.
+3. **The primary endpoint is unaffected and stands**: `plw4 − plw2` tests a
+   lever C6 never examined (`pair_loss_weight` above 2.0), established
+   independently on dist at +0.0142 over 40 seeds. It currently reads
+   **+0.0082, 11/18, p = 0.22** — i.e. the transfer is *not* holding up so far.
+4. **There is no clean confirmation partition left.** C6_RESULTS states "the
+   report third is now spent", and C11 spent it again this week. Any future
+   held-out claim needs a genuinely fresh partition, not another look at that
+   third.
+
+This is the second amendment in one campaign, both from assuming a default or a
+gap rather than checking it. The pattern across this project is consistent
+enough to state plainly: **the prior campaigns already tested more than the
+run-count histograms suggest, and a zero in a config histogram is not evidence
+that a question is open.**
