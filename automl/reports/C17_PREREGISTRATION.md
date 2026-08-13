@@ -100,3 +100,55 @@ that did not survive. What this design guarantees is that the answer will be
 trustworthy at the effect size actually in play. A null is publishable here: it
 would say the loss findings are dist-specific rather than objective-level, which
 is itself new information about where the 3D arm's ceiling comes from.
+
+
+---
+
+## AMENDMENT 1 — the control was wrong, and the campaign caught it
+
+Made after 56 of 144 cells, before any result was claimed.
+
+**The error is mine.** The design table above lists `ctrl | — (published snn)`.
+Omitting `--pair-loss-weight` does **not** reproduce the published snn: the flag
+defaults to **0.0** ("0 reproduces the plain regression objective",
+`train.py:1285`), while the published snn runs used **2.0** in 244 of them.
+So the control arm was *plain regression*, not the published configuration.
+
+Consequences, all visible in the interim numbers:
+
+| arm | interim Δ vs the wrong control | what it actually measured |
+|---|---|---|
+| `plw4` | +0.1057, 12/12, p < 0.0001 | contrast-on vs contrast-off — i.e. **finding A1**, already established at +0.186 on SNN. Not a new result. |
+| `adjw10` | **+0.0000, 0/11, t = nan** | **vacuous** — an adjacent weight multiplying a term of weight zero is bit-identical to the control |
+| `mphys` | +0.0084 | measured against the wrong baseline |
+| `combo` | +0.1074, 10/10 | confounded with the contrast-on effect |
+
+**What exposed it:** the `adjw10` arm returning Δ = exactly 0.0000 on 0/11 seeds
+with an undefined t. A difference that is *identically* zero is never a null
+result; it is a configuration that did not change anything.
+
+### The correction
+
+Every arm now states `--pair-loss-weight` **explicitly** — no arm inherits a
+default — and the manifest generator asserts it is present:
+
+| arm | flags | seeds |
+|---|---|---|
+| `plw2` | `--pair-loss-weight 2.0` (**the published control**) | 32 |
+| `plw4` | `--pair-loss-weight 4.0` | 32 |
+| `adjw10` | `plw 2.0 + --pair-adj-weight 10.0` | 24 |
+| `mphys` | `plw 2.0 + --preset baseline_2d_mphys` | 24 |
+| `combo` | `plw 4.0 + adjw 10.0 + mphys` | 32 |
+
+**Primary endpoint is unchanged in intent and now correct in fact:**
+paired Δ on `sel_adj_logSF_r2`, **`plw4 − plw2`**, 32 seeds, requiring both
+p < 0.05 and scale-free sign agreement.
+
+The 12 completed `c17_ctrl_*` cells are retained as the **plain-regression
+reference** (they are genuinely plw0), not re-run. `plw4` and `combo` sentinels
+are kept — those configurations did not change.
+
+This is the fourth default-related trap in this project after `--pair-head`
+(silent no-op), `--film`/`--attn-pool`/`--node-angular` (silent no-ops) and the
+`n_atoms`/`cn` confounders that were constants. **A flag that is not stated
+explicitly is not a control.**

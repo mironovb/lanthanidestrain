@@ -1,7 +1,7 @@
 [
  {
-  "tag": "c17_ctrl_s501",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 501"
+  "tag": "c17_plw2_s501",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 501"
  },
  {
   "tag": "c17_plw4_s501",
@@ -9,19 +9,19 @@
  },
  {
   "tag": "c17_adjw10_s501",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 501"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 501"
  },
  {
   "tag": "c17_mphys_s501",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 501"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 501"
  },
  {
   "tag": "c17_combo_s501",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 501"
  },
  {
-  "tag": "c17_ctrl_s508",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 508"
+  "tag": "c17_plw2_s508",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 508"
  },
  {
   "tag": "c17_plw4_s508",
@@ -29,19 +29,19 @@
  },
  {
   "tag": "c17_adjw10_s508",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 508"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 508"
  },
  {
   "tag": "c17_mphys_s508",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 508"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 508"
  },
  {
   "tag": "c17_combo_s508",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 508"
  },
  {
-  "tag": "c17_ctrl_s515",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 515"
+  "tag": "c17_plw2_s515",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 515"
  },
  {
   "tag": "c17_plw4_s515",
@@ -49,19 +49,19 @@
  },
  {
   "tag": "c17_adjw10_s515",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 515"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 515"
  },
  {
   "tag": "c17_mphys_s515",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 515"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 515"
  },
  {
   "tag": "c17_combo_s515",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 515"
  },
  {
-  "tag": "c17_ctrl_s522",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 522"
+  "tag": "c17_plw2_s522",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 522"
  },
  {
   "tag": "c17_plw4_s522",
@@ -69,19 +69,19 @@
  },
  {
   "tag": "c17_adjw10_s522",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 522"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 522"
  },
  {
   "tag": "c17_mphys_s522",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 522"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 522"
  },
  {
   "tag": "c17_combo_s522",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 522"
  },
  {
-  "tag": "c17_ctrl_s529",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 529"
+  "tag": "c17_plw2_s529",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 529"
  },
  {
   "tag": "c17_plw4_s529",
@@ -89,19 +89,19 @@
  },
  {
   "tag": "c17_adjw10_s529",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 529"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 529"
  },
  {
   "tag": "c17_mphys_s529",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 529"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 529"
  },
  {
   "tag": "c17_combo_s529",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 529"
  },
  {
-  "tag": "c17_ctrl_s536",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 536"
+  "tag": "c17_plw2_s536",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 536"
  },
  {
   "tag": "c17_plw4_s536",
@@ -109,19 +109,19 @@
  },
  {
   "tag": "c17_adjw10_s536",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 536"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 536"
  },
  {
   "tag": "c17_mphys_s536",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 536"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 536"
  },
  {
   "tag": "c17_combo_s536",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 536"
  },
  {
-  "tag": "c17_ctrl_s543",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 543"
+  "tag": "c17_plw2_s543",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 543"
  },
  {
   "tag": "c17_plw4_s543",
@@ -129,19 +129,19 @@
  },
  {
   "tag": "c17_adjw10_s543",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 543"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 543"
  },
  {
   "tag": "c17_mphys_s543",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 543"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 543"
  },
  {
   "tag": "c17_combo_s543",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 543"
  },
  {
-  "tag": "c17_ctrl_s550",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 550"
+  "tag": "c17_plw2_s550",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 550"
  },
  {
   "tag": "c17_plw4_s550",
@@ -149,19 +149,19 @@
  },
  {
   "tag": "c17_adjw10_s550",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 550"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 550"
  },
  {
   "tag": "c17_mphys_s550",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 550"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 550"
  },
  {
   "tag": "c17_combo_s550",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 550"
  },
  {
-  "tag": "c17_ctrl_s557",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 557"
+  "tag": "c17_plw2_s557",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 557"
  },
  {
   "tag": "c17_plw4_s557",
@@ -169,19 +169,19 @@
  },
  {
   "tag": "c17_adjw10_s557",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 557"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 557"
  },
  {
   "tag": "c17_mphys_s557",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 557"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 557"
  },
  {
   "tag": "c17_combo_s557",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 557"
  },
  {
-  "tag": "c17_ctrl_s564",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 564"
+  "tag": "c17_plw2_s564",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 564"
  },
  {
   "tag": "c17_plw4_s564",
@@ -189,19 +189,19 @@
  },
  {
   "tag": "c17_adjw10_s564",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 564"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 564"
  },
  {
   "tag": "c17_mphys_s564",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 564"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 564"
  },
  {
   "tag": "c17_combo_s564",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 564"
  },
  {
-  "tag": "c17_ctrl_s571",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 571"
+  "tag": "c17_plw2_s571",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 571"
  },
  {
   "tag": "c17_plw4_s571",
@@ -209,19 +209,19 @@
  },
  {
   "tag": "c17_adjw10_s571",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 571"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 571"
  },
  {
   "tag": "c17_mphys_s571",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 571"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 571"
  },
  {
   "tag": "c17_combo_s571",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 571"
  },
  {
-  "tag": "c17_ctrl_s578",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 578"
+  "tag": "c17_plw2_s578",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 578"
  },
  {
   "tag": "c17_plw4_s578",
@@ -229,19 +229,19 @@
  },
  {
   "tag": "c17_adjw10_s578",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 578"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 578"
  },
  {
   "tag": "c17_mphys_s578",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 578"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 578"
  },
  {
   "tag": "c17_combo_s578",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 578"
  },
  {
-  "tag": "c17_ctrl_s585",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 585"
+  "tag": "c17_plw2_s585",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 585"
  },
  {
   "tag": "c17_plw4_s585",
@@ -249,19 +249,19 @@
  },
  {
   "tag": "c17_adjw10_s585",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 585"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 585"
  },
  {
   "tag": "c17_mphys_s585",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 585"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 585"
  },
  {
   "tag": "c17_combo_s585",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 585"
  },
  {
-  "tag": "c17_ctrl_s592",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 592"
+  "tag": "c17_plw2_s592",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 592"
  },
  {
   "tag": "c17_plw4_s592",
@@ -269,19 +269,19 @@
  },
  {
   "tag": "c17_adjw10_s592",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 592"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 592"
  },
  {
   "tag": "c17_mphys_s592",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 592"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 592"
  },
  {
   "tag": "c17_combo_s592",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 592"
  },
  {
-  "tag": "c17_ctrl_s599",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 599"
+  "tag": "c17_plw2_s599",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 599"
  },
  {
   "tag": "c17_plw4_s599",
@@ -289,19 +289,19 @@
  },
  {
   "tag": "c17_adjw10_s599",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 599"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 599"
  },
  {
   "tag": "c17_mphys_s599",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 599"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 599"
  },
  {
   "tag": "c17_combo_s599",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 599"
  },
  {
-  "tag": "c17_ctrl_s606",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 606"
+  "tag": "c17_plw2_s606",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 606"
  },
  {
   "tag": "c17_plw4_s606",
@@ -309,19 +309,19 @@
  },
  {
   "tag": "c17_adjw10_s606",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 606"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 606"
  },
  {
   "tag": "c17_mphys_s606",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 606"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 606"
  },
  {
   "tag": "c17_combo_s606",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 606"
  },
  {
-  "tag": "c17_ctrl_s613",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 613"
+  "tag": "c17_plw2_s613",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 613"
  },
  {
   "tag": "c17_plw4_s613",
@@ -329,19 +329,19 @@
  },
  {
   "tag": "c17_adjw10_s613",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 613"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 613"
  },
  {
   "tag": "c17_mphys_s613",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 613"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 613"
  },
  {
   "tag": "c17_combo_s613",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 613"
  },
  {
-  "tag": "c17_ctrl_s620",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 620"
+  "tag": "c17_plw2_s620",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 620"
  },
  {
   "tag": "c17_plw4_s620",
@@ -349,19 +349,19 @@
  },
  {
   "tag": "c17_adjw10_s620",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 620"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 620"
  },
  {
   "tag": "c17_mphys_s620",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 620"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 620"
  },
  {
   "tag": "c17_combo_s620",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 620"
  },
  {
-  "tag": "c17_ctrl_s627",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 627"
+  "tag": "c17_plw2_s627",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 627"
  },
  {
   "tag": "c17_plw4_s627",
@@ -369,19 +369,19 @@
  },
  {
   "tag": "c17_adjw10_s627",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 627"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 627"
  },
  {
   "tag": "c17_mphys_s627",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 627"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 627"
  },
  {
   "tag": "c17_combo_s627",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 627"
  },
  {
-  "tag": "c17_ctrl_s634",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 634"
+  "tag": "c17_plw2_s634",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 634"
  },
  {
   "tag": "c17_plw4_s634",
@@ -389,19 +389,19 @@
  },
  {
   "tag": "c17_adjw10_s634",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 634"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 634"
  },
  {
   "tag": "c17_mphys_s634",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 634"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 634"
  },
  {
   "tag": "c17_combo_s634",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 634"
  },
  {
-  "tag": "c17_ctrl_s641",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 641"
+  "tag": "c17_plw2_s641",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 641"
  },
  {
   "tag": "c17_plw4_s641",
@@ -409,19 +409,19 @@
  },
  {
   "tag": "c17_adjw10_s641",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 641"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 641"
  },
  {
   "tag": "c17_mphys_s641",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 641"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 641"
  },
  {
   "tag": "c17_combo_s641",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 641"
  },
  {
-  "tag": "c17_ctrl_s648",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 648"
+  "tag": "c17_plw2_s648",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 648"
  },
  {
   "tag": "c17_plw4_s648",
@@ -429,19 +429,19 @@
  },
  {
   "tag": "c17_adjw10_s648",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 648"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 648"
  },
  {
   "tag": "c17_mphys_s648",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 648"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 648"
  },
  {
   "tag": "c17_combo_s648",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 648"
  },
  {
-  "tag": "c17_ctrl_s655",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 655"
+  "tag": "c17_plw2_s655",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 655"
  },
  {
   "tag": "c17_plw4_s655",
@@ -449,19 +449,19 @@
  },
  {
   "tag": "c17_adjw10_s655",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 655"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 655"
  },
  {
   "tag": "c17_mphys_s655",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 655"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 655"
  },
  {
   "tag": "c17_combo_s655",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 655"
  },
  {
-  "tag": "c17_ctrl_s662",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 662"
+  "tag": "c17_plw2_s662",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 662"
  },
  {
   "tag": "c17_plw4_s662",
@@ -469,19 +469,19 @@
  },
  {
   "tag": "c17_adjw10_s662",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-adj-weight 10.0 --seed 662"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --pair-adj-weight 10.0 --seed 662"
  },
  {
   "tag": "c17_mphys_s662",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --preset baseline_2d_mphys --seed 662"
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --preset baseline_2d_mphys --seed 662"
  },
  {
   "tag": "c17_combo_s662",
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 662"
  },
  {
-  "tag": "c17_ctrl_s669",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 669"
+  "tag": "c17_plw2_s669",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 669"
  },
  {
   "tag": "c17_plw4_s669",
@@ -492,8 +492,8 @@
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 669"
  },
  {
-  "tag": "c17_ctrl_s676",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 676"
+  "tag": "c17_plw2_s676",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 676"
  },
  {
   "tag": "c17_plw4_s676",
@@ -504,8 +504,8 @@
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 676"
  },
  {
-  "tag": "c17_ctrl_s683",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 683"
+  "tag": "c17_plw2_s683",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 683"
  },
  {
   "tag": "c17_plw4_s683",
@@ -516,8 +516,8 @@
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 683"
  },
  {
-  "tag": "c17_ctrl_s690",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 690"
+  "tag": "c17_plw2_s690",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 690"
  },
  {
   "tag": "c17_plw4_s690",
@@ -528,8 +528,8 @@
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 690"
  },
  {
-  "tag": "c17_ctrl_s697",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 697"
+  "tag": "c17_plw2_s697",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 697"
  },
  {
   "tag": "c17_plw4_s697",
@@ -540,8 +540,8 @@
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 697"
  },
  {
-  "tag": "c17_ctrl_s704",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 704"
+  "tag": "c17_plw2_s704",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 704"
  },
  {
   "tag": "c17_plw4_s704",
@@ -552,8 +552,8 @@
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 704"
  },
  {
-  "tag": "c17_ctrl_s711",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 711"
+  "tag": "c17_plw2_s711",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 711"
  },
  {
   "tag": "c17_plw4_s711",
@@ -564,8 +564,8 @@
   "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 4.0 --pair-adj-weight 10.0 --preset baseline_2d_mphys --seed 711"
  },
  {
-  "tag": "c17_ctrl_s718",
-  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --seed 718"
+  "tag": "c17_plw2_s718",
+  "args": "--arch snn --select-on adjacent --filtration-max 3.5 --folds 5 --repeats 3 --deterministic --pair-loss-weight 2.0 --seed 718"
  },
  {
   "tag": "c17_plw4_s718",
