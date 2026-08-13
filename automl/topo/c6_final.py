@@ -126,9 +126,16 @@ def main() -> int:
                     help="c6_split partition to score on")
     ap.add_argument("--report", action="store_true",
                     help="shorthand for --restrict report: THE single look")
+    ap.add_argument("--partners", nargs="+", default=None,
+                    help="substrings selecting which c6_partners *_full arms "
+                         "enter the blend; unset = all of them, the published "
+                         "behaviour. Nine near-duplicate CatBoost variants now "
+                         "sit on disk, so an unfiltered blend is an 11-arm "
+                         "stack of correlated models.")
     ap.add_argument("--csv", default=str(REPORTS / "c6_final.csv"))
     args = ap.parse_args()
 
+    partners = args.partners
     restrict = "report" if args.report else args.restrict
     groups = None
     if restrict:
@@ -150,7 +157,15 @@ def main() -> int:
     # ONLY the full-data partner runs.  A screen+select-restricted parquet has
     # no rows on the report third, and align() intersects indices across every
     # arm -- so including one would silently empty the endpoint.
+    # --partners restricts WHICH cpu partners enter the blend.  Unset keeps every
+    # one, which is the published behaviour -- but 11 *_full parquets now sit on
+    # disk (nine CatBoost variants alone), so an unfiltered run silently builds
+    # an 11-arm stack out of near-duplicate models rather than the intended
+    # 3-arm one, and reads as topology contributing nothing against a wall of
+    # correlated partners.
     for p in sorted((ART / "c6_partners").glob("oof_c6p_*_full.parquet")):
+        if partners is not None and not any(w in p.stem for w in partners):
+            continue
         frames[p.stem.replace("oof_c6p_", "cpu_").replace("_full", "")] = attach_meta(
             pd.read_parquet(p).drop_duplicates("safe_exp_id")
             .set_index("safe_exp_id"))
