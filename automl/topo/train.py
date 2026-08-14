@@ -137,7 +137,8 @@ def edge_asset(name: str, verbose: bool = False):
 
 def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
                     match_rows: str = "snn", geometry: str = "full",
-                    edge_asset_name: str | None = None
+                    edge_asset_name: str | None = None,
+                    population: str = "ok_only"
                     ) -> tuple[pd.DataFrame, np.ndarray, list[str]]:
     """Rows backed by this arm's 3D asset, plus their tabular design matrix.
 
@@ -163,7 +164,14 @@ def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
              else PersistenceImages())
     key = df["geometry_feature_build_id"].astype(str)
     df = df.assign(_cplx=[asset.index_of(k) for k in key])
-    df = df[df["_cplx"].notna() & df["geometry_ok"].astype(bool)].reset_index(drop=True)
+    # population="has3d" (August campaign) relaxes the geometry-QC row filter;
+    # rows are still gated on the asset actually holding their complex, so the
+    # default asset reproduces ok_only exactly and only an asset that carries
+    # the borderline builds (--edge-asset has3d) reaches the expanded rows.
+    ok = df["_cplx"].notna()
+    if population == "ok_only":
+        ok &= df["geometry_ok"].astype(bool)
+    df = df[ok].reset_index(drop=True)
     df["_cplx"] = df["_cplx"].astype(int)
     cols = blocks.select(BLOCK_PRESETS[preset])
     X = df[cols].to_numpy(dtype=np.float32)
@@ -1426,6 +1434,11 @@ def main() -> int:
                          "zeroes only the four metal COLUMNS and is NOT exact "
                          "under --arch snn/dist, where the embedding is a "
                          "different complex per metal")
+    ap.add_argument("--population", default="ok_only",
+                    choices=("ok_only", "has3d"),
+                    help="has3d relaxes the geometry-QC row filter (August "
+                         "campaign); needs an asset covering the borderline "
+                         "builds, e.g. --edge-asset has3d")
     ap.add_argument("--edge-asset", default=None,
                     help="load the neighbour graph from "
                          "automl/artifacts/vr_cutoff/<NAME> instead of the "
@@ -1536,7 +1549,8 @@ def main() -> int:
                   f"build cutoff", flush=True)
     df, X, cols = build_row_table(args.preset, args.arch, args.match_rows,
                                   geometry=args.geometry,
-                                  edge_asset_name=args.edge_asset)
+                                  edge_asset_name=args.edge_asset,
+                                  population=args.population)
     if args.extra_block_mean:
         # POST-HOC diagnostic for sweep2 A1, not part of the pre-registration.
         #
@@ -1838,6 +1852,7 @@ def main() -> int:
             + ("_rsurow" if args.radius_slope != "off"
                and args.radius_slope_u == "row" else "")
             + (f"_ea{args.edge_asset}" if args.edge_asset else "")
+            + ("" if args.population == "ok_only" else f"_pop{args.population}")
             + (f"_fb{args.rbf_bins}" if args.rbf_bins else "")
             + (f"_fm{args.rbf_max}" if args.rbf_max else ""))
     pd.DataFrame({
