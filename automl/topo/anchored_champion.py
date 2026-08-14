@@ -131,6 +131,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--cells", nargs="+", default=list(CELLS))
     ap.add_argument("--repeats", type=int, default=3)
+    ap.add_argument("--seeds", type=int, nargs="+", default=[42],
+                    help="per-seed runs are averaged into an _ens parquet")
     args = ap.parse_args()
 
     df, X = load_table()
@@ -139,11 +141,34 @@ def main() -> int:
 
     rows = []
     for name in args.cells:
-        res = run_cell(name, df, X, repeats=args.repeats, **CELLS[name])
-        rows.append(res)
-        print(f"  {name:20s} adj_R2={res['adj_r2']:+.4f} "
-              f"P2={res['adj_pearson2']:+.4f} disp={res['adj_disp']:.3f} "
-              f"logD_R2={res['logD_r2']:+.4f}")
+        oofs = []
+        for sd in args.seeds:
+            res = run_cell(f"{name}_s{sd}", df, X, repeats=args.repeats,
+                           seed=sd, **CELLS[name])
+            oofs.append(pd.read_parquet(ART / f"oof_{name}_s{sd}.parquet")
+                        ["oof"].to_numpy())
+            res["cell"] = f"{name}_s{sd}"
+            rows.append(res)
+            print(f"  {name}_s{sd:<4d} adj_R2={res['adj_r2']:+.4f} "
+                  f"P2={res['adj_pearson2']:+.4f} disp={res['adj_disp']:.3f} "
+                  f"logD_R2={res['logD_r2']:+.4f}")
+        if len(oofs) > 1:
+            y = df["log_D"].to_numpy(float)
+            ens = np.mean(oofs, axis=0)
+            pd.DataFrame({"safe_exp_id": df["safe_exp_id"], "y": y,
+                          "oof": ens}).to_parquet(
+                ART / f"oof_{name}_ens{len(oofs)}.parquet", index=False)
+            dy, dp = ev.adjacent_pair_arrays(
+                y, ens, df["composition_key"].to_numpy(),
+                df["lanthanide_index"].to_numpy())
+            r = {"cell": f"{name}_ens{len(oofs)}", "adj_r2": ev._r2(dy, dp),
+                 "adj_pearson2": float(np.corrcoef(dy, dp)[0, 1] ** 2),
+                 "adj_disp": float(np.std(dp) / np.std(dy)),
+                 "logD_r2": ev._r2(y, ens), "n_pairs": len(dy)}
+            rows.append(r)
+            print(f"  {name}_ens{len(oofs)}  adj_R2={r['adj_r2']:+.4f} "
+                  f"P2={r['adj_pearson2']:+.4f} disp={r['adj_disp']:.3f} "
+                  f"logD_R2={r['logD_r2']:+.4f}")
 
     out = pd.DataFrame(rows)
     if OUT_CSV.exists():

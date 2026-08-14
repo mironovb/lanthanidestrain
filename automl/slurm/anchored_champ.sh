@@ -14,5 +14,5 @@ source /etc/profile.d/modules.sh
 module load anaconda/Python-ML-2025a
 export PYTHONPATH="${REPO}:${PYTHONPATH:-}" PYTHONWARNINGS=ignore
 cd "${REPO}"
-python3 -u -m automl.topo.anchored_champion
+python3 -u -m automl.topo.anchored_champion --cells anch_q60_mae_w07 anch_q60_q60 --seeds 42 51 67 83
 echo "ANCH_CHAMP DONE $(date -Is)"

@@ -103,7 +103,8 @@ def build_pairs(strict: bool = False, population: str = "ok_only",
     if energy and PROBE.exists():
         pr = pd.read_csv(PROBE)
         if len(pr) > 100:            # the full probe, not the 12-row pilot
-            pr["bid"] = pr["path"].str.extract(r"_([0-9a-f]{12})\.xyz$")
+            pr["bid"] = pr["path"].str.extract(
+                r"_([0-9a-f]{12})(?:_[A-Za-z0-9_]+)?\.xyz$")
             probe = pr.set_index("bid")
 
     rows = []
@@ -173,11 +174,23 @@ def cached_pairs(args) -> pd.DataFrame:
     return pf
 
 
+IDENTITY_COLS = ("l_lo", "l_hi", "dl", "d_radius", "mean_radius", "nf_lo",
+                 "nf_hi", "tetrad_q1_lo", "tetrad_q2_lo", "tetrad_q3_lo",
+                 "tetrad_q1_hi", "tetrad_q2_hi", "tetrad_q3_hi", "gd_cross",
+                 "cn_cross", "d_eint", "d_eint_n")
+
+
 def run_config(pf: pd.DataFrame, loss: str, adj_weight: float, folds: int,
-               repeats: int, seed: int, learner: str = "catboost"
-               ) -> tuple[dict, pd.DataFrame]:
+               repeats: int, seed: int, learner: str = "catboost",
+               features: str = "full") -> tuple[dict, pd.DataFrame]:
     feat_cols = [c for c in pf.columns
                  if c not in ("extractant_group", "composition_key", "dy")]
+    if features == "identity_cond":
+        feat_cols = [c for c in feat_cols
+                     if c in IDENTITY_COLS or c.startswith(("dcond__",
+                                                            "bcond__"))]
+    elif features == "identity":
+        feat_cols = [c for c in feat_cols if c in IDENTITY_COLS]
     X = pf[feat_cols].to_numpy(float)
     y = pf["dy"].to_numpy(float)
     g = pf["extractant_group"].to_numpy()
@@ -242,6 +255,8 @@ def main() -> int:
     ap.add_argument("--rebuild", action="store_true")
     ap.add_argument("--sweep", action="store_true",
                     help="loss x adj-weight x learner grid")
+    ap.add_argument("--features", default="full",
+                    choices=("full", "identity_cond", "identity"))
     ap.add_argument("--tag", default="")
     args = ap.parse_args()
 
@@ -257,9 +272,11 @@ def main() -> int:
     rows = []
     for loss, aw, ln in grid:
         res, oof_df = run_config(pf, loss, aw, args.folds, args.repeats,
-                                 args.seed, learner=ln)
+                                 args.seed, learner=ln,
+                                 features=args.features)
         tag = (args.tag or
                f"{ln}_{loss}_w{aw:g}_{args.population}"
+               f"{'' if args.features == 'full' else '_' + args.features}"
                f"{'_strict' if args.strict else ''}"
                f"{'_energy' if args.energy else ''}")
         res.update({"tag": tag, "loss": loss, "adj_weight": aw,

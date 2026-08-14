@@ -92,6 +92,11 @@ def main() -> int:
     ap.add_argument("--wide", action="store_true",
                     help="also try a wider arm pool (extra CatBoost variants + "
                          "snn plw4) -- exploratory, worth checking once")
+    ap.add_argument("--row-parquet", nargs="+", default=None,
+                    help="extra row-level OOF parquet(s) (safe_exp_id,y,oof); "
+                         "each becomes an extra NNLS arm via attach_meta")
+    ap.add_argument("--drop-arm", nargs="+", default=None,
+                    help="substring(s): remove matching base arms first")
     ap.add_argument("--pair-parquet", nargs="+", default=None,
                     help="OOF pair parquet(s) from pair_model.py; each enters "
                          "the NNLS as an extra prediction column, joined on "
@@ -99,6 +104,18 @@ def main() -> int:
     args = ap.parse_args()
 
     frames = load_best_arms()
+    if args.drop_arm:
+        frames = {k: v for k, v in frames.items()
+                  if not any(d in k for d in args.drop_arm)}
+    if args.row_parquet:
+        from automl.topo.compare_arms import attach_meta
+        from automl.topo.c6_final import align
+        for pth in args.row_parquet:
+            name = Path(pth).stem.replace("oof_", "row_")
+            frames[name] = attach_meta(
+                pd.read_parquet(pth).drop_duplicates("safe_exp_id")
+                .set_index("safe_exp_id"))
+        frames = align(frames)
     pf = pair_frame(frames)
     arm_cols = [c for c in pf.columns if c.startswith("dp_") and c != "dp_stack"]
 
