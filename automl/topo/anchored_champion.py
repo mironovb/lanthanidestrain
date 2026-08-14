@@ -53,9 +53,13 @@ MAE_DEEP = dict(iterations=1500, learning_rate=0.04, depth=9, l2_leaf_reg=3.0,
                 rsm=0.3, loss_function="MAE")
 
 
-def load_table():
+def load_table(population: str = "ok_only"):
     df, blocks, _ = load_cache()
-    df = df[df["geometry_ok"].astype(bool) & df["has_3d"]].reset_index(drop=True)
+    if population == "ok_only":
+        df = df[df["geometry_ok"].astype(bool) & df["has_3d"]]
+    else:
+        df = df[df["has_3d"].astype(bool)]
+    df = df.reset_index(drop=True)
     cols = []
     for b in ("rdkit", "ecfp", "metal", "cond", "plan"):
         cols.extend(blocks.mapping[b])
@@ -133,18 +137,22 @@ def main() -> int:
     ap.add_argument("--repeats", type=int, default=3)
     ap.add_argument("--seeds", type=int, nargs="+", default=[42],
                     help="per-seed runs are averaged into an _ens parquet")
+    ap.add_argument("--population", default="ok_only",
+                    choices=("ok_only", "has3d"))
     args = ap.parse_args()
 
-    df, X = load_table()
+    df, X = load_table(args.population)
     print(f"{len(df)} rows · {df['extractant_group'].nunique()} extractants · "
           f"{X.shape[1]} columns")
 
     rows = []
     for name in args.cells:
         oofs = []
+        pop = "" if args.population == "ok_only" else f"_{args.population}"
+        name = name + pop
         for sd in args.seeds:
             res = run_cell(f"{name}_s{sd}", df, X, repeats=args.repeats,
-                           seed=sd, **CELLS[name])
+                           seed=sd, **CELLS[name.removesuffix(pop)])
             oofs.append(pd.read_parquet(ART / f"oof_{name}_s{sd}.parquet")
                         ["oof"].to_numpy())
             res["cell"] = f"{name}_s{sd}"
