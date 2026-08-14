@@ -1199,7 +1199,11 @@ Negative results with teeth from the same campaign, all recorded in
    correlations (La-Ce +0.38, Gd-Tb -0.36) concentrated at the two known
    discontinuity positions.  Exploratory, single look each.
 
-*Falsifying test for the headline:* the pending 8-seed ensemble (seeds
-42-109) must hold >= +0.31; and anchored q60/q60 on the expanded population
-must repeat the fresh-444 contrast.  Ceiling context: `CEILING_NOTE.md`
+*Falsifying test for the headline — RUN, PASSED (14 Aug, evening):*
+the 8-seed ensemble (seeds 42-109) scores **+0.3182** (two independent 4-seed
+ensembles: +0.3188 / +0.3113); anchored q60/q60 trained on the expanded
+population scores **+0.3155 on the legacy 905** (still above the stack) and
+repeats the fresh-444 contrast: **+0.0923 vs flat +0.0709**.  The headline
+stands: **anchored q60/q60, 8-seed ensemble, +0.318 — the project's best
+system, a single tabular model.**  Ceiling context: `CEILING_NOTE.md`
 (no point ceiling identifiable; supersedes the 0.53).
