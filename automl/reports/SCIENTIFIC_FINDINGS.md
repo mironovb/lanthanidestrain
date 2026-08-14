@@ -1207,3 +1207,43 @@ repeats the fresh-444 contrast: **+0.0923 vs flat +0.0709**.  The headline
 stands: **anchored q60/q60, 8-seed ensemble, +0.318 — the project's best
 system, a single tabular model.**  Ceiling context: `CEILING_NOTE.md`
 (no point ceiling identifiable; supersedes the 0.53).
+
+
+### I15. The 3D encoder contributes through the shape channel of the anchored decomposition
+**ESTABLISHED on the iteration population (nested + seed-split); fresh-444
+confirmation pending encoder coverage of the expanded rows.**
+
+System (`automl/topo/anchored_3d.py`):
+`pred = anchor + (1-w)*shape_tabular + w*shape_encoder`, where anchor and
+shape_tabular come from the I14 anchored ensemble and shape_encoder is the
+block-centred c15_plw4 distance-encoder 32-seed ensemble.  w is chosen nested
+per held-out extractant, every training extractant weighted equally.
+
+| variant | adjacent R2 (905) | Pearson^2 |
+|---|---|---|
+| anchored tabular only (I14) | +0.3182 | +0.3306 |
+| + encoder shape, nested w | **+0.3258** | **+0.3472** |
+| encoder shape alone (w=1) | +0.2661 | +0.2685 |
+
+Seed-split robustness (independent halves of both ensembles): half A
++0.3278 vs +0.3188; half B +0.3180 vs +0.3113 — the gain holds on both.
+Nested w is stable at 0.30-0.40.
+
+Two honesty notes, in the module docstring as well: (1) a pair-weighted nested
+criterion was tried first and gives +0.3183 (no gain) — TODGA, 21% of pairs,
+dictates every other extractant's w while its own held-out w is set by the
+remainder; the equal-extractant criterion is the reported one, so one
+selection degree of freedom was spent and the fresh-444 look is the arbiter.
+(2) The fixed-w=0.3 number +0.3277 is look-selected and must not be quoted.
+
+Interpretation: after the level is anchored away, the encoder's within-block
+shape carries ~1/3 of the optimal shape mix — the first configuration in this
+project where the 3D contribution SURVIVES next to the strongest tabular
+model rather than being replaced by it (contrast I12: tabular 3D columns
+collapse the flat model; G1/G2: encoders interchangeable among themselves).
+The 3D information itself was always there (c15_plw4 alone +0.2661); the
+anchored decomposition is what makes it additive.
+
+*Falsifying test:* rebuild the VR edge asset over the ~300 completed
+borderline-QC builds, retrain c15_plw4 on the expanded population, and score
+the blend on the frozen fresh 444.
