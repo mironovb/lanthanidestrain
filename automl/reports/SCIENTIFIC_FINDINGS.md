@@ -1108,3 +1108,33 @@ augmented preset (a −0.30 gap is unlikely to flip on tuning, but the re-grid i
 the falsifying test); consistent with the old champion-ladder null for these
 blocks (−0.008 on overall R², RMSE loss), now much larger on the adjacent
 metric under the quantile loss.
+
+
+### I13. C17 final: the contrast-weight gain transfers to the published simplicial model
+**ESTABLISHED** — the pre-registered C17 primary endpoint, at full power.
+
+`--pair-loss-weight 4.0` vs the published 2.0 on `--arch snn`, 32 paired
+deterministic seeds (501–718, disjoint from every prior campaign):
+
+| criterion | result |
+|---|---|
+| paired Δ `sel_adj_logSF_r2` | **+0.0165**, 95 % CI [+0.0065, +0.0265], 24/32 up |
+| paired significance | t = +3.25, **p = 0.0028**; Wilcoxon p = 0.0017 |
+| scale-free contrast (Pearson²) | **+0.0128, p = 0.013**, 22/32 up — sign agrees |
+| prediction-spread ratio | 0.943 — no shrinkage signature |
+
+Both pre-registered conditions pass. Together with the distance encoder
+(+0.0189, p = 0.006, seeds 201–418; scale-free +0.0153, p = 0.007), the same
+objective change produces the same gain on two architectures from disjoint
+seed sets — an objective-level effect, not an encoder artefact. This is the
+campaign's positive 3D result, and it is the honest kind: the published 3D
+model improves ~+0.017 by aligning its loss with the scored contrast.
+
+Secondary arms, final: `adjw10` **+0.0070 (p = 0.12) — null**, consistent with
+C6's held-out failure of emphasis 10. `mphys` +0.0294 and `combo` +0.0238 are
+**not reportable as gains** (Amendment 2): both score on a population containing
+the extractants that originally selected the mphys block, and C6 measured that
+axis at −0.0044 held-out.
+
+*Falsifying test:* one look at a genuinely fresh partition with
+`snn + plw4` as the single pre-declared configuration.
