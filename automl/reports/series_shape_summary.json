@@ -1,0 +1,19 @@
+{
+ "n_pairs": 905,
+ "n_extractants": 76,
+ "n_positions": 12,
+ "sd_dy": 0.2706941949642343,
+ "loeo_r2_lookup": 0.06569358761814803,
+ "loeo_r2_constant": -0.006086535802955595,
+ "loeo_r2_radius": 0.011429489275576188,
+ "splithalf_r_mean": 0.7508879979350683,
+ "splithalf_r_lo": 0.5949148139192154,
+ "splithalf_r_hi": 0.8881689691065806,
+ "splithalf_frac_positive": 1.0,
+ "splithalf_draws": 500,
+ "rss_radius_only": 65.08481729558405,
+ "rss_lookup": 59.25653762389153,
+ "F_shape_beyond_radius": 7.984778719662486,
+ "p_shape_beyond_radius": 2.266284310454057e-13,
+ "profile_sign_changes": 4
+}
