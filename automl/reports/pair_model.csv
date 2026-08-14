@@ -1,0 +1,2 @@
+n_pairs_train,n_pairs_adj,adj_r2,adj_pearson2,adj_disp,all_r2,tag,loss,adj_weight,learner,population,strict,energy
+6389,905,0.1351087629478085,0.16769878948220043,0.589359888991818,0.48195498961015004,catboost_mae_w3_ok_only,mae,3.0,catboost,ok_only,False,False

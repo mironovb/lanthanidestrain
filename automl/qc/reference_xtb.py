@@ -306,8 +306,13 @@ def main() -> int:
         OUT_ROOT.mkdir(parents=True, exist_ok=True)
         # Spread the probe across metals so the answer is not a property of one
         # ligand family.
+        # One cage per metal when probe_n is small (the original sensitivity
+        # check); a proportional per-metal cap when probe_n is large, so
+        # --probe-n >= len(jobs) probes every cage instead of silently
+        # stopping at 14 (one per metal).
+        per = max(1, -(-args.probe_n // max(1, jobs["metal"].nunique())))
         pick = (jobs.groupby("metal", group_keys=False)
-                .head(1).head(args.probe_n))
+                .head(per).head(args.probe_n))
         print(f"[refxtb] probing {len(pick)} cages x {len(LANTHANIDES)} metals",
               flush=True)
         rows = []

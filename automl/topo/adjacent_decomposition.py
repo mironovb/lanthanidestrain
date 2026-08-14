@@ -71,19 +71,21 @@ def pair_frame(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
     comp = ref["composition_key"].to_numpy()
     li = ref["lanthanide_index"].to_numpy()
     g = ref["extractant_group"].to_numpy()
-    lo_all = []
+    lo_all, ck_all = [], []
     for grp_name in pd.unique(g):
         m = g == grp_name
         frame = pd.DataFrame({"y": y[m], "c": comp[m], "m": li[m]})
-        for _, blk in frame.groupby("c"):
+        for ck, blk in frame.groupby("c"):
             blk = blk.groupby("m", as_index=False)["y"].mean()
             mm = blk["m"].to_numpy()
             i, j = np.triu_indices(len(blk), k=1)
             adj = np.abs(mm[i] - mm[j]) == 1
             lo_all.extend(np.minimum(mm[i][adj], mm[j][adj]).tolist())
+            ck_all.extend([ck] * int(adj.sum()))
     assert len(lo_all) == len(dy), (len(lo_all), len(dy))
 
     out = pd.DataFrame({"extractant_group": grp, "l_lo": np.array(lo_all, int),
+                        "composition_key": ck_all,
                         "dy": dy, "dp_stack": pred})
     for k, n in enumerate(names):
         out[f"dp_{n}"] = A[:, k]

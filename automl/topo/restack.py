@@ -24,6 +24,7 @@ Usage:  module load anaconda/Python-ML-2025a
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -91,14 +92,41 @@ def main() -> int:
     ap.add_argument("--wide", action="store_true",
                     help="also try a wider arm pool (extra CatBoost variants + "
                          "snn plw4) -- exploratory, worth checking once")
+    ap.add_argument("--pair-parquet", nargs="+", default=None,
+                    help="OOF pair parquet(s) from pair_model.py; each enters "
+                         "the NNLS as an extra prediction column, joined on "
+                         "(composition_key, l_lo)")
     args = ap.parse_args()
 
     frames = load_best_arms()
     pf = pair_frame(frames)
-    dy = pf["dy"].to_numpy(float)
     arm_cols = [c for c in pf.columns if c.startswith("dp_") and c != "dp_stack"]
 
     pf["dp_profile"] = profile_column(pf)
+
+    pair_arm_cols: list[str] = []
+    if args.pair_parquet:
+        for pth in args.pair_parquet:
+            pm = pd.read_parquet(pth)
+            pm = pm[pm["dl"] == 1][["composition_key", "l_lo", "dy", "dp"]]
+            name = "dp_pm_" + Path(pth).stem.replace("oof_pairs_", "")
+            merged = pf.merge(pm.rename(columns={"dp": name, "dy": "dy_pm"}),
+                              on=["composition_key", "l_lo"], how="left")
+            # pair_model's dy is lo-hi; the metric's triu order can flip signs.
+            # Align each pair's sign by matching |dy| and flipping where needed.
+            flip = np.sign(merged["dy"]) != np.sign(merged["dy_pm"])
+            both = merged["dy_pm"].notna() & (merged["dy"].abs() > 1e-12)
+            mism = (np.abs(merged.loc[both, "dy"].abs()
+                           - merged.loc[both, "dy_pm"].abs()) > 1e-9)
+            assert mism.mean() < 0.01, "pair join mismatch beyond sign"
+            merged.loc[flip & merged[name].notna(), name] *= -1.0
+            cov = merged[name].notna().mean()
+            merged[name] = merged[name].fillna(0.0)
+            pf[name] = merged[name].to_numpy()
+            pair_arm_cols.append(name)
+            print(f"[pair-arm] {name}: coverage {cov:.1%}")
+
+    dy = pf["dy"].to_numpy(float)
     light = (pf["l_lo"] <= 7).map({True: "light", False: "heavy"})
 
     variants: list[tuple[str, np.ndarray]] = []
@@ -109,6 +137,12 @@ def main() -> int:
                      nested_stack(pf, arm_cols, strata=light)))
     variants.append(("3-arm + profile, stratified",
                      nested_stack(pf, arm_cols + ["dp_profile"], strata=light)))
+    for name in pair_arm_cols:
+        variants.append((f"{name} alone", pf[name].to_numpy()))
+        variants.append((f"3-arm + {name}", nested_stack(pf, arm_cols + [name])))
+    if len(pair_arm_cols) > 1:
+        variants.append(("3-arm + all pair arms",
+                         nested_stack(pf, arm_cols + pair_arm_cols)))
 
     if args.wide:
         from automl.topo.c6_final import ART, align
