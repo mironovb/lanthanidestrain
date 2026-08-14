@@ -168,9 +168,16 @@ def main() -> int:
                     help="c6_split partition to SCORE on; training always uses "
                          "the restricted rows too, matching the GPU screen")
     ap.add_argument("--only", default=None, help="run one grid entry")
+    ap.add_argument("--preset", default="baseline_2d",
+                    help="feature-block preset. baseline_2d is the published "
+                         "arm (NO 3D-derived columns). plus_p3d_all adds the "
+                         "qc + polyhedron + complex-physical blocks, i.e. the "
+                         "3D information in tabular form -- the control that "
+                         "separates 'the VR encoder extracts something special' "
+                         "from 'any 3D information would have done'.")
     args = ap.parse_args()
 
-    df, X, cols = build_row_table("baseline_2d", "snn")
+    df, X, cols = build_row_table(args.preset, "snn")
     # "full" trains on all 162 extractants.  Needed for the endpoint: the stack
     # is scored on the report third, and an arm fitted only on screen+select
     # has no out-of-fold prediction there at all, so it could not enter.
@@ -209,7 +216,9 @@ def main() -> int:
                       "extractant_group": groups, "composition_key": comp,
                       "metal": df["metal"], "lanthanide_index": li}
                      ).to_parquet(
-            OUT / f"oof_c6p_{args.which}_{name}_{args.restrict}.parquet",
+            OUT / (f"oof_c6p_{args.which}_{name}"
+                   + (f"_{args.preset}" if args.preset != "baseline_2d" else "")
+                   + f"_{args.restrict}.parquet"),
             index=False)
 
     res = pd.DataFrame(rows).sort_values("adj_r2", ascending=False)
