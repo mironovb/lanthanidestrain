@@ -1078,3 +1078,33 @@ can resolve ~0.028 at best; smaller effects need proportionally more.
 This is I6 and q0.7 happening a third time in one session, in three different
 guises: a positive that looked clean at n = 4–8 and dissolved when tested
 properly. The pattern is now the finding.
+
+
+### I12. 3D-derived tabular columns do not replicate the encoder — they subtract
+**ESTABLISHED**, full population, 8 seeds × 3 repeats, winning CatBoost config.
+
+The stack comparison ("2D" +0.291 vs "+3D encoder" +0.313) used `baseline_2d`,
+which carries **no** 3D-derived columns. That conflated "3D information helps"
+with "the VR encoder specifically helps". The control: the same winning
+CatBoost with the 84 3D-derived tabular columns added.
+
+| CatBoost q60_rsm03_deep | adjacent R² |
+|---|---|
+| baseline_2d | **+0.2784** |
+| + p3d_all (qc + polyhedron + complex-physical, 84 cols) | **−0.0215** |
+| + p3d_phys only (26 cols) | +0.0223 |
+
+The augmented arm is not a stronger 2D — it is a collapsed one. In the stack,
+the pair-fitted combiner cuts the augmented CatBoost to weight 0.03 and gives
+the VR encoder 0.62; the encoder's marginal over that stack is **+0.0413**.
+
+So the encoder's contribution is not replicable by cheap 3D descriptors under
+the current loss — offering the same information in tabular form actively
+hurts. The published comparison against `baseline_2d` was in fact against the
+*strongest* tabular configuration.
+
+*Caveats:* depth/rsm/loss were tuned on `baseline_2d` and not re-tuned for the
+augmented preset (a −0.30 gap is unlikely to flip on tuning, but the re-grid is
+the falsifying test); consistent with the old champion-ladder null for these
+blocks (−0.008 on overall R², RMSE loss), now much larger on the adjacent
+metric under the quantile loss.
