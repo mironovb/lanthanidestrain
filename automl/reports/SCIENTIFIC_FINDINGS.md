@@ -1138,3 +1138,68 @@ axis at −0.0044 held-out.
 
 *Falsifying test:* one look at a genuinely fresh partition with
 `snn + plw4` as the single pre-declared configuration.
+
+
+### I14. August campaign: the anchored architecture x the champion loss is a new best single system
+**ESTABLISHED on the iteration population; fresh-pair confirmation PASSED for
+the architecture contrast; 8-seed ensemble pending.**
+
+The 457-run architecture sweep (all_results.csv) predates the adjacent metric
+and was never scored on it (finding of the 14 Aug audit).  Re-run on
+`sel_adj_logSF_r2`, the anchored-residual family transfers: anchored CatBoost
++0.2714 vs flat CatBoost +0.1566 at identical fast parameters.  A second gap
+compounded the miss: `models.make_model` never forwards `loss_function`, so
+that sweep ran entirely on RMSE — the anchored architecture and the champion's
+quantile loss (each worth ~+0.10 alone) had never been combined.
+
+Combined (`automl/topo/anchored_champion.py`; base = q60_rsm03_deep params,
+residual model trained on block-centred targets, level = extractant,
+LOEO 5 folds x 3 repeats, ok_only, 746 tabular columns):
+
+| cell | adjacent R2 (905) | log D R2 |
+|---|---|---|
+| flat champion, same harness | +0.2680 | +0.4977 |
+| anchored q60/q60, 1 seed | +0.2955 | +0.5052 |
+| **anchored q60/q60, 4-seed ensemble** | **+0.3188** | +0.5137 |
+| published 3-arm pair-fitted stack | +0.3132 | — |
+| stack + anchored arm (nested NNLS) | +0.3165 | — |
+
+**A single tabular model now beats every stack ever fitted in this project.**
+Fresh-pair confirmation (the 444 adjacent pairs unlocked by relaxing
+`geometry_ok`, frozen before any new model ran — `fresh_eval.py`): on the
+expanded population the anchored>flat contrast holds everywhere — legacy 905:
++0.2997 vs +0.2322; fresh 444: **+0.0888 vs +0.0709**; all 1,349: +0.2266 vs
++0.1763.  The fresh population is intrinsically harder (borderline-QC rows,
+sparser extractants); the *absolute* fresh numbers are not comparable to the
+905, the *contrast* is the confirmed quantity.
+
+Negative results with teeth from the same campaign, all recorded in
+`pair_model.csv` / `restack.csv`:
+
+1. **The stack is saturated.** Series-profile arm, light/heavy-stratified
+   weights, a 17-arm wide pool, and every pair-model arm all land within noise
+   of +0.3132 on the legacy 905.
+2. **All-pairs delta training alone adds no information.**  A standalone model
+   on all 6,389 within-block pairs reaches +0.1909 (vs +0.0344 for the 2026-07
+   905-pair attempt) but its errors are correlated with the existing arms; no
+   stack marginal.
+3. **Within-block condition deltas do not transfer under LOEO.**  The largest
+   measured within-block correlate (`cond__extractant_concentration_M`,
+   |r| 0.30-0.36) adds only +0.004 over pair identity alone out-of-extractant.
+   The conditions channel is extractant-specific.
+4. **Label-side series shape** (`series_shape.py`): LOEO floor +0.0657 from a
+   12-value pair-identity lookup, split-half r = 0.75, structure beyond the
+   radius ramp at p = 2e-13, and a half-shell anomaly (Eu-Gd the only positive
+   position, Gd-Tb the largest negative).  Already embodied in the learned
+   arms (no stack marginal) but publishable as a data observation.
+5. **Energy channel** (`energy_series.py`, full 853-cage frozen-cage probe):
+   g-xTB ligand-specific energy steps rank-correlate with ligand-specific
+   measured selectivity (spearman -0.124, p = 0.010) where GFN2 is exactly
+   null; frozen-cage GFN2 d_eint shows position-dependent sign-flipping
+   correlations (La-Ce +0.38, Gd-Tb -0.36) concentrated at the two known
+   discontinuity positions.  Exploratory, single look each.
+
+*Falsifying test for the headline:* the pending 8-seed ensemble (seeds
+42-109) must hold >= +0.31; and anchored q60/q60 on the expanded population
+must repeat the fresh-444 contrast.  Ceiling context: `CEILING_NOTE.md`
+(no point ceiling identifiable; supersedes the 0.53).
