@@ -32,7 +32,6 @@ import pandas as pd
 
 import automl.evaluation as ev
 from automl.topo.fresh_eval import load_fresh
-from automl.topo.lift_report import ensemble, load_dirs
 
 REPO = Path(__file__).resolve().parents[2]
 ART = REPO / "automl/artifacts/anchored_champ"
@@ -43,15 +42,20 @@ W_FIXED = 0.35
 
 def blend_frame(w: float) -> pd.DataFrame:
     anch = pd.read_parquet(ART / "oof_anch_q60_q60_has3d_ens4.parquet")
-    cells = load_dirs(["topo_c19"])
-    enc = None
-    for k, slot in cells.items():
-        name = sorted(slot["tags"])[0].rsplit("_s", 1)[0]
-        if name == "c19_plw4h3d":
-            enc = ensemble(slot["runs"]).reset_index()
-            n_seeds = len(slot["runs"])
-    if enc is None:
-        raise SystemExit("no c19_plw4h3d runs found yet")
+    import glob
+    paths = sorted(glob.glob(str(
+        REPO / "automl/artifacts/topo_c19/oof_c19_plw4h3d_s*.parquet")))
+    if not paths:
+        raise SystemExit("no c19_plw4h3d seed parquets found yet")
+    frames = [pd.read_parquet(p).drop_duplicates("safe_exp_id")
+              .set_index("safe_exp_id") for p in paths]
+    idx = frames[0].index
+    for f in frames[1:]:
+        idx = idx.intersection(f.index)
+    enc = frames[0].loc[idx, ["y"]].copy()
+    enc["oof"] = np.mean([f.loc[idx, "oof"].to_numpy() for f in frames], axis=0)
+    enc = enc.reset_index()
+    n_seeds = len(paths)
     meta = pd.read_parquet(
         REPO / "automl/artifacts/matrix/matrix.parquet",
         columns=["safe_exp_id", "composition_key", "lanthanide_index"])

@@ -22,11 +22,11 @@ export CUBLAS_WORKSPACE_CONFIG=:4096:8
 cd "${REPO}"
 OUT="${REPO}/automl/artifacts/topo_c19"
 mkdir -p "${OUT}"
-for SEED in 42 51 67 83 91 103 107 109; do
+for SEED in ${SEEDS:-42 51 67 83 91 103 107}; do
   python3 -u -m automl.topo.train --arch dist --preset baseline_2d \
     --filtration-max 4.0 --heavy-only --pair-loss-weight 4.0 --rbf-bins 64 \
     --select-on adjacent --epochs 60 --folds 5 --repeats 3 --seed "${SEED}" \
     --deterministic --edge-asset has3d --population has3d \
-    --tag c19_plw4h3d --out-dir "${OUT}"
+    --tag "c19_plw4h3d_s${SEED}" --out-dir "${OUT}"
 done
 echo "C19_ENC DONE $(date -Is)"
