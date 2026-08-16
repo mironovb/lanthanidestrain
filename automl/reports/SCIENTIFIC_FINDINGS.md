@@ -1244,6 +1244,21 @@ collapse the flat model; G1/G2: encoders interchangeable among themselves).
 The 3D information itself was always there (c15_plw4 alone +0.2661); the
 anchored decomposition is what makes it additive.
 
-*Falsifying test:* rebuild the VR edge asset over the ~300 completed
-borderline-QC builds, retrain c15_plw4 on the expanded population, and score
-the blend on the frozen fresh 444.
+*Falsifying test — RUN, PASSED (16 Aug, C19).*  The VR edge asset was
+rebuilt over the 279 completed borderline builds (1,235 complexes,
+`build_vr_has3d.py`), the `--population` flag proven inert at
+max|delta oof| = 0 vs the published c15_plw4 s201 parquet, and the encoder
+retrained on the expanded population (8 deterministic seeds).  The
+pre-declared rule (`anchored_3d_confirm.py`, committed while C19 was queued:
+fixed w = 0.35, primary = sign of the blend-vs-tabular contrast on the
+frozen fresh 444) gives:
+
+| population | blend R2 | tabular R2 | contrast |
+|---|---|---|---|
+| **fresh 444 (the look)** | +0.1207 | +0.1051 | **+0.0156 PASS** |
+| legacy 905 | +0.3109 | +0.2964 | +0.0146 |
+| all 1,349 | +0.2450 | +0.2301 | +0.0149 |
+
+The contrast is population-uniform.  **I15 is CONFIRMED: the 3D encoder's
+within-block shape adds ~+0.015 over the strongest tabular system on a
+population never used for any selection.**
