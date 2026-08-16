@@ -1262,3 +1262,32 @@ frozen fresh 444) gives:
 The contrast is population-uniform.  **I15 is CONFIRMED: the 3D encoder's
 within-block shape adds ~+0.015 over the strongest tabular system on a
 population never used for any selection.**
+
+
+### I16. The energy-channel candidate does not survive its replication
+**CLOSED (16 Aug).**  The D2 pilot (I14 point 5: relaxed-series g-xTB energy
+steps vs ligand-specific selectivity, spearman -0.124, p = 0.010, one look)
+was replicated at full scale on the clean instrument: the overnight
+frozen-cage probe (`gxtb_cage_probe.py`, 951/954 cages x 15 metals, high-spin
+g-xTB, fixed geometry — no relaxation noise), scored by the identical
+residualisation against the identical label cells, with the GFN2 full probe
+as the matched control on the same cages:
+
+| Hamiltonian | cells | pearson | spearman | p |
+|---|---|---|---|---|
+| g-xTB (frozen cage) | 494 / 71 extractants | +0.027 | -0.064 | 0.15 |
+| GFN2 (frozen cage) | 494 / 71 extractants | +0.127 | +0.044 | 0.33 |
+
+The sign survives; the magnitude does not.  With 15% more cells and the
+cleaner instrument the pilot's p = 0.010 attenuates to p = 0.15 — the
+familiar dissolution pattern (I6, q0.7, I10).  Possible physical escape
+hatch (the signal lives in the RELAXATION response, which the frozen cage
+removes) is post-hoc and unfunded by any current evidence.  The
+energy-channel publishable candidate is withdrawn; the full probe data
+(automl/artifacts/gxtb_cage/, ~14k single points incl. per-metal HOMO-LUMO
+gaps and Mulliken charges) remains a clean asset for future work.
+
+Night-test footnotes: shape_weight refinement of the I14 winner (w = 0.8/0.9,
+4 seeds) lands at +0.3217/+0.3211 vs +0.3188 at w = 1.0 — inside seed noise,
+not claimed.  Expanded-population anchored second seed half ens4 +0.2301 vs
+first half +0.2381 — consistent.
