@@ -128,6 +128,10 @@ CELLS = {
     "anch_q60_mae_w07": dict(base_params=CHAMP, resid_params=MAE_DEEP,
                              shape_weight=0.7),
     "anch_mae_mae": dict(base_params=MAE_DEEP, resid_params=MAE_DEEP),
+    "anch_q60_q60_w08": dict(base_params=CHAMP, resid_params=CHAMP,
+                             shape_weight=0.8),
+    "anch_q60_q60_w09": dict(base_params=CHAMP, resid_params=CHAMP,
+                             shape_weight=0.9),
 }
 
 
