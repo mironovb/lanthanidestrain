@@ -1,6 +1,6 @@
 # Lanthanide extraction: what limits adjacent-lanthanide selectivity prediction
 
-**As of 10 August 2026.** Predicting the distribution coefficient `log D` of
+**As of 16 August 2026.** Predicting the distribution coefficient `log D` of
 lanthanide(III) extraction complexes, and in particular the **separation of
 *adjacent* lanthanides** — the industrially valuable case, where neighbouring
 ionic radii differ by ~0.013 Å.
@@ -93,23 +93,34 @@ differencing**. Measured on 203 repeated (composition, adjacent-pair) cases, a
 separation reproduces to **0.1533** — 6× tighter than the levels it is computed
 from.
 
-| | |
-|---|---|
-| reproducibility of a separation | 0.1533 |
-| spread of separations | 0.2236 |
-| **ceiling on `sel_adj_logSF_r2`** | **≈ +0.53** |
-| current best | **+0.183** |
-
-We are at ~35 % of what the labels permit, and that is a *lower* bound. Roughly
-0.35 of R² is genuinely available — but **not in geometry**, which explains ~1 %
-of adjacent-separation variance under either Hamiltonian.
+**Correction (16 Aug 2026, `automl/reports/CEILING_NOTE.md`):** the ≈ +0.53
+ceiling previously quoted here came from an estimator that was formally
+withdrawn (`CEILING_CLOSED.md`); **no point ceiling is identifiable from this
+dataset**. What is defensible: a separation reproduces to ~0.16 log units
+across independent condition sets on a spread of ~0.22 — consistent with
+substantial but unquantifiable headroom above the current best (+0.326).
 
 Tested and not the answer either: a **direct pair head** predicting the
 difference from `[h_i, h_j, h_i − h_j]` gives **+0.0123 (4/6 seeds, p = 0.30,
 n.s.)**, and *reconciling* the level head to it is **catastrophic**: −1.16,
 0/6 seeds, p = 0.002.
 
-## 4. The modelling result (unchanged)
+## 3b. The August 2026 campaign (findings I14–I16)
+
+**A single anchored model now beats every stack this project fitted, and the
+3D encoder's contribution — confirmed on a never-touched 444-pair
+population — flows through its shape channel.**
+
+`pred = anchor + 0.65·shape_tabular + 0.35·shape_encoder`, where the anchor
+and tabular shape come from an anchored CatBoost (champion quantile loss for
+the level, a second model trained on block-centred targets for the shape) and
+the encoder shape is the block-centred c15 distance encoder:
+**+0.326 adjacent-pair R² on the legacy 905** (previous best stack +0.313);
+pre-declared fresh-444 look: 3D-vs-tabular contrast **+0.0156, PASS**,
+uniform ~+0.015 across populations. Full story, killed candidates and named
+next tests: [`automl/reports/CAMPAIGN_AUG2026.md`](automl/reports/CAMPAIGN_AUG2026.md).
+
+## 4. The modelling result of the topology campaign (July; superseded as the best system)
 
 The topology campaign's headline stands and is preserved in full in
 [`docs/README_2026-07-22.md`](docs/README_2026-07-22.md):
@@ -151,7 +162,8 @@ Arguably more transferable than any headline.
 
 | document | contents |
 |---|---|
-| [`automl/reports/CAMPAIGN_SUMMARY_gxtb.md`](automl/reports/CAMPAIGN_SUMMARY_gxtb.md) | **start here** — the g-xTB campaign, the null, and the ceiling |
+| [`automl/reports/CAMPAIGN_AUG2026.md`](automl/reports/CAMPAIGN_AUG2026.md) | **start here** — the August campaign: the anchored system, the confirmed 3D shape channel, the kills |
+| [`automl/reports/CAMPAIGN_SUMMARY_gxtb.md`](automl/reports/CAMPAIGN_SUMMARY_gxtb.md) | the g-xTB campaign and the null |
 | [`automl/reports/SCIENTIFIC_FINDINGS.md`](automl/reports/SCIENTIFIC_FINDINGS.md) | standing register: every claim with its status and its falsifying test |
 | [`automl/reports/C8_RESULTS.md`](automl/reports/C8_RESULTS.md) | why the one positive 3D arm was calibration |
 | [`automl/reports/NOISE_FLOOR.md`](automl/reports/NOISE_FLOOR.md) | the 200× correction to the noise-floor claim |
