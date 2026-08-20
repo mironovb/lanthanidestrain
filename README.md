@@ -26,6 +26,7 @@ remaining signal is not.
 | Collaborator cross-validation (20 Aug) | his A2 reproduced from spec (macro MAE 0.324 vs his 0.319); his champion and our system **statistically tie** under his metric; ours holds +0.288 on his expanded dataset | reproduction PASS | `COLLAB_UPDATE_REPORT.md` |
 | Label-side series shape | pair-identity LOEO floor +0.066, split-half r = 0.75, half-shell anomaly (Eu–Gd/Gd–Tb) | robust data observation | I14 notes, `series_shape.py` |
 | Ceiling | **not identifiable** from this dataset (supersedes the old 0.53); separations reproduce to ~0.16 on a 0.22 spread | corrected | `CEILING_NOTE.md` |
+| Topology beyond the distance encoder | **nothing to add**: simplicial encoder gets blend weight 0.01 (encoders 0.963-correlated), triangles no better than edges, persistence features collapse the shape model (78 % of the damage from within-block variation) | tested, negative | `TOPOLOGY_TESTS.md`, I17 |
 
 ---
 
