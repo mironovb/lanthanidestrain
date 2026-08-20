@@ -1314,7 +1314,7 @@ two short CPU runs:
    assets and simplicial GPU campaign were therefore not run.
 4. **Persistence features collapse the shape model**: +0.3188 -> +0.0897
    (22 `g9__topology__*` statistics) and -> +0.0022 (279 persistence-image
-   pixels), given only to the residual model. A block-mean control (same
+   pixels) and -> -0.0387 (both), given only to the residual model. A block-mean control (same
    columns, within-block variation removed) recovers **78 %** of the
    collapse, locating the damage in the columns' across-metal variation
    inside a block.

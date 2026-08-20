@@ -77,7 +77,7 @@ to the residual/shape model (the level model is untouched), 4 seeds each:
 | baseline (746 columns) | **+0.3188** | — |
 | + 22 persistence statistics | +0.0897 | −0.229 |
 | + 279 persistence-image pixels | +0.0022 | −0.317 |
-| + both | negative per seed | — |
+| + both | **−0.0387** | −0.358 |
 | + 22 persistence statistics, **block-mean control** | +0.2687 | −0.050 |
 
 The block-mean control replaces each added column by its mean within the
