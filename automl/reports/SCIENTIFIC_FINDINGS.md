@@ -1291,3 +1291,39 @@ Night-test footnotes: shape_weight refinement of the I14 winner (w = 0.8/0.9,
 4 seeds) lands at +0.3217/+0.3211 vs +0.3188 at w = 1.0 — inside seed noise,
 not claimed.  Expanded-population anchored second seed half ens4 +0.2301 vs
 first half +0.2381 — consistent.
+
+
+### I17. Topological representations add nothing beyond the distance encoder
+**ESTABLISHED**, legacy 905-pair evaluation set, out-of-fold,
+leave-extractants-out. Full detail: `automl/reports/TOPOLOGY_TESTS.md`.
+
+Four tests of whether topology contributes to the anchored system's shape
+channel, all negative, all on out-of-fold predictions already on disk plus
+two short CPU runs:
+
+1. **Simplicial encoder in the shape blend: fitted weight 0.01**, against
+   0.35 for the distance encoder; offered both, the joint fit puts 0.00 on
+   the simplicial one (blend R2 +0.3258 either way).
+2. **Mechanism is redundancy**: the two encoders' pair-level shape
+   predictions correlate at **0.963**, and both correlate with the tabular
+   model's residual at a similar level (0.196 dist vs 0.176 snn). The
+   pair-level counterpart of the effective-rank-1.05 result (G1/G2).
+3. **Triangles do not beat edges** at matched seeds on two
+   configuration-matched pairs: −0.020 (4.0 A) and −0.016 (3.5 A) for the
+   encoder alone, −0.007 / −0.001 in the blend. The planned triangulated
+   assets and simplicial GPU campaign were therefore not run.
+4. **Persistence features collapse the shape model**: +0.3188 -> +0.0897
+   (22 `g9__topology__*` statistics) and -> +0.0022 (279 persistence-image
+   pixels), given only to the residual model. A block-mean control (same
+   columns, within-block variation removed) recovers **78 %** of the
+   collapse, locating the damage in the columns' across-metal variation
+   inside a block.
+
+Point 4 refutes a prediction of mine: I12 showed 3D tabular columns collapse
+a flat model, and I expected the anchored decomposition to protect against
+that because the level is fitted separately. The opposite holds — the shape
+model is the more vulnerable place for such columns, since within-block
+variation is precisely what it fits.
+
+*Not pursued:* confidence-based routing between encoders (sub-effects below
+the +-0.01 CI on the whole 3D contribution).
