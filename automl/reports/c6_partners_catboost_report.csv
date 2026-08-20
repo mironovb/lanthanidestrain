@@ -1,0 +1,2 @@
+which,variant,adj_r2,n_pairs,logD_r2,seconds,seeds,params
+catboost,q60_rsm03_deep,0.17500570511642444,301,0.16084019579337028,1337.6,8,"{""depth"": 9, ""lr"": 0.04, ""l2"": 3.0, ""rsm"": 0.3, ""loss"": ""Quantile:alpha=0.6""}"
