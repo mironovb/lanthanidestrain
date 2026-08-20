@@ -1,6 +1,6 @@
 # Lanthanide extraction: what limits adjacent-lanthanide selectivity prediction
 
-**As of 16 August 2026.** Predicting the distribution coefficient `log D` of
+**As of 20 August 2026.** Predicting the distribution coefficient `log D` of
 lanthanide(III) extraction complexes, and in particular the **separation of
 *adjacent* lanthanides** — the industrially valuable case, where neighbouring
 ionic radii differ by ~0.013 Å.
@@ -10,10 +10,22 @@ Architector / GFN2-xTB complexes.** Every number is **leave-extractants-out**
 cross-validation (5 folds × 3 repeats), so an extractant never appears in both
 train and test.
 
-The project has produced two things: a **modelling result** (3D topology
-contributes, by complementarity) and — more recently — an **explanation of why
-it contributes so little**, which turns out to be a property of the
-electronic-structure method rather than of the models.
+The project has produced three things: a **chemistry benchmark** (GFN2-xTB
+gets the lanthanide contraction wrong; g-xTB fixes it), a **modelling
+result** (the anchored level/shape decomposition, with a confirmed 3D shape
+channel), and a run of **negative results with teeth** that map where the
+remaining signal is not.
+
+## 0. Best results at a glance (August 2026)
+
+| result | number | status | where |
+|---|---|---|---|
+| Best system: anchored CatBoost + 3D encoder shape (w = 0.35) | **+0.326** adjacent-pair log SF R² (905 legacy pairs); **+0.288** on the expanded 1,220-pair population | 3D contrast **confirmed** by a pre-declared look on 444 never-touched pairs (+0.0156) | `CAMPAIGN_AUG2026.md`, I14–I15 |
+| Best single model: anchored CatBoost q60/q60 (8-seed ens) | **+0.318** — beats every stack ever fitted (prev. best stack +0.313) | falsifying test passed | I14 |
+| Chemistry benchmark: lanthanide-contraction compliance | GFN2 **0.405 ± 0.145** (2.47× under), g-xTB **1.078 ± 0.094**; 71/71 ligands, p = 4.9e−52 | standalone, publishable | §1 |
+| Collaborator cross-validation (20 Aug) | his A2 reproduced from spec (macro MAE 0.324 vs his 0.319); his champion and our system **statistically tie** under his metric; ours holds +0.288 on his expanded dataset | reproduction PASS | `COLLAB_UPDATE_REPORT.md` |
+| Label-side series shape | pair-identity LOEO floor +0.066, split-half r = 0.75, half-shell anomaly (Eu–Gd/Gd–Tb) | robust data observation | I14 notes, `series_shape.py` |
+| Ceiling | **not identifiable** from this dataset (supersedes the old 0.53); separations reproduce to ~0.16 on a 0.22 spread | corrected | `CEILING_NOTE.md` |
 
 ---
 
