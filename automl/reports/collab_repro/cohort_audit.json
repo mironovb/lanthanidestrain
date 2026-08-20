@@ -1,0 +1,17 @@
+{
+ "start_rows": 5992,
+ "quarantined": 129,
+ "dropped_nan_conditions": 2851,
+ "cohort_rows": 3012,
+ "cells": 2520,
+ "cells_replicated": 198,
+ "candidate_pairs": 8195,
+ "dropped_geometry": 688,
+ "dropped_replicates": 802,
+ "dropped_feat3d": 0,
+ "pairs": 6705,
+ "extractants": 34,
+ "condition_ids": 278,
+ "pair_labels": 91,
+ "a2_columns": 2130
+}

@@ -120,6 +120,21 @@ pre-declared fresh-444 look: 3D-vs-tabular contrast **+0.0156, PASS**,
 uniform ~+0.015 across populations. Full story, killed candidates and named
 next tests: [`automl/reports/CAMPAIGN_AUG2026.md`](automl/reports/CAMPAIGN_AUG2026.md).
 
+## 3c. Collaborator update (20 Aug 2026)
+
+The collaborator's 2026-08-18 drop (`collaborator_update/`) repaired the
+geometry QC side of the shared dataset (`geometry_ok` 4,746 -> 5,479 rows;
+labels and conditions byte-identical). Three results, full detail in
+[`automl/reports/COLLAB_UPDATE_REPORT.md`](automl/reports/COLLAB_UPDATE_REPORT.md):
+his headline metrics **reproduce from scratch** within his stated tolerance
+(A2 macro MAE 0.3238 +- 0.0057 vs his 0.3192 +- 0.0078); his champion and our
+anchored system are a **statistical tie under his metric** (ours under a
+stricter leave-one-extractant-out CV); and on his expanded population
+(**1,230 adjacent pairs**, +325) our anchored-3D system holds
+**+0.288 adjacent-pair R2** with both campaign mechanisms replicating
+(anchored architecture +0.11 over flat; 3D shape contrast positive on every
+slice including his new pairs).
+
 ## 4. The modelling result of the topology campaign (July; superseded as the best system)
 
 The topology campaign's headline stands and is preserved in full in
@@ -163,6 +178,7 @@ Arguably more transferable than any headline.
 | document | contents |
 |---|---|
 | [`automl/reports/CAMPAIGN_AUG2026.md`](automl/reports/CAMPAIGN_AUG2026.md) | **start here** — the August campaign: the anchored system, the confirmed 3D shape channel, the kills |
+| [`automl/reports/COLLAB_UPDATE_REPORT.md`](automl/reports/COLLAB_UPDATE_REPORT.md) | the collaborator update: reproduction, his-vs-ours tie, our system on the expanded dataset |
 | [`automl/reports/CAMPAIGN_SUMMARY_gxtb.md`](automl/reports/CAMPAIGN_SUMMARY_gxtb.md) | the g-xTB campaign and the null |
 | [`automl/reports/SCIENTIFIC_FINDINGS.md`](automl/reports/SCIENTIFIC_FINDINGS.md) | standing register: every claim with its status and its falsifying test |
 | [`automl/reports/C8_RESULTS.md`](automl/reports/C8_RESULTS.md) | why the one positive 3D arm was calibration |
