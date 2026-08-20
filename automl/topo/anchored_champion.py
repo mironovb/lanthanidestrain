@@ -57,6 +57,12 @@ def load_table(population: str = "ok_only"):
     df, blocks, _ = load_cache()
     if population == "ok_only":
         df = df[df["geometry_ok"].astype(bool) & df["has_3d"]]
+    elif population == "collab":
+        cflag = pd.read_parquet(
+            REPO / "collaborator_update/dataset.parquet",
+            columns=["safe_exp_id", "geometry_ok"]
+        ).set_index("safe_exp_id")["geometry_ok"]
+        df = df[df["safe_exp_id"].map(cflag).fillna(False).astype(bool)]
     else:
         df = df[df["has_3d"].astype(bool)]
     df = df.reset_index(drop=True)
@@ -142,7 +148,7 @@ def main() -> int:
     ap.add_argument("--seeds", type=int, nargs="+", default=[42],
                     help="per-seed runs are averaged into an _ens parquet")
     ap.add_argument("--population", default="ok_only",
-                    choices=("ok_only", "has3d"))
+                    choices=("ok_only", "has3d", "collab"))
     args = ap.parse_args()
 
     df, X = load_table(args.population)

@@ -168,9 +168,17 @@ def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
     # rows are still gated on the asset actually holding their complex, so the
     # default asset reproduces ok_only exactly and only an asset that carries
     # the borderline builds (--edge-asset has3d) reaches the expanded rows.
+    # population="collab" (20 Aug) uses the collaborator's re-QC'd geometry_ok
+    # (5,479 rows; collaborator_update/dataset.parquet), joined by safe_exp_id.
     ok = df["_cplx"].notna()
     if population == "ok_only":
         ok &= df["geometry_ok"].astype(bool)
+    elif population == "collab":
+        cflag = pd.read_parquet(
+            REPO / "collaborator_update/dataset.parquet",
+            columns=["safe_exp_id", "geometry_ok"]
+        ).set_index("safe_exp_id")["geometry_ok"]
+        ok &= df["safe_exp_id"].map(cflag).fillna(False).astype(bool)
     df = df[ok].reset_index(drop=True)
     df["_cplx"] = df["_cplx"].astype(int)
     cols = blocks.select(BLOCK_PRESETS[preset])
@@ -1435,7 +1443,7 @@ def main() -> int:
                          "under --arch snn/dist, where the embedding is a "
                          "different complex per metal")
     ap.add_argument("--population", default="ok_only",
-                    choices=("ok_only", "has3d"),
+                    choices=("ok_only", "has3d", "collab"),
                     help="has3d relaxes the geometry-QC row filter (August "
                          "campaign); needs an asset covering the borderline "
                          "builds, e.g. --edge-asset has3d")
