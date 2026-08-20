@@ -75,14 +75,22 @@ def load_table(population: str = "ok_only", resid_blocks: tuple = ()):
     cols = [c for c in dict.fromkeys(cols) if c in df.columns]
     X = df[cols].to_numpy(float)
     if resid_blocks:
+        block_mean = "block_mean" in resid_blocks
+        names = [b for b in resid_blocks if b != "block_mean"]
         extra = []
-        for b in resid_blocks:
+        for b in names:
             extra.extend(blocks.mapping[b])
         extra = [c for c in dict.fromkeys(extra)
                  if c in df.columns and c not in cols]
-        X_resid = df[cols + extra].to_numpy(float)
+        E = df[extra]
+        if block_mean:
+            # replace each column by its within-composition-block mean: same
+            # columns, same between-block content, zero within-block variation
+            E = E.groupby(df["composition_key"]).transform("mean")
+        X_resid = np.hstack([df[cols].to_numpy(float), E.to_numpy(float)])
         print(f"resid model sees {X.shape[1]} + {len(extra)} extra "
-              f"({', '.join(resid_blocks)}) = {X_resid.shape[1]} columns")
+              f"({', '.join(names)}{', block-mean' if block_mean else ''})"
+              f" = {X_resid.shape[1]} columns")
     else:
         X_resid = X
     return df, X, X_resid
@@ -164,6 +172,11 @@ CELLS = {
                         resid_blocks=("g9", "g11")),
     "anch_g11": dict(base_params=CHAMP, resid_params=CHAMP,
                      resid_blocks=("g11",)),
+    # control for the collapse: identical columns, but each replaced by its
+    # within-block mean.  If this recovers the score, the damage comes from
+    # the columns' WITHIN-block variation, not from adding columns per se.
+    "anch_g9_bm": dict(base_params=CHAMP, resid_params=CHAMP,
+                       resid_blocks=("g9", "block_mean")),
 }
 
 
