@@ -53,7 +53,10 @@ MAE_DEEP = dict(iterations=1500, learning_rate=0.04, depth=9, l2_leaf_reg=3.0,
                 rsm=0.3, loss_function="MAE")
 
 
-def load_table(population: str = "ok_only"):
+def load_table(population: str = "ok_only", resid_blocks: tuple = ()):
+    """Design matrices. Returns (df, X, X_resid); X_resid is X plus the
+    named extra blocks (used only by the residual/shape model when a cell
+    asks for it), or X itself when no extra blocks are requested."""
     df, blocks, _ = load_cache()
     if population == "ok_only":
         df = df[df["geometry_ok"].astype(bool) & df["has_3d"]]
@@ -71,7 +74,18 @@ def load_table(population: str = "ok_only"):
         cols.extend(blocks.mapping[b])
     cols = [c for c in dict.fromkeys(cols) if c in df.columns]
     X = df[cols].to_numpy(float)
-    return df, X
+    if resid_blocks:
+        extra = []
+        for b in resid_blocks:
+            extra.extend(blocks.mapping[b])
+        extra = [c for c in dict.fromkeys(extra)
+                 if c in df.columns and c not in cols]
+        X_resid = df[cols + extra].to_numpy(float)
+        print(f"resid model sees {X.shape[1]} + {len(extra)} extra "
+              f"({', '.join(resid_blocks)}) = {X_resid.shape[1]} columns")
+    else:
+        X_resid = X
+    return df, X, X_resid
 
 
 def _cb(params: dict, seed: int) -> CatBoostRegressor:
@@ -82,7 +96,7 @@ def _cb(params: dict, seed: int) -> CatBoostRegressor:
 
 def run_cell(name: str, df, X, base_params, resid_params=None,
              level="extractant", shape_weight=1.0, folds=5, repeats=3,
-             seed=42):
+             seed=42, X_resid=None):
     y = df["log_D"].to_numpy(float)
     g = df["extractant_group"].to_numpy()
     comp = df["composition_key"].to_numpy()
@@ -99,9 +113,10 @@ def run_cell(name: str, df, X, base_params, resid_params=None,
                 key_tr = pd.Series(key_arr[tr])
                 resid = y[tr] - key_tr.map(
                     pd.Series(y[tr]).groupby(key_tr).mean()).to_numpy()
-                rm = _cb(resid_params, seed + rep).fit(X[tr], resid)
+                Xr = X if X_resid is None else X_resid
+                rm = _cb(resid_params, seed + rep).fit(Xr[tr], resid)
                 bp = pd.Series(base.predict(X[te]))
-                sp = pd.Series(rm.predict(X[te]))
+                sp = pd.Series(rm.predict(Xr[te]))
                 key_te = pd.Series(key_arr[te])
                 anchor = bp.groupby(key_te).transform("mean")
                 shape_c = sp - sp.groupby(key_te).transform("mean")
@@ -138,6 +153,17 @@ CELLS = {
                              shape_weight=0.8),
     "anch_q60_q60_w09": dict(base_params=CHAMP, resid_params=CHAMP,
                              shape_weight=0.9),
+    # persistent-homology features given ONLY to the shape model.  The known
+    # failure of 3D-derived tabular columns (I12) was a flat-model failure:
+    # they perturb the level, which is the loud channel.  Here the level is
+    # produced by the unmodified base model and the extra columns can only
+    # move within-block shape.
+    "anch_g9": dict(base_params=CHAMP, resid_params=CHAMP,
+                    resid_blocks=("g9",)),
+    "anch_g9_g11": dict(base_params=CHAMP, resid_params=CHAMP,
+                        resid_blocks=("g9", "g11")),
+    "anch_g11": dict(base_params=CHAMP, resid_params=CHAMP,
+                     resid_blocks=("g11",)),
 }
 
 
@@ -151,18 +177,24 @@ def main() -> int:
                     choices=("ok_only", "has3d", "collab"))
     args = ap.parse_args()
 
-    df, X = load_table(args.population)
+    df, X, _ = load_table(args.population)
     print(f"{len(df)} rows · {df['extractant_group'].nunique()} extractants · "
           f"{X.shape[1]} columns")
+    resid_cache: dict[tuple, np.ndarray] = {}
 
     rows = []
     for name in args.cells:
         oofs = []
         pop = "" if args.population == "ok_only" else f"_{args.population}"
         name = name + pop
+        cfg = dict(CELLS[name.removesuffix(pop)])
+        rb = tuple(cfg.pop("resid_blocks", ()))
+        if rb and rb not in resid_cache:
+            resid_cache[rb] = load_table(args.population, rb)[2]
+        Xr = resid_cache.get(rb)
         for sd in args.seeds:
             res = run_cell(f"{name}_s{sd}", df, X, repeats=args.repeats,
-                           seed=sd, **CELLS[name.removesuffix(pop)])
+                           seed=sd, X_resid=Xr, **cfg)
             oofs.append(pd.read_parquet(ART / f"oof_{name}_s{sd}.parquet")
                         ["oof"].to_numpy())
             res["cell"] = f"{name}_s{sd}"
