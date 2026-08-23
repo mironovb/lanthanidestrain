@@ -1,111 +1,121 @@
 #!/usr/bin/env python3
-"""Scheme figure: the two quantities being predicted.
+"""Scheme figure: the predicted quantity, built from one measured block.
 
-Panel A defines the distribution coefficient D for one lanthanide in a
-two-phase extraction; panel B defines the adjacent-pair separation factor
-on a measured 14-lanthanide series (one extractant, one condition set).
-ACS-style: minimal colour, definitions written once, no annotations beyond
-the labels.
+Three measured rows (MMTODGA, 3.0 M HCl, Isopar-L, 25 C -- only the metal
+differs), the separation-factor subtraction written out with the displayed
+rounding, and the lanthanide row with the adjacent pair marked and Pm absent.
 
 Usage:  PYTHONPATH=$PWD python3 docs/talk_acs/make_scheme.py
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
-from matplotlib.patches import FancyArrowPatch, Rectangle
+from matplotlib.patches import FancyBboxPatch, Rectangle
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[1]
-D = json.loads((REPO / "docs/figures_arch/fig_data.json").read_text())
 
 INK = "#111111"
-GREY = "#8a8f94"
-BLUE = "#2a6db0"
+GREY = "#7d838a"
 ORANGE = "#d55e00"
-AQ = "#e8f1f8"
-ORG = "#f5efe6"
+TINT = "#fdeadd"
+LINE = "#c9cdd2"
 
 plt.rcParams.update({
     "font.family": "DejaVu Sans", "figure.facecolor": "white",
-    "savefig.dpi": 400, "axes.edgecolor": INK, "axes.linewidth": 0.8,
-    "xtick.color": INK, "ytick.color": INK, "font.size": 9,
-    "axes.spines.top": False, "axes.spines.right": False})
+    "savefig.dpi": 400, "font.size": 9})
 
-fig = plt.figure(figsize=(7.0, 3.1))
+fig = plt.figure(figsize=(7.0, 2.9))
+ax = fig.add_axes([0, 0, 1, 1])
+ax.set_xlim(0, 100); ax.set_ylim(0, 100)
+ax.axis("off")
 
-# ------------------------------------------------------------- panel A
-axA = fig.add_axes([0.045, 0.14, 0.30, 0.74])
-axA.set_xlim(0, 10); axA.set_ylim(0, 10)
-axA.axis("off")
+# ------------------------------------------------- measured rows (table)
+cols = [("metal", 5.5), ("extractant", 14.5), ("acid", 33.0),
+        ("diluent", 46.5), ("T", 58.0), ("log D", 65.5)]
+rows = [("Gd", "1.86", True),
+        ("Tb", "2.25", True),
+        ("Dy", "2.12", False)]
+cond = {"extractant": "MMTODGA 0.1 M", "acid": "HCl 3.0 M",
+        "diluent": "Isopar-L", "T": "25 °C"}
 
-axA.add_patch(Rectangle((1.2, 5.0), 7.6, 3.6, facecolor=ORG,
-                        edgecolor=INK, linewidth=0.9))
-axA.add_patch(Rectangle((1.2, 1.4), 7.6, 3.6, facecolor=AQ,
-                        edgecolor=INK, linewidth=0.9))
-axA.text(8.55, 8.15, "organic", ha="right", va="top", fontsize=8.5,
-         color=INK, style="italic")
-axA.text(8.55, 1.85, "aqueous", ha="right", va="bottom", fontsize=8.5,
-         color=INK, style="italic")
+y0, rh = 86.0, 11.0
+for name, x in cols:
+    ax.text(x, y0 + 3.2, name, fontsize=8.5, color=GREY, va="bottom",
+            style="italic")
+ax.plot([4, 71], [y0 + 2.2, y0 + 2.2], color=INK, lw=0.9)
+for i, (metal, ld, hl) in enumerate(rows):
+    yy = y0 - i * rh
+    if hl:
+        ax.add_patch(Rectangle((4, yy - rh + 3.3), 67, rh - 0.8,
+                               facecolor=TINT, edgecolor="none", zorder=0))
+    ax.text(cols[0][1], yy - 2.0, metal, fontsize=10.5, color=INK,
+            fontweight="bold" if hl else "normal", va="center")
+    for key, x in cols[1:5]:
+        ax.text(x, yy - 2.0, cond[key], fontsize=9, color=GREY, va="center")
+    ax.text(cols[5][1], yy - 2.0, ld, fontsize=10.5, color=INK,
+            fontweight="bold" if hl else "normal", va="center")
+ax.plot([4, 71], [y0 - 2 * rh - 4.2, y0 - 2 * rh - 4.2], color=INK, lw=0.9)
+ax.text(4, y0 - 2 * rh - 8.6, "same extractant, acid, diluent, temperature "
+        "— only the metal differs", fontsize=8.5, color=GREY, va="center")
 
-org_pts = np.array([[2.1, 7.6], [3.5, 6.3], [4.9, 7.3],
-                    [6.3, 6.0], [7.4, 7.0], [2.6, 5.6]])
-aq_pts = np.array([[3.2, 3.0], [6.1, 2.4]])
-axA.scatter(org_pts[:, 0], org_pts[:, 1], s=26, color=BLUE, zorder=3)
-axA.scatter(aq_pts[:, 0], aq_pts[:, 1], s=26, color=BLUE, zorder=3)
-axA.text(2.55, 7.62, r"Ln$^{3+}$", fontsize=8, color=BLUE, va="center")
+# ------------------------------------------------- the subtraction
+bx, by, bw, bh = 74.5, 42.0, 23.5, 52.0
+ax.add_patch(FancyBboxPatch((bx, by), bw, bh,
+                            boxstyle="round,pad=1.0,rounding_size=1.5",
+                            facecolor="white", edgecolor=INK, linewidth=0.9))
+ax.text(bx + bw / 2, by + bh - 4.0, r"$\log SF =$",
+        ha="center", va="top", fontsize=9.5, color=INK)
+ax.text(bx + bw / 2, by + bh - 13.5,
+        r"$\log D(\mathrm{A}) - \log D(\mathrm{B})$",
+        ha="center", va="top", fontsize=9.5, color=INK)
+ax.text(bx + bw / 2, by + bh - 28,
+        r"$\log SF_{\,\mathrm{Tb/Gd}} = 2.25 - 1.86$",
+        ha="center", va="top", fontsize=9.5, color=INK)
+ax.text(bx + bw / 2, by + bh - 40, r"$= 0.39$",
+        ha="center", va="top", fontsize=12, color=ORANGE,
+        fontweight="bold")
 
-axA.add_patch(FancyArrowPatch((4.6, 4.35), (4.6, 5.65),
-                              arrowstyle="<|-|>", mutation_scale=10,
-                              linewidth=0.9, color=INK))
+# ------------------------------------------------- lanthanide row
+series = ["La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd",
+          "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
+x0, cw, yb, ch = 4.0, 6.25, 22.0, 13.0
+for i, el in enumerate(series):
+    xx = x0 + i * cw
+    if el == "Pm":
+        ax.add_patch(Rectangle((xx, yb), cw - 0.7, ch, facecolor="white",
+                               edgecolor=LINE, linewidth=0.9,
+                               linestyle=(0, (2, 2))))
+        ax.text(xx + (cw - 0.7) / 2, yb + ch / 2, el, ha="center",
+                va="center", fontsize=9, color=LINE)
+    elif el in ("Gd", "Tb"):
+        ax.add_patch(Rectangle((xx, yb), cw - 0.7, ch, facecolor=ORANGE,
+                               edgecolor=ORANGE, linewidth=0.9))
+        ax.text(xx + (cw - 0.7) / 2, yb + ch / 2, el, ha="center",
+                va="center", fontsize=9.5, color="white",
+                fontweight="bold")
+    else:
+        ax.add_patch(Rectangle((xx, yb), cw - 0.7, ch, facecolor="white",
+                               edgecolor=GREY, linewidth=0.9))
+        ax.text(xx + (cw - 0.7) / 2, yb + ch / 2, el, ha="center",
+                va="center", fontsize=9, color=INK)
 
-axA.text(5.0, 0.15, r"$D \;=\; [\mathrm{Ln}]_{\mathrm{org}} \, / \, "
-                    r"[\mathrm{Ln}]_{\mathrm{aq}}$",
-         ha="center", va="bottom", fontsize=10.5, color=INK)
-axA.set_title("A", fontsize=11, fontweight="bold", loc="left", x=-0.02)
+gx0 = x0 + series.index("Gd") * cw
+gx1 = x0 + series.index("Tb") * cw + cw - 0.7
+ax.plot([gx0, gx0, gx1, gx1], [yb - 2.0, yb - 4.2, yb - 4.2, yb - 2.0],
+        color=ORANGE, lw=1.1)
+ax.text((gx0 + gx1) / 2, yb - 6.0, "adjacent pair", ha="center", va="top",
+        fontsize=8.5, color=ORANGE)
+pmx = x0 + series.index("Pm") * cw + (cw - 0.7) / 2
+ax.text(pmx, yb - 6.0, "absent", ha="center", va="top", fontsize=8.5,
+        color=LINE)
 
-# ------------------------------------------------------------- panel B
-axB = fig.add_axes([0.435, 0.17, 0.545, 0.70])
-ex = D["example"]
-m = ex["metals"]
-y = np.array(ex["y"])
-xs = np.arange(len(m))
-
-iA, iB = m.index("Gd"), m.index("Tb")
-others = [i for i in range(len(m)) if i not in (iA, iB)]
-axB.plot(xs[others], y[others], "o", ms=4.5, markerfacecolor="white",
-         markeredgecolor=GREY, markeredgewidth=1.0, zorder=2)
-axB.plot([xs[iA], xs[iB]], [y[iA], y[iB]], "o", ms=5.5, color=ORANGE,
-         zorder=3)
-
-xb = xs[iB] + 0.42
-axB.plot([xs[iA], xb], [y[iA], y[iA]], lw=0.8, color=INK, ls=":")
-axB.plot([xs[iB], xb], [y[iB], y[iB]], lw=0.8, color=INK, ls=":")
-axB.add_patch(FancyArrowPatch((xb, y[iA]), (xb, y[iB]),
-                              arrowstyle="<|-|>", mutation_scale=8,
-                              linewidth=0.9, color=INK))
-axB.text(xs[iA], y[iA] - 0.28, "B", ha="center", fontsize=9, color=ORANGE,
-         fontweight="bold")
-axB.text(xs[iB], y[iB] + 0.17, "A", ha="center", fontsize=9, color=ORANGE,
-         fontweight="bold")
-
-axB.text(0.03, 0.96,
-         r"$\log SF \;=\; \log D(\mathrm{A}) \,-\, \log D(\mathrm{B})$",
-         transform=axB.transAxes, fontsize=10.5, color=INK, va="top")
-axB.text(0.03, 0.83, "A, B adjacent in the series",
-         transform=axB.transAxes, fontsize=8.5, color=GREY, va="top")
-
-axB.set_xticks(xs)
-axB.set_xticklabels(m, fontsize=8)
-axB.set_ylabel(r"$\log D$", fontsize=10)
-axB.set_xlim(-0.7, len(m) - 0.2)
-axB.set_ylim(y.min() - 0.55, y.max() + 0.45)
-axB.set_title("B", fontsize=11, fontweight="bold", loc="left")
+ax.text(96.5, 4.0, r"$D = [\mathrm{Ln}]_{\mathrm{org}} \, / \, "
+                   r"[\mathrm{Ln}]_{\mathrm{aq}}$",
+        ha="right", va="bottom", fontsize=9, color=GREY)
 
 fig.savefig(HERE / "scheme_target.png")
 print("wrote scheme_target.png")
