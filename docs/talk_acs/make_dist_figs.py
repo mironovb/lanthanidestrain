@@ -3,6 +3,9 @@
 
 fig_logD.{pdf,png}   log D over the 5,992 unique lanthanide(III) measurements
 fig_logSF.{pdf,png}  log SF over the 1,230 adjacent-pair separations scored
+fig_logD_talk.png, fig_logSF_talk.png
+                     the same two, in the talk palette (log D blue, log SF
+                     orange, matching the deck) at projection size
 
 Caption text (for the manuscript):
   Figure. (a) Distribution of measured log D for the 5,992 unique
@@ -67,26 +70,45 @@ for _, blk in cells.groupby("composition_key"):
 dy = np.asarray(dy)
 
 
-def hist(x, bins, xlabel, xlim, name, xticks=None):
-    fig, ax = plt.subplots(figsize=(3.25, 2.35))
-    fig.subplots_adjust(left=0.17, right=0.97, bottom=0.20, top=0.95)
-    ax.hist(x, bins=bins, color="0.35", edgecolor="white", linewidth=0.3)
+def hist(x, bins, xlabel, xlim, name, xticks=None, talk=False):
+    if talk:
+        fig, ax = plt.subplots(figsize=(6.2, 4.3))
+        fig.subplots_adjust(left=0.14, right=0.97, bottom=0.17, top=0.95)
+        fs = 15
+        color = BLUE if name == "fig_logD" else ORANGE
+        ax.tick_params(labelsize=13, length=5, width=0.9)
+        ax.tick_params(which="minor", length=3, width=0.7)
+        for sp in ("left", "bottom"):
+            ax.spines[sp].set_linewidth(0.9)
+    else:
+        fig, ax = plt.subplots(figsize=(3.25, 2.35))
+        fig.subplots_adjust(left=0.17, right=0.97, bottom=0.20, top=0.95)
+        fs = 8
+        color = "0.35"
+    ax.hist(x, bins=bins, color=color, edgecolor="white",
+            linewidth=0.6 if talk else 0.3)
     ax.set_xlim(*xlim)
     if xticks is not None:
         ax.set_xticks(xticks)
     ax.minorticks_on()
-    ax.set_xlabel(xlabel)
+    ax.set_xlabel(xlabel, fontsize=fs)
     ax.set_ylabel("Number of measurements" if name == "fig_logD"
-                  else "Number of pairs")
+                  else "Number of pairs", fontsize=fs)
     ax.text(0.03, 0.95, f"n = {len(x):,}", transform=ax.transAxes,
-            ha="left", va="top", fontsize=7, color=GREY)
-    for ext in ("pdf", "png"):
-        fig.savefig(HERE / f"{name}.{ext}")
+            ha="left", va="top", fontsize=fs - 1, color=GREY)
+    if talk:
+        fig.savefig(HERE / f"{name}_talk.png", dpi=300)
+    else:
+        for ext in ("pdf", "png"):
+            fig.savefig(HERE / f"{name}.{ext}")
     plt.close(fig)
 
 
-hist(logd, np.arange(-13, 5.01, 0.5), r"$\log D$", (-13, 5), "fig_logD",
-     xticks=np.arange(-12, 5, 3))
-hist(dy, np.arange(-2.0, 2.01, 0.1), r"$\log SF$ (adjacent pair)",
-     (-2, 2), "fig_logSF", xticks=np.arange(-2, 2.1, 1))
+BLUE, ORANGE = "#2a78d6", "#eb6834"
+
+for talk in (False, True):
+    hist(logd, np.arange(-13, 5.01, 0.5), r"$\log D$", (-13, 5), "fig_logD",
+         xticks=np.arange(-12, 5, 3), talk=talk)
+    hist(dy, np.arange(-2.0, 2.01, 0.1), r"$\log SF$ (adjacent pair)",
+         (-2, 2), "fig_logSF", xticks=np.arange(-2, 2.1, 1), talk=talk)
 print(f"font: {FAMILY}; log D n={len(logd)}, pairs n={len(dy)}")
