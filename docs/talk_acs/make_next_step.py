@@ -109,7 +109,7 @@ axB.scatter(P[nbr[focus], 0], P[nbr[focus], 1], s=52, color="#4D4D4D",
 axB.scatter(*P[focus], s=86, color=INK, zorder=6, linewidths=0)
 fig.text(0.74, 0.93, "each atom updates from its neighbours", ha="center",
          va="center", fontsize=13.5, color=CAP)
-fig.text(0.74, 0.045, "three rounds — three steps out along the mesh",
+fig.text(0.74, 0.045, "repeated three times",
          ha="center", va="center", fontsize=10, color=SUB)
 
 fig.savefig(HERE / "next_step.png", dpi=300, bbox_inches="tight")
