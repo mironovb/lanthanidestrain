@@ -110,8 +110,8 @@ for xc, (v, col) in zip(xs, series):
     axB.text(xc, -0.02, f"{v.mean():.3f} ± {v.std(ddof=1):.3f}", ha="center",
              va="top", fontsize=8.5, color=col, transform=axB.get_xaxis_transform())
 axB.axhline(1.0, color=INK, lw=0.8, ls="--", zorder=2)
-axB.text(xs[-1] + 0.72, 1.02, "Shannon radii", fontsize=8.5, color=INK,
-         va="bottom", ha="right")
+axB.text(-0.42, 1.02, "Shannon radii", fontsize=8.5, color=INK,
+         va="bottom", ha="left")
 axB.set_xticks(xs)
 axB.set_xticklabels([name for name, _ in ARM.values()], fontsize=10)
 axB.tick_params(axis="x", length=0, pad=18)

@@ -1422,3 +1422,46 @@ the lanthanide target, and the Am/Eu target needs within-family
 information the descriptors do not carry (the same limitation as the
 lanthanide problem). Structures for the Am complexes would be the next
 thing to try, and a separate decision.
+
+### I21. Ln-xTB, the third Hamiltonian: right mean contraction, wrong shape
+**ESTABLISHED**, 71 ligands × 15 lanthanides, gas phase, same anchors and
+protocol as §1 (`automl/qc/lnxtb_params.py`, `automl/qc/lnxtb_summary.py`,
+`automl/artifacts/gxtb_series/lnxtb_benchmark.json`, `lnxtb_shard{0,1}.json`).
+
+Ln-xTB (Zhang 2026, J. Comput. Chem., 10.1002/jcc.70321) re-optimises the
+20 element-specific GFN2-xTB parameters of La–Lu, element by element,
+against all-electron Ln–X bond lengths (5d6s6p valence, f in core, as GFN2).
+The parameters exist only as PDF tables in the SI; they were parsed from
+both copies (Tables S60/S61 and S62, zero disagreement), spliced into the
+stock GFN2 parameter file, and verified by reproducing all 35 SI structure
+energies to < 2e-8 Eh once the SI's spin convention was identified (Hund's
+unpaired count, lowered by one where its parity clashes with the electron
+count). All 2,130 optimisations converged.
+
+| Hamiltonian | c_L (1.00 = Shannon) | vs 1.00 | median linear-fit R² of the series | Gd − ½(Eu+Tb), Å | non-linear residual rms, Å (shared across ligands) |
+|---|---|---|---|---|---|
+| GFN2-xTB | 0.405 ± 0.145 | −34.5, p = 1e−45 | 0.956 | +0.000 | 0.006 (45 %) |
+| g-xTB | 1.078 ± 0.094 | +7.0, p = 1e−09 | 0.823 | +0.030 | 0.026 (89 %) |
+| **Ln-xTB** (SI spin protocol) | **1.081 ± 0.214** | +3.2, p = 2e−03 | **0.434** | **−0.102** | **0.064 (80 %)** |
+| Ln-xTB closed shell | 0.981 ± 0.140 | −1.1, p = 0.26 | 0.425 | −0.092 | 0.059 (90 %) |
+
+Reading. Ln-xTB fixes the *mean* contraction that GFN2 misses (closer to
+1.00 than GFN2 on 66/71 ligands; paired t vs g-xTB +0.1, p = 0.92), so the
+linear-in-Z cause identified in §1 is confirmed from a second direction:
+re-fitting the same functional form per element is enough to recover the
+slope. But the series it produces is not smooth: the departure from a
+straight line is 2.4× g-xTB's and 11× GFN2's, and 80 % of it is a metal
+profile shared by every ligand, dominated by a −0.12 Å dip at Gd and
+±0.08 Å swings at Ce/Pr/Nd. A profile that every ligand shares is a
+signature of the parameter set (independent per-element fits with no
+smoothness constraint), not chemistry; it carries no ligand information, the
+same conclusion as for g-xTB's own shared residual (I16-era analysis, 96 %).
+The spin protocol matters at the 0.10 level (closed shell 0.98 vs 1.08).
+
+Consequence for the benchmark paper: three Hamiltonians, one message. The
+slope is a parameterisation property (GFN2 0.41 → Ln-xTB 1.08 with the same
+physics), the smoothness is a physics property (g-xTB, f in valence, is the
+only one that is both right on average and regular), and none of the three
+per-ligand compliances predicts measured adjacent selectivity (Pearson
+0.11 / −0.02 / 0.17 for GFN2 / g-xTB / Ln-xTB on 44 matched ligands), so
+the negative result of `compliance_test` is Hamiltonian-independent.

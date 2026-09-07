@@ -260,6 +260,26 @@ def build():
         caption="71 ligands, one protocol, one binary. Improves on 71 of 71; "
                 "paired p = 4.9 × 10⁻⁵².")
 
+    # 6b --------------------------------------------------------------
+    figure_slide(
+        prs, "A third Hamiltonian, Ln-xTB: the right slope, but not the shape",
+        HERE / "contraction.png",
+        "Ln-xTB, published this year, keeps GFN2's physics — f in the core, "
+        "the same 5d6s6p valence — and simply re-fits the twenty lanthanide "
+        "parameters element by element against all-electron bond lengths. "
+        "Same 71 ligands, same protocol, all 2,130 optimisations converged. "
+        "Its mean compliance is 1.08, identical to g-xTB's. So the slope "
+        "was a parameterisation property, exactly as we argued: fix the "
+        "linear-in-Z interpolation and the contraction comes back. But the "
+        "series is jagged — a linear fit explains 43 percent of it against "
+        "82 for g-xTB — with a tenth-of-an-angstrom dip at gadolinium that "
+        "every ligand shares. A profile shared by every ligand is a "
+        "signature of independent per-element fits, not chemistry. Only "
+        "the f-in-valence method is both right on average and regular, and "
+        "none of the three per-ligand slopes predicts measured selectivity.",
+        caption="Ln-xTB 1.081 ± 0.214 vs g-xTB 1.078 ± 0.094: same mean, "
+                "2.3× the spread, series fit R² 0.43 vs 0.82.")
+
     # 7 ---------------------------------------------------------------
     figure_slide(
         prs, "The cause is in the parameter file: every lanthanide is a "
@@ -558,8 +578,8 @@ def build():
         "underperforms is not the network — it is that the electronic "
         "structure method hands you one number about the metal.",
         footer="Next: designed replication for a real ceiling; the "
-               "under-prediction of large separations; Ln-xTB as a third "
-               "Hamiltonian.")
+               "under-prediction of large separations; structures for the "
+               "americium complexes.")
 
     # 24 --------------------------------------------------------------
     s = add(prs)

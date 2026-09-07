@@ -66,10 +66,18 @@ differences — the same limitation as on the lanthanide side. Details in
 the repository (automl/an_ln/, findings I19–I20).
 
 **Ln-xTB.** The third Hamiltonian for the contraction benchmark (Zhang,
-J. Comput. Chem. 2026, 10.1002/jcc.70321) is now running: the SI gives the
-parameters only as PDF tables, so I rebuilt the parameter file, verified
-it against all 35 SI structure energies (agreement to 1e-8 Eh), and the
-same 71-ligand series is in progress. [LN-XTB RESULT PENDING]
+J. Comput. Chem. 2026, 10.1002/jcc.70321) is done: the SI gives the
+parameters only as PDF tables, so I rebuilt the parameter file and
+verified it against all 35 SI structure energies (1e-8 Eh), then ran the
+same 71-ligand, 15-metal series. Result: Ln-xTB gets the mean contraction
+right (compliance 1.08 ± 0.21, identical to g-xTB's 1.08 ± 0.09 and
+against GFN2's 0.41) but the series is jagged — linear-fit R² 0.43 versus
+0.82 for g-xTB, with a −0.10 Å dip at Gd that every ligand shares, i.e. a
+signature of the element-by-element parameter fit rather than chemistry.
+So the slope is a parameterisation property, the smoothness is a physics
+property (only g-xTB has both), and none of the three per-ligand
+compliances predicts the measured selectivity. Three Hamiltonians, one
+message; that closes the benchmark paper.
 
 Best regards,
 Bogdan

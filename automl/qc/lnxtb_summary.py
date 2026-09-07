@@ -81,6 +81,38 @@ def main() -> int:
                      "sd_A": round(float(np.std(vals, ddof=1)), 4)}
     out["gd_break_A"] = gd
     print("Gd deviation from the Eu/Tb midpoint (Å):", json.dumps(gd))
+    # How much of each arm's departure from a straight line is a SHARED metal
+    # profile (the same for every ligand -> a parameter-set signature, no
+    # ligand information) versus ligand-specific?  Residuals of the per-ligand
+    # linear fit on the Shannon radius, ligands x metals; shared fraction =
+    # variance explained by the column (metal) means.
+    from automl.qc.compliance_test import SHANNON
+    shared = {}
+    for a in arms:
+        rows_r = []
+        for fam, g in okr[okr.arm == a].groupby("family"):
+            g = g[g.f_count >= 1]
+            cn = int(g.iloc[0]["cn"]) if not pd.isna(g.iloc[0]["cn"]) else 9
+            sh = SHANNON.get(cn, SHANNON[9])
+            x = g.metal.map(sh).to_numpy(float); y = g.mean_m_donor.to_numpy(float)
+            m = np.isfinite(x) & np.isfinite(y)
+            if m.sum() < 12:
+                continue
+            c, b = np.polyfit(x[m], y[m], 1)
+            rows_r.append(pd.Series(y[m] - (c * x[m] + b), index=g.metal[m].to_numpy()))
+        M = pd.DataFrame(rows_r).dropna(axis=1)
+        tot = float((M.to_numpy() ** 2).sum())
+        col = M.mean(axis=0)
+        expl = float(((np.ones((len(M), 1)) * col.to_numpy()[None, :]) ** 2).sum())
+        prof = col.round(4).to_dict()
+        shared[a] = {"n_ligands": int(len(M)), "n_metals": int(M.shape[1]),
+                     "residual_rms_A": round(float(np.sqrt((M.to_numpy() ** 2).mean())), 4),
+                     "shared_fraction": round(expl / tot, 3) if tot > 0 else None,
+                     "metal_profile_A": prof}
+        print(f"  {NAMES[a]:22s} residual rms {shared[a]['residual_rms_A']:.4f} Å, "
+              f"shared across ligands {shared[a]['shared_fraction']:.3f}; largest |profile|: "
+              + ", ".join(f"{k} {v:+.3f}" for k, v in sorted(prof.items(), key=lambda kv: -abs(kv[1]))[:4]))
+    out["nonlinear_residual"] = shared
     OUT.write_text(json.dumps(out, indent=1, default=float))
     print("wrote", OUT)
     return 0

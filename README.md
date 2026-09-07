@@ -22,7 +22,7 @@ remaining signal is not.
 |---|---|---|---|
 | Best system: anchored CatBoost + 3D encoder shape (w = 0.35) | **+0.326** adjacent-pair log SF R² (905 legacy pairs); **+0.288** on the expanded 1,220-pair population | 3D contrast **confirmed** by a pre-declared look on 444 never-touched pairs (+0.0156) | `CAMPAIGN_AUG2026.md`, I14–I15 |
 | Best single model: anchored CatBoost q60/q60 (8-seed ens) | **+0.318** — beats every stack ever fitted (prev. best stack +0.313) | falsifying test passed | I14 |
-| Chemistry benchmark: lanthanide-contraction compliance | GFN2 **0.405 ± 0.145** (2.47× under), g-xTB **1.078 ± 0.094**; 71/71 ligands, p = 4.9e−52 | standalone, publishable | §1 |
+| Chemistry benchmark: lanthanide-contraction compliance | GFN2 **0.405 ± 0.145** (2.47× under), g-xTB **1.078 ± 0.094**, Ln-xTB **1.081 ± 0.214** (right mean, jagged series: fit R² 0.43, −0.10 Å Gd dip shared by all ligands); 71/71 ligands | standalone, publishable; three Hamiltonians | §1, I21 |
 | Collaborator cross-validation (20 Aug) | his A2 reproduced from spec (macro MAE 0.324 vs his 0.319); his champion and our system **statistically tie** under his metric; ours holds +0.288 on his expanded dataset | reproduction PASS | `COLLAB_UPDATE_REPORT.md` |
 | Label-side series shape | pair-identity LOEO floor +0.066, split-half r = 0.75, half-shell anomaly (Eu–Gd/Gd–Tb) | robust data observation | I14 notes, `series_shape.py` |
 | Ceiling | **not identifiable** from this dataset (supersedes the old 0.53); separations reproduce to ~0.16 on a 0.22 spread | corrected | `CEILING_NOTE.md` |
