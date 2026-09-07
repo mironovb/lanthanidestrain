@@ -1,0 +1,48 @@
+{
+ "rows": 7923,
+ "per_metal": {
+  "Am": 1794,
+  "Eu": 1566,
+  "Nd": 635,
+  "La": 418,
+  "Dy": 409,
+  "Gd": 397,
+  "Pr": 355,
+  "Sm": 347,
+  "Er": 322,
+  "Ce": 305,
+  "Ho": 281,
+  "Tb": 259,
+  "Lu": 255,
+  "Yb": 241,
+  "Tm": 202,
+  "Cm": 137
+ },
+ "ligands": 200,
+ "an_descriptors": {
+  "Am": {
+   "Atomic Number_metal": 95,
+   "lanthanide_index": 5.27,
+   "Ionic Radius_metal": 1.09
+  },
+  "Cm": {
+   "Atomic Number_metal": 96,
+   "lanthanide_index": 5.93,
+   "Ionic Radius_metal": 1.08
+  }
+ },
+ "columns": 2149,
+ "counts": {
+  "raw_rows": 48138,
+  "raw_columns": 37,
+  "after_lanthanide_filter": 32977,
+  "after_valid_D": 32306,
+  "after_smiles_present": 32174,
+  "after_limit": 32174,
+  "exact_duplicates_removed": 22110,
+  "invalid_smiles_removed": 380,
+  "after_valid_canonical_smiles": 9684,
+  "content_duplicates_removed": 1740,
+  "deduplicated_rows": 7944
+ }
+}
