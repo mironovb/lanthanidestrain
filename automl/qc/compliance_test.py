@@ -138,7 +138,9 @@ def compliance(recs: list[dict]) -> pd.DataFrame:
         rec_cn = g.iloc[0].get("cn")
         cn = int(rec_cn if rec_cn is not None and not pd.isna(rec_cn)
                  else fm.get("cn", 9))
-        n_at = int(g.iloc[0].get("n_atoms") or fm.get("n_atoms", 0))
+        rec_na = g.iloc[0].get("n_atoms")          # NaN when mixed with older runs
+        n_at = int(rec_na if rec_na is not None and not pd.isna(rec_na)
+                   else fm.get("n_atoms", 0))
         sh = SHANNON.get(cn, SHANNON[9])
         x = g.metal.map(sh).to_numpy(dtype=float)
         y = g.mean_m_donor.to_numpy(dtype=float)

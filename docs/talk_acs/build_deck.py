@@ -473,6 +473,43 @@ def build():
         caption="Reproduced from the written spec; the head-to-head "
                 "difference is within noise.")
 
+    # 21b -------------------------------------------------------------
+    figure_slide(
+        prs, "What R² = 0.33 buys a screening user: ranking, and honest intervals",
+        HERE / "T9_ranking.png",
+        "R² undersells the practical value. Panel A: for each adjacent pair, "
+        "rank the held-out extractants by predicted separation and compare "
+        "with the measured ranking. Mean Spearman 0.46 over the twelve "
+        "positions; the predicted top quartile contains a measured "
+        "top-quartile ligand half of the time, against a quarter by chance. "
+        "Sm–Eu, Gd–Tb, La–Ce and Yb–Lu rank best; Tb–Dy and Dy–Ho barely "
+        "above chance. Panel B: split-conformal intervals, calibrated "
+        "leave-one-extractant-out, cover 79 and 90 percent at nominal 80 "
+        "and 90, with half-widths of 0.22 and 0.32 log units. Abstaining on "
+        "uncertain pairs lowers the error but not R², because the confident "
+        "pairs are the small separations.",
+        caption="Ranking held-out extractants doubles the odds of a "
+                "top-quartile pick; the intervals are calibrated.")
+
+    # 21c -------------------------------------------------------------
+    figure_slide(
+        prs, "Taking the model to americium: family-level transfer only",
+        REPO / "automl/reports/an_ln/am_eu_transfer.png",
+        "The same database holds 1,815 americium rows, 95 percent on ligands "
+        "we already model, giving 312 Am/Eu separation factors on 82 "
+        "extractants under identical conditions — the SANEX chemistry. Left: "
+        "treating Am as a lanthanide at its radius predicts nothing, which is "
+        "the right answer, because An/Ln selectivity is soft-donor "
+        "covalency, not size. Right: with Am rows in training the held-out "
+        "score is R² 0.47 — but a control that predicts a held-out "
+        "extractant from the mean of its ligand family scores the same, and "
+        "within a family the model has no skill. So the model learns which "
+        "ligand classes separate Am from Eu and in which direction, nothing "
+        "finer; and the lanthanide target does not move. Same limitation as "
+        "on the lanthanide side: the descriptors carry the family.",
+        caption="Zero-shot fails as it should; joint training matches a "
+                "no-model family lookup (R² 0.47 vs 0.47), within-family R² 0.02.")
+
     # 22 --------------------------------------------------------------
     bullets_slide(
         prs, "What the labels can support — and a claim we had to withdraw",
