@@ -1327,3 +1327,32 @@ variation is precisely what it fits.
 
 *Not pursued:* confidence-based routing between encoders (sub-effects below
 the +-0.01 CI on the whole 3D contribution).
+
+
+### I18. Decision quality of the best system: ranking and calibrated uncertainty
+**ESTABLISHED**, legacy 905 pairs, out-of-fold (`automl/topo/decision_quality.py`,
+`automl/reports/decision_quality.json`).
+
+The R² of +0.327 understates what a screening user gets. Ranking held-out
+extractants by predicted separation, position by position:
+
+| quantity | value | chance |
+|---|---|---|
+| mean Spearman over the 12 positions | **0.46** | 0 |
+| top-quartile hit rate (predicted top quartile ∩ measured top quartile) | **0.50** | 0.25 |
+| pooled Spearman, all 905 pairs | 0.54 | 0 |
+| sign accuracy on pairs with \|log SF\| > 0.1 (n = 490) | 0.80 | 0.5 |
+| median within-extractant Spearman over positions (43 extractants) | 0.57 | 0 |
+
+The model doubles the odds of picking a top-quartile ligand for a given
+adjacent separation. Best positions: Sm–Eu (ρ 0.69), Gd–Tb (0.64), La–Ce
+(0.63), Yb–Lu (0.59); worst: Tb–Dy (0.24), Dy–Ho (0.26).
+
+Uncertainty: split-conformal intervals calibrated leave-one-extractant-out
+are honest — empirical coverage 79.3 % / 89.7 % at nominal 80 / 90 %, with
+half-widths 0.22 / 0.32 log units. The 8-seed ensemble spread tracks the
+absolute residual (ρ = 0.29), and abstaining on the most uncertain pairs
+lowers MAE (0.140 → 0.091 on the most confident quarter) but not R², because
+the confident pairs are also the small-separation ones (sd of the truth
+falls from 0.27 to 0.15). Uncertainty is usable for MAE-style screening,
+not for cherry-picking a higher R².
