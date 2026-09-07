@@ -19,7 +19,7 @@ target.
 CatBoost supports per-feature weights, so I tested it literally on the
 three metal columns (Z, series index, Shannon radius) in the shape model:
 ×2 is neutral (+0.321 vs +0.319, within seed noise), ×5 and ×10 hurt
-(≈ +0.25 and lower). The structural version of your idea is what actually
+(+0.273 and +0.237). The structural version of your idea is what actually
 worked: predicting the block level and the within-block shape with
 separate models (+0.268 → +0.318 with the same learner and features),
 which forces the second model to spend all its capacity on the metal
@@ -53,16 +53,23 @@ chemistry (DGA, BTBP, BTPhen, CyMe4 families on both sides). Two tests,
 extractants held out throughout: (a) zero-shot, treating Am as a
 lanthanide at its radius, the Am/Eu separation is NOT predicted (R² < 0,
 rank correlation ≈ 0) — which is the chemically right answer, since
-An/Ln selectivity comes from soft-donor covalency, not radius; (b) joint
-training with Am rows and a 5f flag: [RESULT PENDING — Am/Eu R² and effect
-on the lanthanide target]. Details in the repository
-(automl/an_ln/, findings I19–I20).
+An/Ln selectivity comes from soft-donor covalency, not radius; (b) joint training with Am rows and a 5f flag reaches R² +0.47 (rank
+correlation 0.65, sign accuracy 0.80) on the same 312 held-out pairs —
+but a control that predicts a held-out extractant by the mean of the
+other extractants in its ligand family, with no model at all, scores
++0.47 as well, and within a family the model has no skill (R² +0.02).
+So the model learns which ligand classes discriminate Am from Eu and in
+which direction, i.e. the textbook SANEX picture, and nothing finer; the
+lanthanide target itself does not move (+0.002 ± 0.020 over paired
+seeds). The descriptors carry the family, not the within-family
+differences — the same limitation as on the lanthanide side. Details in
+the repository (automl/an_ln/, findings I19–I20).
 
-**One request.** The obvious third Hamiltonian for the contraction
-benchmark is Ln-xTB (Zhang, J. Comput. Chem. 2026, 10.1002/jcc.70321).
-The parameter files are only in the Wiley supporting information, which
-I cannot reach from the cluster. If you have access, could you forward the
-SI, or would you be comfortable with me emailing the author?
+**Ln-xTB.** The third Hamiltonian for the contraction benchmark (Zhang,
+J. Comput. Chem. 2026, 10.1002/jcc.70321) is now running: the SI gives the
+parameters only as PDF tables, so I rebuilt the parameter file, verified
+it against all 35 SI structure energies (agreement to 1e-8 Eh), and the
+same 71-ligand series is in progress. [LN-XTB RESULT PENDING]
 
 Best regards,
 Bogdan

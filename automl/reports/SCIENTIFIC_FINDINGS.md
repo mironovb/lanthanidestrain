@@ -1356,3 +1356,69 @@ lowers MAE (0.140 → 0.091 on the most confident quarter) but not R², because
 the confident pairs are also the small-separation ones (sd of the truth
 falls from 0.27 to 0.15). Uncertainty is usable for MAE-style screening,
 not for cherry-picking a higher R².
+
+### I19. Up-weighting the metal-identity features does not help (tested, negative)
+**TESTED, NEGATIVE**, legacy 905 pairs, ok_only population, 4 seeds
+(`automl/topo/anchored_champion.py --cells anch_fw2 anch_fw5 anch_fw10`,
+`automl/reports/anchored_champion.csv`).
+
+The suggestion from the 4 Sept call was to give the lanthanide identity a
+larger weight. CatBoost 1.2.10 supports per-feature weights, so the three
+metal columns (Z, series index, Shannon radius) of the shape model were
+weighted literally:
+
+| metal-feature weight | 4-seed ensemble adj. R² | per-seed range |
+|---|---|---|
+| ×1 (reference, same seeds) | +0.319 | 0.298–0.314 |
+| ×2 | +0.321 | 0.299–0.314 |
+| ×5 | +0.273 | 0.235–0.267 |
+| ×10 | +0.237 | 0.197–0.24 |
+
+×2 is within seed noise of the reference; ×5 and ×10 are harmful. The
+structural version of the same idea, the level/shape split (I14), is what
+worked: it forces the second model to spend all of its capacity on the metal
+dependence without distorting the split criterion.
+
+### I20. Actinide transfer: joint training with Am rows learns family-level Am/Eu selectivity, nothing finer, and does not help the lanthanide target
+**TESTED**, pre-frozen pairs (`automl/artifacts/an_ln/frozen_pairs.json`,
+frozen before any result existed), one look at the 4-seed ensembles
+(`automl/an_ln/{build,experiments,report}.py`, `automl/reports/an_ln/`).
+
+Data: the SAFE database holds 1,815 Am(III) rows on 110 ligands after the
+lanthanide pipeline's own cleaning (21 Am(VI) rows dropped, SF ≡ 1
+detection-limit pairs dropped), 95 % on ligands that also have lanthanide
+data, giving **312 Am/Eu pairs on 82 extractants** under identical conditions
+(block key = extractant + the ten condition bins), plus Cm/Eu (27) and Am/Cm
+(35). Extractants are held out throughout; an extractant's Am and Ln rows
+leave together. Same CatBoost level/shape learner, RDKit + ECFP + metal +
+condition features, plus a 5f flag; no structures for Am, so no 3D channel.
+
+| | Ln legacy 905-pair R² | Am/Eu R² | Am/Eu Spearman | Am/Eu sign accuracy |
+|---|---|---|---|---|
+| Ln-only, Am zero-shot as a pseudo-lanthanide (radius 1.09 Å) | +0.307 | **−0.136** | −0.12 | 0.47 |
+| Ln + Am joint, 5f flag | +0.309 | **+0.467** | +0.65 | 0.80 |
+| control: leave-one-extractant-out mean of the ligand *family* (no model) | — | **+0.472** | +0.52 | — |
+| Ln + Am joint, family-demeaned (within-family skill) | — | +0.024 | +0.24 | — |
+
+Reading. (1) Zero-shot transfer fails, as it should: An/Ln selectivity comes
+from soft-donor covalency, not radius, and Am at its radius is just another
+light lanthanide to the model. (2) With Am rows in training the pooled Am/Eu
+score jumps to +0.47 on held-out extractants, but a SMARTS family lookup
+(DGA / BTP-BTBP-BTPhen / aza-aromatic amides / azolyl-pyridines /
+thiophosphoryl / P=O / other amides) does exactly as well. Within a family
+the model has essentially no skill (R² +0.02, ρ 0.24); per family, DGA
+(179 pairs, 41 extractants) R² −0.12 / ρ 0.18, BTP-family (42 pairs)
+R² −0.06 / ρ 0.26 with sign accuracy 0.95. So what is learned is *which
+ligand classes discriminate Am from Eu and in which direction*, which is
+textbook SANEX chemistry, not new discrimination between ligands of one
+class. (3) The lanthanide target does not benefit from the extra chemistry:
+paired-seed contrast +0.002 ± 0.020 (2 of 4 seeds up). (4) Ranking
+extractants by their mean Am/Eu separation, the joint model reaches ρ 0.82
+over 82 extractants; that is the useful practical statement and it is the
+family effect again.
+
+Conclusion: the data-side augmentation route (more metals) is closed for
+the lanthanide target, and the Am/Eu target needs within-family
+information the descriptors do not carry (the same limitation as the
+lanthanide problem). Structures for the Am complexes would be the next
+thing to try, and a separate decision.

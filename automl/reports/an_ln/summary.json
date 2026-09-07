@@ -1,0 +1,184 @@
+{
+ "frozen_check": "312 Am/Eu pairs == frozen set",
+ "ensemble": {
+  "ln_only": {
+   "ln_legacy_r2": 0.3071,
+   "am_eu": {
+    "n": 312,
+    "r2": -0.1362,
+    "spearman": -0.124,
+    "sign_acc": 0.468,
+    "sd_dy": 0.823,
+    "sd_dp": 0.249
+   },
+   "cm_eu": {
+    "pair": "Cm/Eu",
+    "n_pairs": 27,
+    "n_extractants": 9,
+    "r2": -0.4163358268332962,
+    "spearman": -0.1568986568986569,
+    "sign_accuracy": 0.37037037037037035,
+    "macro_mae": 0.5515533760010786,
+    "sd_dy": 1.0309214986698976,
+    "sd_dp": 0.27549091809278053
+   },
+   "am_cm": {
+    "pair": "Am/Cm",
+    "n_pairs": 35,
+    "n_extractants": 12,
+    "r2": 0.1183690499229545,
+    "spearman": 0.23187968411103557,
+    "sign_accuracy": 0.3142857142857143,
+    "macro_mae": 0.26235494348435506,
+    "sd_dy": 0.563795796110204,
+    "sd_dp": 0.19410920398900558
+   }
+  },
+  "ln_am": {
+   "ln_legacy_r2": 0.3094,
+   "am_eu": {
+    "n": 312,
+    "r2": 0.4666,
+    "spearman": 0.654,
+    "sign_acc": 0.804,
+    "sd_dy": 0.823,
+    "sd_dp": 0.516
+   },
+   "cm_eu": {
+    "pair": "Cm/Eu",
+    "n_pairs": 27,
+    "n_extractants": 9,
+    "r2": -0.1364639402389658,
+    "spearman": 0.1807081807081807,
+    "sign_accuracy": 0.7407407407407407,
+    "macro_mae": 0.5582106347855019,
+    "sd_dy": 1.0309214986698976,
+    "sd_dp": 0.38248565919707145
+   },
+   "am_cm": {
+    "pair": "Am/Cm",
+    "n_pairs": 35,
+    "n_extractants": 12,
+    "r2": 0.1033169936263939,
+    "spearman": 0.22268907563025211,
+    "sign_accuracy": 0.6,
+    "macro_mae": 0.2540082268692429,
+    "sd_dy": 0.563795796110204,
+    "sd_dp": 0.2702620515772352
+   }
+  }
+ },
+ "paired_seeds": {
+  "seeds": [
+   42,
+   51,
+   67,
+   83
+  ],
+  "ln_legacy_ln_only": [
+   0.2788,
+   0.3043,
+   0.3209,
+   0.2741
+  ],
+  "ln_legacy_ln_am": [
+   0.3009,
+   0.3133,
+   0.2947,
+   0.2775
+  ],
+  "d_ln_legacy_mean": 0.0021,
+  "d_ln_legacy_sd": 0.0204,
+  "d_ln_legacy_all_positive": false,
+  "am_eu_ln_only": [
+   -0.19,
+   -0.1054,
+   -0.104,
+   -0.1748
+  ],
+  "am_eu_ln_am": [
+   0.4564,
+   0.4813,
+   0.4585,
+   0.4399
+  ],
+  "d_am_eu_mean": 0.6025
+ },
+ "am_eu_by_family_joint": {
+  "BTP/BTBP/BTPhen": {
+   "n": 42,
+   "r2": -0.0589,
+   "spearman": 0.262,
+   "sign_acc": 0.952,
+   "sd_dy": 0.752,
+   "sd_dp": 0.428,
+   "n_extractants": 9,
+   "mean_abs_dy": 1.312
+  },
+  "DGA": {
+   "n": 179,
+   "r2": -0.1197,
+   "spearman": 0.179,
+   "sign_acc": 0.782,
+   "sd_dy": 0.626,
+   "sd_dp": 0.307,
+   "n_extractants": 41,
+   "mean_abs_dy": 0.546
+  },
+  "aza-aromatic (thio)amide": {
+   "n": 15,
+   "r2": -0.8625,
+   "spearman": 0.3,
+   "sign_acc": 0.867,
+   "sd_dy": 0.32,
+   "sd_dp": 0.082,
+   "n_extractants": 7,
+   "mean_abs_dy": 0.34
+  },
+  "other amide": {
+   "n": 37,
+   "r2": 0.0497,
+   "spearman": 0.566,
+   "sign_acc": 0.919,
+   "sd_dy": 0.411,
+   "sd_dp": 0.199,
+   "n_extractants": 12,
+   "mean_abs_dy": 0.46
+  },
+  "phosphine oxide / phosphate": {
+   "n": 16,
+   "r2": 0.0807,
+   "spearman": 0.724,
+   "sign_acc": 0.438,
+   "sd_dy": 0.264,
+   "sd_dp": 0.092,
+   "n_extractants": 4,
+   "mean_abs_dy": 0.199
+  },
+  "thiophosphoryl (S donors)": {
+   "n": 14,
+   "r2": 0.28,
+   "spearman": 0.341,
+   "sign_acc": 0.643,
+   "sd_dy": 0.186,
+   "sd_dp": 0.067,
+   "n_extractants": 4,
+   "mean_abs_dy": 0.126
+  }
+ },
+ "am_eu_per_extractant": {
+  "n": 82,
+  "spearman": 0.824,
+  "r2": 0.6413
+ },
+ "control_family_mean_loeo": {
+  "r2": 0.4716,
+  "spearman": 0.523,
+  "note": "predict a held-out extractant's Am/Eu by the mean of the other extractants in its SMARTS family; no model"
+ },
+ "joint_within_family": {
+  "r2": 0.024,
+  "spearman": 0.242,
+  "note": "both measured and predicted Am/Eu centred on their family mean"
+ }
+}

@@ -27,6 +27,8 @@ remaining signal is not.
 | Label-side series shape | pair-identity LOEO floor +0.066, split-half r = 0.75, half-shell anomaly (Eu–Gd/Gd–Tb) | robust data observation | I14 notes, `series_shape.py` |
 | Ceiling | **not identifiable** from this dataset (supersedes the old 0.53); separations reproduce to ~0.16 on a 0.22 spread | corrected | `CEILING_NOTE.md` |
 | Decision quality (I18) | ranking held-out extractants per adjacent pair: mean Spearman **0.46**, top-quartile hit rate **0.50** vs 0.25 chance; conformal 80/90 % intervals cover 79/90 % | established | `decision_quality.py`, I18 |
+| Metal-feature weighting (I19) | ×2 neutral (+0.321 vs +0.319), ×5 harmful (+0.273), ×10 worse (+0.237) | tested, negative | I19 |
+| Actinide transfer (I20) | zero-shot Am/Eu **−0.136**; joint Ln+Am training **+0.467** on 312 held-out-extractant pairs, but a no-model ligand-family mean scores +0.472 and within-family skill is +0.02; lanthanide metric unchanged (+0.002 ± 0.020) | tested; family-level only | `automl/an_ln/`, I20 |
 | Topology beyond the distance encoder | **nothing to add**: simplicial encoder gets blend weight 0.01 (encoders 0.963-correlated), triangles no better than edges, persistence features collapse the shape model (78 % of the damage from within-block variation) | tested, negative | `TOPOLOGY_TESTS.md`, I17 |
 
 ---
