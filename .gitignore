@@ -2,3 +2,12 @@ __pycache__/
 *.pyc
 tests/_tmp/
 catboost_info/
+
+# supporting-information / literature PDFs dropped in the repo root
+/jcc70321-sup-*.zip
+/jcc70321-sup-*.pdf
+/chemrxiv-*.pdf
+/ct8b01176.pdf
+# Ln-xTB parameter tree: only the patched GFN2 file is ours; the rest are stock xtb copies
+/automl/artifacts/lnxtb/share/xtb/*
+!/automl/artifacts/lnxtb/share/xtb/param_gfn2-xtb.txt

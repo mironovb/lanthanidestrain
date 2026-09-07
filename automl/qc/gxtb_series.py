@@ -105,14 +105,27 @@ def pick_anchors(n: int, max_atoms: int | None = None) -> list[dict[str, Any]]:
     return out
 
 
+LNXTB_SHARE = _REPO / "automl/artifacts/lnxtb/share/xtb"
+PARITY_MSG = "not consistent with the total number of electrons"
+
+
 def _one(task: dict[str, Any]) -> dict[str, Any]:
     sym0, xyz0 = read_plain_xyz(_REPO / task["path"])
     sym = substitute_metal(list(sym0), task["metal"])
-    uhf = (high_spin_uhf(task["metal"]) if task["arm"] == "gxtb_hs" else 0)
-    method = "gfn2" if task["arm"] == "gfn2" else "gxtb"
-    r = optimize_with_retry(sym, xyz0, charge=task["charge"], uhf=uhf,
-                            method=method, solvent=task.get("solvent"),
-                            threads=1, timeout=task.get("timeout", 7200))
+    arm = task["arm"]
+    uhf = high_spin_uhf(task["metal"]) if arm in ("gxtb_hs", "lnxtb_hs") else 0
+    # lnxtb_*: Ln-xTB (Zhang 2026) = stock GFN2 code with the La-Lu parameter
+    # blocks replaced (automl/qc/lnxtb_params.py).  The SI protocol is Hund's
+    # unpaired count, lowered by one where its parity clashes with the electron
+    # count (verified: reproduces every SI structure energy to <2e-8 Eh).
+    method = "gfn2" if arm in ("gfn2", "lnxtb_hs", "lnxtb_cs") else "gxtb"
+    xtbpath = str(LNXTB_SHARE) if arm.startswith("lnxtb") else None
+    kw = dict(charge=task["charge"], method=method, solvent=task.get("solvent"),
+              threads=1, timeout=task.get("timeout", 7200), xtbpath=xtbpath)
+    r = optimize_with_retry(sym, xyz0, uhf=uhf, **kw)
+    if (not r.get("ok") and uhf > 0 and PARITY_MSG in r.get("log_tail", "")):
+        uhf -= 1
+        r = optimize_with_retry(sym, xyz0, uhf=uhf, **kw)
     # n_atoms and cn MUST travel with the record.  They were omitted once, and
     # the downstream "partial correlation controlling for ligand size and CN"
     # then silently controlled for two constants (n_atoms defaulted to 0, cn to

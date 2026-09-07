@@ -93,10 +93,12 @@ def high_spin_uhf(sym: str) -> int:
     return n if n <= 7 else 14 - n
 
 
-def _run(args: list[str], wd: Path, threads: int, timeout: int
-         ) -> tuple[int, str]:
-    proc = subprocess.run([str(GXTB_BIN)] + args, cwd=wd,
-                          env=xtb_env(GXTB_BIN, threads),
+def _run(args: list[str], wd: Path, threads: int, timeout: int,
+         xtbpath: str | None = None) -> tuple[int, str]:
+    env = xtb_env(GXTB_BIN, threads)
+    if xtbpath:                       # alternative parameter tree (Ln-xTB)
+        env["XTBPATH"] = str(xtbpath)
+    proc = subprocess.run([str(GXTB_BIN)] + args, cwd=wd, env=env,
                           capture_output=True, text=True, timeout=timeout)
     return proc.returncode, proc.stdout + "\n" + proc.stderr
 
@@ -174,7 +176,8 @@ def single_point(symbols, coords, *, charge: int, uhf: int, method: str,
 def optimize(symbols, coords, *, charge: int, uhf: int, method: str,
              solvent: str | None = None, opt_level: str = "tight",
              maxcycle: int = 750, threads: int = 1, timeout: int = 7200,
-             etemp: float | None = None) -> dict[str, Any]:
+             etemp: float | None = None, xtbpath: str | None = None
+             ) -> dict[str, Any]:
     """Relax a substituted structure and report the M-donor shell.
 
     The electronic probe above is at *fixed* geometry, which isolates the
@@ -196,7 +199,7 @@ def optimize(symbols, coords, *, charge: int, uhf: int, method: str,
         if etemp is not None:
             args += ["--etemp", str(etemp)]
         try:
-            rc, out = _run(args, wd, threads, timeout)
+            rc, out = _run(args, wd, threads, timeout, xtbpath=xtbpath)
         except subprocess.TimeoutExpired:
             return {"ok": False, "reason": "timeout", "method": method,
                     "seconds": time.time() - t0}
