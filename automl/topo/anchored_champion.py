@@ -93,18 +93,33 @@ def load_table(population: str = "ok_only", resid_blocks: tuple = ()):
               f" = {X_resid.shape[1]} columns")
     else:
         X_resid = X
+    load_table.last_cols = cols          # for feature-weight lookups
     return df, X, X_resid
 
 
-def _cb(params: dict, seed: int) -> CatBoostRegressor:
+def _cb(params: dict, seed: int, feature_weights=None) -> CatBoostRegressor:
+    extra = {"feature_weights": feature_weights} if feature_weights is not None else {}
     return CatBoostRegressor(random_seed=seed, verbose=0,
                              allow_writing_files=False, thread_count=12,
-                             **params)
+                             **params, **extra)
+
+
+METAL_COLS = ("Atomic Number_metal", "lanthanide_index", "Ionic Radius_metal")
 
 
 def run_cell(name: str, df, X, base_params, resid_params=None,
              level="extractant", shape_weight=1.0, folds=5, repeats=3,
-             seed=42, X_resid=None):
+             seed=42, X_resid=None, metal_weight=None):
+    """metal_weight: if set, CatBoost feature_weights = metal_weight on the
+    metal-identity columns of the residual (shape) model, 1.0 elsewhere --
+    the professor's suggestion, tested literally."""
+    fw = None
+    if metal_weight is not None:
+        cols = getattr(load_table, "last_cols", [])
+        ncol = (X if X_resid is None else X_resid).shape[1]
+        fw = [metal_weight if (i < len(cols) and cols[i] in METAL_COLS) else 1.0
+              for i in range(ncol)]
+        assert sum(w != 1.0 for w in fw) == 3, "metal columns not located"
     y = df["log_D"].to_numpy(float)
     g = df["extractant_group"].to_numpy()
     comp = df["composition_key"].to_numpy()
@@ -122,7 +137,7 @@ def run_cell(name: str, df, X, base_params, resid_params=None,
                 resid = y[tr] - key_tr.map(
                     pd.Series(y[tr]).groupby(key_tr).mean()).to_numpy()
                 Xr = X if X_resid is None else X_resid
-                rm = _cb(resid_params, seed + rep).fit(Xr[tr], resid)
+                rm = _cb(resid_params, seed + rep, fw).fit(Xr[tr], resid)
                 bp = pd.Series(base.predict(X[te]))
                 sp = pd.Series(rm.predict(Xr[te]))
                 key_te = pd.Series(key_arr[te])
@@ -177,6 +192,10 @@ CELLS = {
     # the columns' WITHIN-block variation, not from adding columns per se.
     "anch_g9_bm": dict(base_params=CHAMP, resid_params=CHAMP,
                        resid_blocks=("g9", "block_mean")),
+    # the professor's suggestion: up-weight the lanthanide-identity columns
+    "anch_fw2": dict(base_params=CHAMP, resid_params=CHAMP, metal_weight=2.0),
+    "anch_fw5": dict(base_params=CHAMP, resid_params=CHAMP, metal_weight=5.0),
+    "anch_fw10": dict(base_params=CHAMP, resid_params=CHAMP, metal_weight=10.0),
 }
 
 

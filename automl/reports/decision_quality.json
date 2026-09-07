@@ -1,0 +1,130 @@
+{
+ "ranking": {
+  "by_position": {
+   "La-Ce": {
+    "n_extractants": 49,
+    "spearman": 0.634,
+    "top_quartile_hit_rate": 0.667,
+    "q": 12
+   },
+   "Ce-Pr": {
+    "n_extractants": 51,
+    "spearman": 0.316,
+    "top_quartile_hit_rate": 0.5,
+    "q": 12
+   },
+   "Pr-Nd": {
+    "n_extractants": 56,
+    "spearman": 0.439,
+    "top_quartile_hit_rate": 0.357,
+    "q": 14
+   },
+   "Sm-Eu": {
+    "n_extractants": 51,
+    "spearman": 0.692,
+    "top_quartile_hit_rate": 0.667,
+    "q": 12
+   },
+   "Eu-Gd": {
+    "n_extractants": 55,
+    "spearman": 0.358,
+    "top_quartile_hit_rate": 0.385,
+    "q": 13
+   },
+   "Gd-Tb": {
+    "n_extractants": 46,
+    "spearman": 0.637,
+    "top_quartile_hit_rate": 0.545,
+    "q": 11
+   },
+   "Tb-Dy": {
+    "n_extractants": 47,
+    "spearman": 0.238,
+    "top_quartile_hit_rate": 0.182,
+    "q": 11
+   },
+   "Dy-Ho": {
+    "n_extractants": 40,
+    "spearman": 0.257,
+    "top_quartile_hit_rate": 0.5,
+    "q": 10
+   },
+   "Ho-Er": {
+    "n_extractants": 38,
+    "spearman": 0.436,
+    "top_quartile_hit_rate": 0.333,
+    "q": 9
+   },
+   "Er-Tm": {
+    "n_extractants": 35,
+    "spearman": 0.349,
+    "top_quartile_hit_rate": 0.375,
+    "q": 8
+   },
+   "Tm-Yb": {
+    "n_extractants": 33,
+    "spearman": 0.567,
+    "top_quartile_hit_rate": 0.625,
+    "q": 8
+   },
+   "Yb-Lu": {
+    "n_extractants": 34,
+    "spearman": 0.589,
+    "top_quartile_hit_rate": 0.875,
+    "q": 8
+   }
+  },
+  "mean_spearman_over_positions": 0.459,
+  "mean_top_quartile_hit_rate": 0.501,
+  "chance_hit_rate": 0.25,
+  "pooled_spearman_all_pairs": 0.541,
+  "sign_accuracy_|dy|>0.1": 0.798,
+  "n_pairs_|dy|>0.1": 490,
+  "median_within_extractant_spearman": 0.566,
+  "n_extractants_with_>=6_positions": 43
+ },
+ "conformal": {
+  "coverage": {
+   "80%": {
+    "empirical": 0.793,
+    "median_half_width": 0.216
+   },
+   "90%": {
+    "empirical": 0.897,
+    "median_half_width": 0.315
+   }
+  },
+  "abstention": [
+   {
+    "kept_fraction": 0.25,
+    "n": 226,
+    "r2": 0.102,
+    "mae": 0.091,
+    "sd_dy_kept": 0.154
+   },
+   {
+    "kept_fraction": 0.5,
+    "n": 452,
+    "r2": 0.197,
+    "mae": 0.106,
+    "sd_dy_kept": 0.186
+   },
+   {
+    "kept_fraction": 0.75,
+    "n": 679,
+    "r2": 0.212,
+    "mae": 0.115,
+    "sd_dy_kept": 0.202
+   },
+   {
+    "kept_fraction": 1.0,
+    "n": 905,
+    "r2": 0.327,
+    "mae": 0.14,
+    "sd_dy_kept": 0.271
+   }
+  ],
+  "spread_vs_abs_residual_spearman": 0.285
+ },
+ "n_pairs": 905
+}
