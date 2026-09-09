@@ -1465,3 +1465,50 @@ only one that is both right on average and regular), and none of the three
 per-ligand compliances predicts measured adjacent selectivity (Pearson
 0.11 / −0.02 / 0.17 for GFN2 / g-xTB / Ln-xTB on 44 matched ligands), so
 the negative result of `compliance_test` is Hamiltonian-independent.
+
+### I22. Learning curve over training extractants: the score saturates by ~45 extractants
+**ESTABLISHED**, legacy 905 pairs, 4 CV seed blocks × 3 nested draws
+(`automl/topo/learning_curve.py`, `automl/reports/learning_curve_both.json`,
+`automl/slurm/learning_curve.sh`).
+
+The claim that "the binding constraint is data" (I20, the MoML draft) was a
+prediction, not a measurement. This measures it: the anchored level/shape
+CatBoost (`anch_q60_q60`) is retrained with only a fraction of each
+cross-validation fold's training extractants (nested random draws), the test
+folds are untouched, and every run is scored on the same 905 pairs. The
+f = 1.0 run reproduces the stored champion OOF exactly (+0.2955, seed 42).
+
+| training extractants with pairs (mean over folds) | 7.8 | 15.4 | 30.4 | 45.9 | 60.8 (all) |
+|---|---|---|---|---|---|
+| adjacent-pair R², mean over 4 seeds × 3 draws | +0.146 | +0.196 | +0.254 | +0.301 | **+0.307** |
+| sd over runs | 0.044 | 0.041 | 0.026 | 0.015 | 0.010 (seeds) |
+
+Fits on the draw means: hyperbolic $R_\infty - k/n$ gives $R_\infty = 0.32$
+and +0.012 for doubling the extractants; a power law hits the flattest
+exponent allowed (c = 0.2, $R_\infty = 0.64$) and gives +0.043 for doubling.
+The data cannot separate the two, but both say the same thing at the scale
+that matters: the last 33 % of the data (46 → 61 extractants) bought
+**+0.005**, within seed noise (0.029), and doubling the extractant count is
+worth roughly +0.01 to +0.04. Ninety-eight percent of the full-data score is
+reached with 46 training extractants.
+
+Two construction facts fell out. (1) The level model is irrelevant to the
+metric by design: the anchor is one number per extractant and cancels in
+every adjacent pair, so a "shape-only" arm (level model on full data) is
+numerically identical to the primary arm on the pair score (it differs only
+on log D R², 0.35 vs 0.43 at f = 0.125). (2) Subsampling a fixed set of 76
+extractants measures "more of the same distribution"; genuinely new ligand
+families could add more than the curve suggests, and less noisy labels would
+raise every point. Neither caveat rescues "collect more of the same".
+
+Consequence. The prediction in the direction review and in the MoML draft's
+Limitations, that data is the binding constraint and the score is still
+rising steeply, is **not supported**. With the current descriptors the model
+learns ligand-class-level selectivity from a few dozen examples and then
+stops improving, which is the same picture as the Am/Eu result (I20:
+family-level only, within-family R² +0.02). More extractants of the same
+kind is a low-yield direction; what is missing is information that
+distinguishes ligands within a family, or a target with less measurement
+noise. Curation of new full-series extractants moves from first to third
+priority; the stability-constant pretraining and designed replication
+remain, and any next modelling step must add within-family information.

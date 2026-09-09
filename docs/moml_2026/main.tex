@@ -237,11 +237,12 @@ So a better Hamiltonian fixes the chemistry without changing what a 3D model can
 
 \section{Limitations and outlook}
 
-The binding constraint is data.
-Seventy-six extractants contribute scored pairs, so each ligand's series is learned from about seventy-five others, and no feature engineering changes that count.
+The obvious suspect is data: seventy-six extractants contribute scored pairs.
+A learning curve says otherwise (Figure~\ref{fig:lc}): retraining with a random fraction of each fold's training extractants, test folds untouched, the score rises from $+0.15$ with eight extractants to $+0.30$ with forty-six and then flattens, $+0.31$ with all sixty-one; the last third of the data is worth $+0.005$, inside seed noise, and the fitted curves put the gain from doubling the extractant count between $+0.01$ and $+0.04$.
+With these descriptors the model learns ligand-class-level selectivity from a few dozen examples and then stops, the same picture as the americium transfer (Appendix~\ref{app:am}), so more extractants of the same kind is a low-yield direction; what is missing is information that separates ligands within a class.
 The attainable score is not identifiable from this dataset: separations reproduce to roughly 0.10--0.16 log units across independent condition sets, which bounds $R^2$ below about 0.65--0.85, but 70\,\% of scored pairs come from cells with no replicate, so a defensible ceiling needs designed replication.
 Within one extractant, the model's series shape is weak (median per-extractant $R^2 = 0.09$); what it predicts well is which ligands are selective at all and where their large separations lie.
-We therefore recommend reporting adjacent-pair models by ranking and enrichment with a bootstrap interval, keeping $R^2$ as a diagnostic, and spending effort on more ligands and on replication rather than on representations.
+We therefore recommend reporting adjacent-pair models by ranking and enrichment with a bootstrap interval, keeping $R^2$ as a diagnostic, and spending effort on within-class descriptors and on replication rather than on more of the same data or on representations of the same geometry.
 
 \section{Conclusion}
 
@@ -272,6 +273,23 @@ Blend weight $w$: nested selection over $\{0, 0.05, \dots, 1\}$ with an equal-we
 
 \paragraph{Confirmation set.}
 The 444 pairs come from lanthanide rows with computed but uncurated geometries; their identities were written to the repository before any 3D model was trained on the expanded population, and they were scored once.
+
+\section{Learning curve}
+\label{app:lc}
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.55\linewidth]{fig3_learning_curve}
+	\caption{Adjacent-pair $R^2$ on the 905 legacy pairs when the level/shape model is trained on a random fraction of each fold's training extractants (nested draws, four CV seeds, three draws each; whiskers span the runs). The two lines are the fitted extrapolations, hyperbolic (solid) and power law (dotted), which bracket the gain from doubling the extractants at $+0.01$ to $+0.04$; the dashed line marks the full training set.}
+	\label{fig:lc}
+\end{figure}
+
+Fractions 0.125, 0.25, 0.5, 0.75 and 1 of each fold's training extractants; within a draw the subsets are nested. The full-data run reproduces the stored champion exactly. Because the anchor is one number per extractant it cancels in every adjacent pair, so the level model does not affect the score and only the shape model's training set matters.
+
+\section{Americium transfer}
+\label{app:am}
+
+The same database holds 1{,}794 Am(III) rows on 110 ligands, 95\,\% of them ligands with lanthanide data, giving 312 Am/Eu separation factors on 82 extractants under identical conditions. Zero-shot, with Am treated as a lanthanide at its radius, the Am/Eu separation is not predicted ($R^2 = -0.14$). Joint training with the Am rows reaches $+0.47$ on held-out extractants, but a control that assigns each held-out extractant the mean of the other extractants in its ligand family scores $+0.47$ as well, and within a family the model has no skill ($R^2 = +0.02$); the lanthanide target is unchanged ($+0.002 \pm 0.020$ over paired seeds). The model learns which ligand classes discriminate Am from Eu, nothing finer.
 
 \section{Ln-xTB parameters}
 \label{app:lnxtb}

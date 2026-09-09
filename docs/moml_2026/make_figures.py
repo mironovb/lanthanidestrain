@@ -126,12 +126,47 @@ def fig2b(comp):
     return {n: (float(cw[a].mean()), float(cw[a].std(ddof=1))) for a, n in HAM}
 
 
+# ------------------------------------------------------------ figure 3
+def fig3():
+    """Learning curve over training extractants (automl/topo/learning_curve.py)."""
+    arms = [("both", "level and shape models", fs.COLOR["model"]),
+            ("shape_only", "shape model only", fs.COLOR["hit"])]
+    data = {}
+    for arm, _, _ in arms:
+        p = REPO / f"automl/reports/learning_curve_{arm}.json"
+        if p.exists():
+            data[arm] = json.loads(p.read_text())
+    if "both" not in data:
+        print("fig3: no learning-curve results yet"); return None
+    fig, ax = fs.figure(3.6, 3.4)
+    F = data["both"]["fits"]
+    pts = pd.DataFrame(F["points"]); col = fs.COLOR["model"]
+    n_full = float(pts.n.max())
+    h1 = ax.errorbar(pts.n, pts.r2, yerr=[pts.r2 - pts.lo, pts.hi - pts.r2], fmt="o", color=col,
+                     ms=5, capsize=2.5, lw=1.1, label="mean of 4 seeds × 3 draws (range)")
+    xx = np.linspace(pts.n.min() * 0.9, 2.0 * n_full, 200)
+    hy, pw = F["hyperbolic"], F["power"]
+    h2, = ax.plot(xx, hy["R_inf"] - hy["k"] / xx, color=col, lw=1.1, ls="-", label="hyperbolic fit")
+    h3, = ax.plot(xx, pw["R_inf"] - pw["k"] * xx ** (-pw["c"]), color=col, lw=1.1, ls=":",
+                  label="power-law fit")
+    h4 = ax.axvline(n_full, ls="--", lw=0.9, color=fs.NEUTRAL, label="all training extractants")
+    ax.set_xscale("log"); ax.set_xlabel("training extractants with adjacent pairs")
+    ax.set_ylabel("adjacent-pair log SF R²")
+    ax.set_xticks([10, 20, 40, 80, 120]); ax.set_xticklabels(["10", "20", "40", "80", "120"])
+    ax.minorticks_off()
+    fs.legend_above(ax, [h1, h2, h3, h4], [h.get_label() for h in (h1, h2, h3, h4)], ncol=1)
+    fs.finish(fig, "fig3_learning_curve")
+    return data["both"]["fits"]["verdict"]
+
+
 def main() -> int:
     r = fig1a(); fig1b()
     df = series_records()
     comp = pd.DataFrame(json.loads((SER / "compliance_test.json").read_text())["compliance"])
     lig, cn = fig2a(df, comp); stats = fig2b(comp)
     print(f"fig1a r = {r:.3f}; fig2a example ligand {lig} (CN {cn}); fig2b {stats}")
+    v = fig3()
+    if v: print("fig3 verdict:", v)
     return 0
 
 
