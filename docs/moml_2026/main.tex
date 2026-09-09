@@ -151,8 +151,9 @@ The predictions are calibrated in the sense that the regression of truth on pred
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.98\linewidth]{ranking}
-	\caption{Decision quality on held-out extractants. (A) For each adjacent pair, extractants are ranked by predicted separation: Spearman correlation with the measured ranking and top-quartile hit rate (chance 0.25). (B) Split-conformal intervals calibrated leave-one-extractant-out: empirical coverage at nominal 80\,\% and 90\,\%.}
+	\begin{minipage}[t]{0.46\linewidth}\centering\includegraphics[width=\linewidth]{fig1a_parity}\end{minipage}\hfill
+	\begin{minipage}[t]{0.50\linewidth}\centering\includegraphics[width=\linewidth]{fig1b_ranking}\end{minipage}
+	\caption{Best system on held-out extractants. Left: predicted against measured adjacent-pair $\log \mathrm{SF}$ for the 905 legacy pairs; the dashed line is the identity. Right: for each adjacent pair, extractants ranked by predicted separation against the measured ranking (Spearman $\rho$) and the fraction of the predicted top quartile that is in the measured top quartile; the dashed line is the hit rate by chance.}
 	\label{fig:ranking}
 \end{figure}
 
@@ -204,8 +205,9 @@ All $3 \times 1{,}065$ optimisations converged.
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.98\linewidth]{contraction}
-	\caption{The lanthanide contraction in 71 ligand complexes. (A) One ligand: mean Ln--donor distance against the Shannon radius under the three Hamiltonians. (B) Per-ligand compliance $c_L$ for all 71 ligands; 1.00 is exact agreement with the ionic radii.}
+	\begin{minipage}[t]{0.48\linewidth}\centering\includegraphics[width=\linewidth]{fig2a_series}\end{minipage}\hfill
+	\begin{minipage}[t]{0.48\linewidth}\centering\includegraphics[width=\linewidth]{fig2b_compliance}\end{minipage}
+	\caption{The lanthanide contraction in 71 ligand complexes. Left: one ligand (the one at GFN2-xTB's median compliance), mean Ln--donor distance against the Shannon radius across Ce--Lu under the three Hamiltonians, with the fitted slopes. Right: the per-ligand compliance $c_L$ for all 71 ligands, with the mean of each Hamiltonian as a bar; 1.00 is exact agreement with the ionic radii.}
 	\label{fig:contraction}
 \end{figure}
 
