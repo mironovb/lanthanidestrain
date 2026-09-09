@@ -96,11 +96,13 @@ def fig2a(df, comp):
         c, b = np.polyfit(x, yv, 1)
         xx = np.array([x.min() - 0.005, x.max() + 0.005])
         ax.plot(xx, c * xx + b, color=HCOL[arm], lw=1.3, zorder=2)
-        ax.scatter(x, yv, s=22, color=HCOL[arm], linewidths=0, zorder=3,
-                   label=f"{name}, slope {c:.2f}")
+        ax.scatter(x, yv, s=22, color=HCOL[arm], linewidths=0, zorder=3, label=name)
+        ax.text(xx[0] - 0.004, c * xx[0] + b, f"{c:.2f}", color=HCOL[arm],
+                ha="left", va="center")                 # slope at the line's small-radius end
     ax.invert_xaxis()
+    x0, x1 = ax.get_xlim(); ax.set_xlim(x0, x1 - 0.03)   # room for the slope labels
     ax.set_xlabel("Shannon radius of Ln$^{3+}$ (Å)"); ax.set_ylabel("mean Ln–donor distance (Å)")
-    fs.legend_above(ax, ncol=1)
+    fs.legend_above(ax, ncol=3)
     fs.finish(fig, "fig2a_series")
     return fam.split("||")[0], cn
 
