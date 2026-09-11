@@ -32,8 +32,15 @@ HAM = [("gfn2", "GFN2-xTB"), ("gxtb_hs", "g-xTB"), ("lnxtb_hs", "Ln-xTB")]
 HCOL = {"gfn2": fs.COLOR["gfn2"], "gxtb_hs": fs.COLOR["gxtb"], "lnxtb_hs": fs.COLOR["lnxtb"]}
 
 
+def letter(ax, ch):
+    """16 pt bold panel letter, outside the axes at the top left."""
+    if ch:
+        ax.text(-0.22, 1.02, ch, transform=ax.transAxes, fontsize=fs.TITLE,
+                fontweight="bold", ha="left", va="bottom")
+
+
 # ------------------------------------------------------------ figure 1a
-def fig1a():
+def fig1a(ch=None):
     P = pair_table()
     dy, dp = P.dy.to_numpy(), P.dp.to_numpy()
     r = np.corrcoef(dy, dp)[0, 1]
@@ -48,12 +55,13 @@ def fig1a():
     ax.set_xlabel("measured log SF"); ax.set_ylabel("predicted log SF")
     ax.text(0.03, 0.97, f"r = {r:.2f}\n{len(P)} pairs, {P.ex.nunique()} extractants",
             transform=ax.transAxes, va="top", ha="left")
+    letter(ax, ch)
     fs.finish(fig, "fig1a_parity")
     return r
 
 
 # ------------------------------------------------------------ figure 1b
-def fig1b():
+def fig1b(ch=None):
     D = json.loads((REPO / "automl/reports/decision_quality.json").read_text())
     R = D["ranking"]["by_position"]
     pos = list(R.keys())[::-1]                      # La-Ce at the top
@@ -70,6 +78,7 @@ def fig1b():
     ax.set_xlabel("ranking of held-out extractants")
     ax.tick_params(axis="y", length=0)
     fs.legend_above(ax, [h1, h2, h3], [h.get_label() for h in (h1, h2, h3)], ncol=1)
+    letter(ax, ch)
     fs.finish(fig, "fig1b_ranking")
 
 
@@ -107,7 +116,7 @@ def fig2a(df, comp):
     return fam.split("||")[0], cn
 
 
-def fig2b(comp):
+def fig2b(comp, ch=None):
     cw = comp.pivot(index="family", columns="arm", values="c_L")[[h for h, _ in HAM]].dropna()
     assert len(cw) == 71, len(cw)
     fig, ax = fs.figure(3.4, 3.4)
@@ -122,12 +131,13 @@ def fig2b(comp):
     ax.set_xlim(-0.5, len(HAM) - 0.5); ax.set_ylim(0, 1.5)
     ax.set_ylabel("contraction compliance c$_L$")
     fs.legend_above(ax, ncol=1)
+    letter(ax, ch)
     fs.finish(fig, "fig2b_compliance")
     return {n: (float(cw[a].mean()), float(cw[a].std(ddof=1))) for a, n in HAM}
 
 
 # ------------------------------------------------------------ figure 3
-def fig3():
+def fig3(ch=None):
     """Learning curve over training extractants (automl/topo/learning_curve.py)."""
     arms = [("both", "level and shape models", fs.COLOR["model"]),
             ("shape_only", "shape model only", fs.COLOR["hit"])]
@@ -138,7 +148,7 @@ def fig3():
             data[arm] = json.loads(p.read_text())
     if "both" not in data:
         print("fig3: no learning-curve results yet"); return None
-    fig, ax = fs.figure(3.6, 3.4)
+    fig, ax = fs.figure(3.4, 3.4)
     F = data["both"]["fits"]
     pts = pd.DataFrame(F["points"]); col = fs.COLOR["model"]
     n_full = float(pts.n.max())
@@ -155,17 +165,18 @@ def fig3():
     ax.set_xticks([10, 20, 40, 80, 120]); ax.set_xticklabels(["10", "20", "40", "80", "120"])
     ax.minorticks_off()
     fs.legend_above(ax, [h1, h2, h3, h4], [h.get_label() for h in (h1, h2, h3, h4)], ncol=1)
+    letter(ax, ch)
     fs.finish(fig, "fig3_learning_curve")
     return data["both"]["fits"]["verdict"]
 
 
 def main() -> int:
-    r = fig1a(); fig1b()
+    r = fig1a("a"); fig1b("b")
     df = series_records()
     comp = pd.DataFrame(json.loads((SER / "compliance_test.json").read_text())["compliance"])
-    lig, cn = fig2a(df, comp); stats = fig2b(comp)
+    lig, cn = fig2a(df, comp); stats = fig2b(comp, "c")
     print(f"fig1a r = {r:.3f}; fig2a example ligand {lig} (CN {cn}); fig2b {stats}")
-    v = fig3()
+    v = fig3("d")
     if v: print("fig3 verdict:", v)
     return 0
 
