@@ -41,6 +41,7 @@ from automl.topo.snn import SimplicialNet, MaskedChargeHead, count_parameters
 from automl.topo.pi_cnn import PersistenceImages, PersistenceCNN, PI_PATH
 from automl.topo.tabular_net import TabularNet, NullCache
 from automl.topo.dist_gnn import DistanceNet
+from automl.topo.attn_gnn import AttentionNet
 
 REPO = Path(__file__).resolve().parents[2]
 OUT_DIR = REPO / "automl/artifacts/topo_runs"
@@ -158,7 +159,7 @@ def build_row_table(preset: str = "baseline_2d", arch: str = "snn",
     # node features -- so it must select the same rows or the paired bootstrap
     # would compare two different datasets.
     key_arch = match_rows if arch == "tabular" else (
-        "snn" if arch == "dist" else arch)
+        "snn" if arch in ("dist", "attn") else arch)
     asset = ((edge_asset(edge_asset_name) if edge_asset_name
               else geometry_asset(geometry)) if key_arch == "snn"
              else PersistenceImages())
@@ -316,6 +317,10 @@ class ComplexCache:
         # metal_ang only adds a readout key and leaves node_feat alone.
         self.node_angular = bool(angular if node_angular is None else node_angular)
         self.metal_angular = bool(angular if metal_angular is None else metal_angular)
+        # --arch attn needs atom coordinates for its all-pairs distance bias.
+        # Added to the batch only when set, so every other arm's batch dict
+        # is byte-identical to the published one.
+        self.with_coords = False
         self._c: dict[Any, Any] = {}
 
     def get(self, k: int, conformer: int = 0):
@@ -337,7 +342,11 @@ class ComplexCache:
 
     def batch(self, ids: list[int], conformers: list[int] | None = None):
         cs = conformers if conformers is not None else [0] * len(ids)
-        b = collate([self.get(i, c) for i, c in zip(ids, cs)])
+        objs = [self.get(i, c) for i, c in zip(ids, cs)]
+        b = collate(objs)
+        if self.with_coords:
+            b["coords"] = torch.as_tensor(
+                np.concatenate([o.coords for o in objs]).astype(np.float32))
         return {k: (v.to(self.device) if torch.is_tensor(v) else v)
                 for k, v in b.items()}
 
@@ -546,6 +555,27 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
                             pair_head=bool(cfg.get("pair_head")),
                             film_dim=(len(cond_idx) if cfg.get("film") else 0),
                             ).to(device)
+    elif cfg.get("arch", "snn") == "attn":
+        # Transformer over the atoms of each complex.  Same node inputs,
+        # readout, head width and losses as DistanceNet; only the body differs
+        # (attention with a learned distance bias instead of continuous-filter
+        # message passing).  See attn_gnn.py.
+        model = AttentionNet(dim=cfg["dim"], layers=cfg["layers"],
+                             dropout=cfg["dropout"], tabular_dim=X.shape[1],
+                             head_hidden=cfg["head_hidden"],
+                             rbf_bins=int(cfg.get("rbf_bins") or 32),
+                             rbf_max=float(cfg["rbf_max"]
+                                           if cfg.get("rbf_max") is not None
+                                           else cfg.get("filtration_max", 3.5)),
+                             radial_bins=int(cfg.get("radial_bins") or 32),
+                             radial_max=float(cfg.get("radial_max") or 8.0),
+                             head_embed_mult=2 if cfg.get("block_centre") else 1,
+                             pair_head=bool(cfg.get("pair_head")),
+                             film_dim=(len(cond_idx) if cfg.get("film") else 0),
+                             n_heads=int(cfg.get("attn_heads") or 4),
+                             sparse=bool(cfg.get("attn_sparse")),
+                             bias_max=float(cfg.get("attn_bias_max") or 10.0),
+                             ).to(device)
     else:
         from automl.topo.simplicial_data import N_ANGULAR_BINS
         # T3: which design-matrix columns are experimental conditions.  Taken
@@ -1251,7 +1281,8 @@ def run_fold(df, X, cache, tr_idx, te_idx, *, cfg, device, seed,
 # ---------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--arch", choices=("snn", "picnn", "tabular", "dist"),
+    ap.add_argument("--arch", choices=("snn", "picnn", "tabular", "dist",
+                                       "attn"),
                     default="snn",
                     help="'tabular' is the no-topology control: identical loop,\n"
                          "loss, folds and seeds with a width-zero embedding.\n"
@@ -1442,6 +1473,14 @@ def main() -> int:
                          "zeroes only the four metal COLUMNS and is NOT exact "
                          "under --arch snn/dist, where the embedding is a "
                          "different complex per metal")
+    ap.add_argument("--attn-heads", type=int, default=4,
+                    help="--arch attn: attention heads (dim must divide)")
+    ap.add_argument("--attn-sparse", action="store_true",
+                    help="--arch attn: restrict attention to the <= cutoff "
+                         "neighbourhood the message-passing encoders use")
+    ap.add_argument("--attn-bias-max", type=float, default=10.0,
+                    help="--arch attn: distance at which the attention bias "
+                         "basis saturates (dense mode)")
     ap.add_argument("--population", default="ok_only",
                     choices=("ok_only", "has3d", "collab"),
                     help="has3d relaxes the geometry-QC row filter (August "
@@ -1540,7 +1579,7 @@ def main() -> int:
                   "which does not carry the interaction term. Crossing them "
                   "double-counts.", flush=True)
     if args.edge_asset:
-        if args.arch != "dist" and not args.no_triangles:
+        if args.arch not in ("dist", "attn") and not args.no_triangles:
             raise SystemExit(
                 "--edge-asset carries no 2-simplices; an --arch snn run "
                 "without --no-triangles would be a no-triangles model recorded "
@@ -1662,6 +1701,7 @@ def main() -> int:
         cache = ComplexCache(S, args.filtration_max, args.heavy_only, device,
                              node_angular=bool(args.node_angular),
                              metal_angular=bool(args.angular_readout))
+        cache.with_coords = (args.arch == "attn")
         n_assets = len(S)
         if args.conformers > 1:
             tot = sum(S.n_conformers(k) for k in range(len(S)))
@@ -1671,6 +1711,9 @@ def main() -> int:
            ("dim", "layers", "dropout", "head_hidden", "lr", "weight_decay",
             "epochs", "batch_rows", "eval_batch", "val_every", "patience")}
     cfg["arch"] = args.arch
+    cfg["attn_heads"] = args.attn_heads
+    cfg["attn_sparse"] = args.attn_sparse
+    cfg["attn_bias_max"] = args.attn_bias_max
     cfg["pair_loss_weight"] = args.pair_loss_weight
     cfg["pair_adj_weight"] = args.pair_adj_weight
     cfg["pair_adj_only"] = args.pair_adj_only
@@ -1861,6 +1904,8 @@ def main() -> int:
                and args.radius_slope_u == "row" else "")
             + (f"_ea{args.edge_asset}" if args.edge_asset else "")
             + ("" if args.population == "ok_only" else f"_pop{args.population}")
+            + (f"_h{args.attn_heads}" if args.arch == "attn" else "")
+            + ("_asp" if (args.arch == "attn" and args.attn_sparse) else "")
             + (f"_fb{args.rbf_bins}" if args.rbf_bins else "")
             + (f"_fm{args.rbf_max}" if args.rbf_max else ""))
     pd.DataFrame({
