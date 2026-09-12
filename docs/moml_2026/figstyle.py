@@ -22,15 +22,16 @@ DPI = 300
 BODY, TITLE = 12, 16
 NEUTRAL = "#7a7a7a"          # scaffolding only: reference lines, 1:1 line
 
-# Paul Tol's "vibrant" qualitative scheme (colour-blind safe; SRON technical
-# note on colour schemes).  One colour per entity, reused in every panel.
-TOL = {"blue": "#0077BB", "cyan": "#33BBEE", "teal": "#009988",
-       "orange": "#EE7733", "red": "#CC3311", "magenta": "#EE3377"}
+# Okabe-Ito palette (colour-blind safe).  One colour per entity, reused in
+# every panel; black and grey only for scaffolding (identity, reference lines).
+OI = {"orange": "#E69F00", "skyblue": "#56B4E9", "green": "#009E73",
+      "yellow": "#F0E442", "blue": "#0072B2", "vermilion": "#D55E00",
+      "purple": "#CC79A7", "black": "#000000"}
 COLOR = {
-    "model": TOL["blue"],       # the model's predictions / its scores
-    "bins": TOL["magenta"],     # binned means of the predictions
-    "hit": TOL["orange"],       # top-quartile hit rate
-    "gfn2": TOL["red"], "gxtb": TOL["teal"], "lnxtb": TOL["cyan"],
+    "model": OI["blue"],        # the model's predictions / its scores
+    "bins": OI["purple"],       # (unused) binned means
+    "hit": OI["orange"],        # top-quartile hit rate
+    "gfn2": OI["vermilion"], "gxtb": OI["green"], "lnxtb": OI["skyblue"],
 }
 
 
