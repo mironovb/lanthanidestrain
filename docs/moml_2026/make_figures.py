@@ -74,18 +74,31 @@ def fig1b(ch=None):
     y = np.arange(len(pos)); h = 0.38
     ax.barh(y + h / 2, rho, height=h, color=fs.COLOR["model"])
     ax.barh(y - h / 2, hit, height=h, color=fs.COLOR["hit"])
-    ax.vlines(chance, -0.7, len(pos) - 1 + 0.75, ls="--", lw=0.7, color=fs.OI["black"], zorder=3)
+    ax.vlines(chance, -0.7, len(pos) - 1 + 0.8, ls="--", lw=0.7, color=fs.OI["black"], zorder=3)
     # names written beside the shortest row's bars, where the axes are empty
     top = len(pos) - 1
-    # series names as coloured text in the empty band above the bars (one line,
-    # right-aligned); the chance level is named in its tick label
+    # series names in the empty pocket to the right of the shortest rows.  A
+    # 12 pt line is about one row tall, so a name centred on row k must clear
+    # the bars of row k, the orange bar of the row above (k+1) and the blue bar
+    # of the row below (k-1).  The orange name is two lines and takes two rows.
     top = len(pos) - 1
-    ax.text(1.0, top + 1.05, "top-quartile hit rate", ha="right", va="bottom", color=fs.COLOR["hit"])
-    ax.text(0.40, top + 1.05, "Spearman ρ", ha="right", va="bottom", color=fs.COLOR["model"])
+    def clear_x(rows):
+        lo, hi = min(rows), max(rows)
+        xs = [max(rho[k], hit[k]) for k in rows]
+        if hi + 1 <= top: xs.append(hit[hi + 1])
+        if lo - 1 >= 0: xs.append(rho[lo - 1])
+        return max(xs) + 0.03
+    kb = min(range(len(pos)), key=lambda k: clear_x([k]))
+    pairs = [(k, k - 1) for k in range(1, len(pos)) if kb not in (k, k - 1)]
+    ko = min(pairs, key=lambda pr: clear_x(list(pr)))
+    ax.text(clear_x([kb]), kb, "Spearman ρ", va="center", ha="left", color=fs.COLOR["model"])
+    ax.text(clear_x(list(ko)), np.mean(ko), "top-quartile\nhit rate", va="center", ha="left",
+            color=fs.COLOR["hit"], linespacing=1.1)
+    ax.text(chance, top + 0.85, "chance", ha="center", va="bottom", color=fs.OI["black"])
     ax.set_yticks(y); ax.set_yticklabels(pos)
-    ax.set_ylim(-0.7, top + 1.9)
-    ax.set_xlim(0, 1.0); ax.set_xticks([0, chance, 0.5, 0.75, 1.0])
-    ax.set_xticklabels(["0", f"{chance:.2f}\nchance", "0.5", "0.75", "1"])
+    ax.set_ylim(-0.7, top + 1.7)
+    ax.set_xlim(0, 1.0); ax.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
+    ax.set_xticklabels(["0", "0.25", "0.5", "0.75", "1"])
     ax.set_xlabel("ranking of held-out extractants")
     ax.tick_params(axis="y", length=0)
     letter(ax, ch)
