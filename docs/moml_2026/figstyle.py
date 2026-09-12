@@ -22,10 +22,15 @@ DPI = 300
 BODY, TITLE = 12, 16
 NEUTRAL = "#7a7a7a"          # scaffolding only: reference lines, 1:1 line
 
-# one colour per entity, reused in every panel
+# Paul Tol's "vibrant" qualitative scheme (colour-blind safe; SRON technical
+# note on colour schemes).  One colour per entity, reused in every panel.
+TOL = {"blue": "#0077BB", "cyan": "#33BBEE", "teal": "#009988",
+       "orange": "#EE7733", "red": "#CC3311", "magenta": "#EE3377"}
 COLOR = {
-    "gfn2": PALETTE["blue"], "gxtb": PALETTE["orange"], "lnxtb": PALETTE["aqua"],
-    "model": PALETTE["blue"], "hit": PALETTE["violet"],
+    "model": TOL["blue"],       # the model's predictions / its scores
+    "bins": TOL["magenta"],     # binned means of the predictions
+    "hit": TOL["orange"],       # top-quartile hit rate
+    "gfn2": TOL["red"], "gxtb": TOL["teal"], "lnxtb": TOL["cyan"],
 }
 
 

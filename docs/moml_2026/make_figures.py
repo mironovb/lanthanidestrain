@@ -48,13 +48,29 @@ def fig1a(ch=None):
     fig, ax = fs.figure(3.4, 3.4)
     m = float(max(np.abs(dy).max(), np.abs(dp).max())) + 0.15   # limits from the data
     lim = (-m, m)
-    ax.plot(lim, lim, ls="--", lw=0.9, color=fs.NEUTRAL, zorder=1)
-    ax.scatter(dy, dp, s=12, color=fs.COLOR["model"], alpha=0.55, linewidths=0, zorder=2)
+    h_id, = ax.plot(lim, lim, ls="--", lw=0.8, color=fs.NEUTRAL, zorder=1, label="y = x")
+    h_pt = ax.scatter(dy, dp, s=9, color=fs.COLOR["model"], alpha=0.45, linewidths=0,
+                      zorder=2, label="held-out pair (905)")
+    # conditional mean of the prediction in 0.25-wide bins of the measured value
+    # (bins with fewer than 10 pairs are dropped)
+    # 0.25-wide bins through the bulk, wider bins in the sparse tails
+    edges = np.array([-2.6, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 2.6])
+    idx = np.digitize(dy, edges) - 1
+    xb, yb, ci = [], [], []
+    for k in range(len(edges) - 1):
+        sel = idx == k
+        if sel.sum() >= 10:
+            xb.append(dy[sel].mean()); yb.append(dp[sel].mean())
+            ci.append(1.96 * dp[sel].std(ddof=1) / np.sqrt(sel.sum()))
+    xb, yb, ci = map(np.array, (xb, yb, ci))
+    ax.plot(xb, yb, color=fs.COLOR["bins"], lw=1.0, zorder=3)
+    h_bin = ax.errorbar(xb, yb, yerr=ci, fmt="o", ms=4.5, color=fs.COLOR["bins"], ecolor=fs.COLOR["bins"],
+                        elinewidth=1.0, capsize=2, zorder=4, label="bin mean ± 95 % CI")
     ax.set_xlim(lim); ax.set_ylim(lim); ax.set_aspect("equal")
     ax.set_xticks([-2, -1, 0, 1, 2]); ax.set_yticks([-2, -1, 0, 1, 2])
     ax.set_xlabel("measured log SF"); ax.set_ylabel("predicted log SF")
-    ax.text(0.03, 0.97, f"r = {r:.2f}\n{len(P)} pairs, {P.ex.nunique()} extractants",
-            transform=ax.transAxes, va="top", ha="left")
+    ax.text(0.03, 0.97, f"r = {r:.2f}", transform=ax.transAxes, va="top", ha="left")
+    fs.legend_above(ax, [h_pt, h_bin, h_id], [h.get_label() for h in (h_pt, h_bin, h_id)], ncol=1)
     letter(ax, ch)
     fs.finish(fig, "fig1a_parity")
     return r
@@ -171,6 +187,16 @@ def fig3(ch=None):
 
 
 def main() -> int:
+    import argparse
+    ap = argparse.ArgumentParser(); ap.add_argument("--only", nargs="*", default=None)
+    only = ap.parse_args().only
+    if only is not None:
+        if "a" in only: print("fig1a r =", round(fig1a("a"), 3))
+        if "b" in only: fig1b("b")
+        if "c" in only:
+            comp = pd.DataFrame(json.loads((SER / "compliance_test.json").read_text())["compliance"]); fig2b(comp, "c")
+        if "d" in only: fig3("d")
+        return 0
     r = fig1a("a"); fig1b("b")
     df = series_records()
     comp = pd.DataFrame(json.loads((SER / "compliance_test.json").read_text())["compliance"])
