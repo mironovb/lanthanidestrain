@@ -134,13 +134,28 @@ def fig2b(comp, ch=None):
     assert len(cw) == 71, len(cw)
     fig, ax = fs.figure(3.8, 3.7)
     data = [cw[a].to_numpy() for a, _ in HAM]
-    parts = ax.violinplot(data, positions=range(len(HAM)), widths=0.8, points=300,
-                          showmeans=False, showmedians=False, showextrema=False)
+    # violins computed directly: Gaussian KDE with Scott's bandwidth, evaluated
+    # 1.5 bandwidths beyond the data so the ends taper instead of being cut,
+    # ONE width scale for all three groups (equal n, so equal areas), and a thin
+    # outline in the group colour so a near-zero-density neck (g-xTB between
+    # its outlier at 0.61 and the bulk) stays visibly connected
+    from scipy.stats import gaussian_kde
+    grids, dens = [], []
+    for v in data:
+        kde = gaussian_kde(v)                      # Scott: factor = n^(-1/5)
+        bw = kde.factor * v.std(ddof=1)
+        g = np.linspace(max(0.0, v.min() - 1.5 * bw), v.max() + 1.5 * bw, 600)
+        d = kde(g)
+        assert abs(np.trapz(d, g) - 1.0) < 0.03, np.trapz(d, g)   # integrates to 1
+        grids.append(g); dens.append(d)
+    scale = 0.42 / max(d.max() for d in dens)     # widest violin = 0.42 half-width
     rng = np.random.default_rng(0)
-    for i, ((arm, name), body, v) in enumerate(zip(HAM, parts["bodies"], data)):
-        body.set_facecolor(HCOL[arm]); body.set_alpha(0.25); body.set_edgecolor(HCOL[arm]); body.set_linewidth(0.8)
-        ax.scatter(i + rng.uniform(-0.10, 0.10, len(v)), v, s=7, color=HCOL[arm], linewidths=0, zorder=3)
-        ax.hlines(v.mean(), i - 0.30, i + 0.30, color=HCOL[arm], lw=2.0, zorder=4)
+    for i, ((arm, name), v, g, d) in enumerate(zip(HAM, data, grids, dens)):
+        ax.fill_betweenx(g, i - scale * d, i + scale * d, facecolor=HCOL[arm], alpha=0.35,
+                         edgecolor=HCOL[arm], linewidth=0.8, zorder=2)
+        ax.scatter(i + rng.uniform(-0.06, 0.06, len(v)), v, s=6, color=HCOL[arm], alpha=0.9,
+                   linewidths=0, zorder=3)
+        ax.hlines(v.mean(), i - 0.22, i + 0.22, color=HCOL[arm], lw=2.4, zorder=5)
     ax.axhline(1.0, ls="--", lw=0.7, color=fs.OI["black"], zorder=2)
     ax.text(-0.45, 0.98, "Shannon radii", ha="left", va="top", color=fs.OI["black"])
     ax.set_xticks(range(len(HAM)))
