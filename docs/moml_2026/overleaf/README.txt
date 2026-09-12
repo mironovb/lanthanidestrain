@@ -11,4 +11,4 @@ MoML 2026 submission -- Overleaf package
 Rules: 2-4 pages of main text; references and appendices do not count.
 Under a plain-article stand-in for the style the main text ends on page 4;
 check the page break again under the real style.
-Open items: author e-mails (three TODOs), acknowledgements, co-author consent.
+Open item: acknowledgements (TODO).

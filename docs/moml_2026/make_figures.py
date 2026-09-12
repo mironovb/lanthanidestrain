@@ -223,6 +223,7 @@ def figure1(comp):
                           wspace=0.33, hspace=0.38)
     axs = [fig.add_subplot(gs[i, j]) for i in range(2) for j in range(2)]
     fig1a("a", ax=axs[0]); fig1b("b", ax=axs[1]); fig2b(comp, "c", ax=axs[2]); fig3("d", ax=axs[3])
+    axs[0].set_anchor("W")     # square parity axes flush left, so its y axis lines up with panel c's
     fs.finish(fig, "figure1")
 
 

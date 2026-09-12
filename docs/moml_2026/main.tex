@@ -114,51 +114,50 @@
 \author[Mironov et al.]
 {Bogdan Mironov \\
  \institute{Department of Chemistry, Berea College \\ Berea, KY, USA} \\
- \email{TODO@berea.edu}\And
+ \email{mironovb@berea.edu}\And
  Dias Daulet \\
  \institute{NIS Nauryzbay \\ Almaty, Kazakhstan} \\
- \email{TODO@example.com}\And
+ \email{daulet_d0806@hbalm.nis.edu.kz}\And
  Konstantinos D. Vogiatzis \\
  \institute{Department of Chemistry, University of Tennessee \\ Knoxville, TN, USA} \\
- \email{TODO@utk.edu}}
+ \email{kvogiatz@utk.edu}}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Separating neighbouring lanthanides is the most demanding step in rare-earth processing. Adjacent ions differ in radius by about 0.013~\AA{}, and a ligand that prefers one over the other is still found by trial. We ask how well that preference can be predicted for ligands a model has never seen, using nothing but the published solvent-extraction literature. From the SAFE database we assembled 4{,}746 distribution ratios for 162 extractants across the lanthanide series and trained gradient-boosting models to predict the separation factor of each adjacent pair measured under the same conditions. With whole extractants held out, predicted and measured log separation factors correlate at $r = 0.59$ over 905 pairs ($R^2 = 0.33$). The improvement over a model trained on the distribution ratios directly ($R^2 = 0.27$) comes from one change: a ligand's overall extraction strength and the differences between metals are predicted by two separate models, so the second is judged only on what tells the metals apart. In practice, half of the model's top-quartile suggestions for a given pair are genuinely top-quartile (a quarter by chance), separation factors above two are picked out with an AUC of 0.81, and the uncertainty intervals hold their nominal coverage. A graph neural network on computed structures of the metal--ligand complexes adds only 0.015 to the score, and a benchmark of three semiempirical methods on 71 ligands shows why: GFN2-xTB reproduces 40\,\% of the lanthanide contraction and g-xTB 108\,\%, but under either the structures carry little about the metal beyond its size, which the model already has. The score stops rising at about forty-five training extractants, so further gains will come from information that separates ligands within a chemical family, not from more of the same data.
+Adjacent lanthanide ions differ in radius by about 0.013~\AA{}, and separating them is the most expensive step in rare-earth processing. In this work, we show that the published solvent-extraction record contains sufficient information to learn which ligands perform this separation effectively. On 4{,}746 measurements covering 162 extractants, a gradient-boosting model evaluated with whole extractants held out predicts log separation factors that correlate with experiment at $r = 0.59$ across 905 adjacent pairs. The prediction is split in two: one model estimates the overall extraction level of each series, the other the differences between its metals, and the pair outperforms a single model trained directly on the separation factors. Used as a screen, the model identifies the most effective separations (above a factor of two) with an AUC of 0.81, and extractants ranked in the model's top quartile fall within the true top quartile 50\,\% of the time, twice the rate expected by chance. The conformal prediction intervals match their nominal coverage. A graph neural network operating on three-dimensional metal--ligand geometries provides similar predictions independently complex and adds a small further gain in combined model.
 \end{abstract}
 
 \section{Introduction}
-Trivalent lanthanides are chemically alike. The ionic radius shrinks by roughly 0.013~\AA{} per element along the series \citep{shannon1976}, and that contraction is nearly all a ligand has to work with when asked to prefer neodymium over praseodymium. Industrial separation runs through dozens of extraction stages, and better extractants are still found by trial \citep{cheisson2019}.
+Trivalent lanthanides scarcely differ chemically. Along the series, the ionic radius decreases by about 0.013~\AA{} from one lanthanide to the next \citep{shannon1976}. A ligand that separates neodymium from praseodymium has, in effect, mostly only that shrinkage to to use for the separation. An industrial plant therefore runs its extraction stages in long series. New extractants still found, for the most part, from trial and error \citep{cheisson2019}.
 
-Decades of that hand work are written down. The SAFE database \citep{safe2025} collects distribution ratios from the extraction literature, and many ligands in it have been measured across most of the series under one set of conditions. Two distribution ratios from the same experiment give the separation factor of that pair, with the noise common to both cancelled. This paper asks how much adjacent-lanthanide selectivity can be learned from that record for a ligand the model has never seen, and what a 3D structure of the complex adds. The answer has four parts: a scoring construction that isolates selectivity from extraction strength (Section~\ref{sec:data}), the level/shape decomposition (Section~\ref{sec:model}), what 3D structure adds and why so little (Sections~\ref{sec:results} and \ref{sec:geom}), and how much data the problem needs.
+The SAFE database \citep{safe2025} compiles distribution ratios from the solvent-extraction literature, and many of its ligands have been measured across most of the series under a single set of conditions. The separation factor of a pair of metals is the ratio of their distribution ratios from the same experiment, so errors that are common to both measurements cancel. This paper addresses how much adjacent-lanthanide selectivity can be learned from this record for extractants not seen during training, and what a three-dimensional (3D) structure of the metal--ligand complex adds. The work makes the following three contributions: (i) an evaluation score and a model that both separate extraction strength from selectivity ($+0.27 \to +0.33$ from the model split with the same learner and features); (ii) a small gain from 3D structures of the complexes; and (iii) a benchmark of three tight-binding Hamiltonians on the lanthanide contraction, which measures how much information about the metal a computed geometry contains. Past a few dozen training extractants, the learning curve levels off.
 
 \section{Data and target}
 \label{sec:data}
-From SAFE we keep lanthanide(III) rows with a resolvable extractant structure, canonicalise the SMILES, remove duplicates and detection-limit placeholders, and retain the 4{,}746 measurements of \logD{} on 162 extractants for which a complex geometry exists, so that every model is compared on the same rows; each row carries the extractant, the metal and 64 condition columns. The 956 complexes were built with Architector \citep{architector} (extractant plus nitrate or water to coordination number 8--10) and optimised with GFN2-xTB \citep{bannwarth2019gfn2}.
+From the SAFE Database lanthanide(III) rows with a resolvable extractant structure were kept. We canonicalise the SMILES, remove duplicates and detection-limit placeholders, and retain the 4{,}746 measurements of \logD{} on 162 extractants for which a complex geometry exists. Each row carries the extractant, the metal and 64 condition columns. The 956 complexes were built with Architector \citep{architector} (extractant and nitrate or water to coordination number 8--10) and optimised with GFN2-xTB \citep{bannwarth2019gfn2}.
 
-A separation factor is only defined between measurements made under the same conditions, so rows are grouped into blocks (one extractant, one bin of each of ten condition descriptors), replicate measurements of a metal within a block are averaged into a cell, and each pair of cells whose lanthanides are neighbours in the series gives one target value,
+A separation factor is only defined between measurements made under the same conditions, therefore rows are grouped into blocks (one extractant, one bin of each of ten condition descriptors). Within a block, replicate \logD{} measurements of one metal are averaged into a cell, and each pair of cells whose lanthanides lie adjacent in the series contributes one target value,
 \begin{equation}
   \logSF_{i,i+1} = \logD_{\mathrm{Ln}_i} - \logD_{\mathrm{Ln}_{i+1}} .
   \label{eq:target}
 \end{equation}
-Models are trained on \logD{} row by row and evaluated after this construction is applied to their out-of-fold predictions; the score \adjR{} is the coefficient of determination of predicted against measured \logSF{} over all adjacent pairs. The differencing is what makes the problem tractable: raw \logD{} scatters by 0.7--0.9 within a (block, metal) group, adjacent separations reproduce to about 0.16.
+Models are trained on \logD{} row by row and evaluated after this construction is applied to their out-of-fold predictions; the score \adjR{} is the coefficient of determination of predicted against measured \logSF{} over all adjacent pairs.
 
-Every number below is out-of-fold under five-fold cross-validation grouped by extractant, repeated three times. The development population has 905 adjacent pairs on 76 extractants; a second set of 444 pairs, from rows outside it, was set aside before any 3D model was built and used only for the final test; their union has 1{,}349 pairs.
+Every number presented below is out-of-fold under five-fold cross-validation grouped by extractant, repeated three times. The population yields 905 adjacent pairs on 76 extractants.
 
 \section{Model}
 \label{sec:model}
-The tabular features are RDKit descriptors and 2048-bit Morgan fingerprints of the extractant \citep{rogers2010}, the metal's atomic number, position in the series and Shannon radius, and the 64 condition columns, 746 in all. The learner is CatBoost \citep{catboost2018} with a quantile loss ($\alpha = 0.6$), depth 9 and feature subsampling 0.3, chosen on the adjacent-pair score.
+The tabular features are RDKit descriptors and 2048-bit Morgan fingerprints of the extractant \citep{rogers2010}, the metal's atomic number, position in the series and Shannon radius, and the 64 condition columns, 746 in total. The learner is CatBoost \citep{catboost2018} with a quantile loss ($\alpha = 0.6$), depth 9 and feature subsampling 0.3, chosen on the adjacent-pair score. Trained on \logD{} directly it reaches $\adjR = +0.268$.
 
-The raw target mixes two questions, how strongly a ligand extracts under given conditions and how that changes from one metal to the next, and only the second is scored. So two models answer them. A level model $f_L$ is trained on \logD{} and used only through its mean over the test block, the anchor $a_b$; a shape model $f_S$ is trained on the block-centred target $\logD_i - \bar y_{b(i)}$ and is itself centred within the test block,
+The raw target combines the overall extraction strength of a ligand with its variation across metals. Only the variation is scored, so each part recieves its own model. The level model $f_L$ is trained on \logD{}, and only its test-block mean, the anchor $a_b$, is used. The shape model  $f_S$ is trained on the block-centred target $\logD_i - \bar y_{b(i)}$, and its predictions are centred within the test block in the same way,
 \begin{equation}
   \hat y_i = a_{b(i)} + \Big(f_S(x_i) - \operatorname*{mean}_{j \in b(i)} f_S(x_j)\Big).
   \label{eq:anchored}
 \end{equation}
-Nothing else changes; the shape model can no longer trade accuracy on metal differences for accuracy on the level, and the score rises to $+0.318$ over eight seeds.
 
-For the 3D channel, heavy atoms of the complex are nodes, atoms within 4~\AA{} are connected, and three continuous-filter layers of width 96 \citep{schnet2017} feed a readout with a metal-centred term and a radial shell histogram, since plain mean pooling averages away shifts of a few hundredths of an \AA{}ngstr\"om; the embedding is concatenated with the tabular features, and training uses a Huber loss on \logD{} plus a contrast term on the within-block pairs of each batch (Appendix~\ref{app:protocol}). On its own the network scores $+0.266$, no better than the boosting baseline. Its block-centred prediction $s_{\mathrm{3D}}$ enters Eq.~\eqref{eq:anchored} as a second shape source, $\hat y = a + (1-w)\,s_{\mathrm{tab}} + w\,s_{\mathrm{3D}}$, with $w = 0.35$ from a nested criterion; the score becomes $+0.326$. A simplicial variant with triangle message passing makes the same predictions ($r = 0.963$), so we report the distance graph.
+For the 3D channel, heavy atoms of the complex are nodes, atoms within 4~\AA{} are connected, and three continuous-filter layers of width 96 \citep{schnet2017} feed a readout with a metal-centred term and a radial shell histogram, since plain mean pooling averages away shifts of a few hundredths of an \AA{}ngstr\"om; the embedding is concatenated with the tabular features, and training uses a Huber loss on \logD{} plus a contrast term on the within-block pairs of each batch (Appendix~\ref{app:protocol}). On its own the network scores $+0.266$, no better than the boosting baseline. Its block-centred prediction $s_{\mathrm{3D}}$ enters Eq.~\eqref{eq:anchored} as a second shape source, $\hat y = a + (1-w)\,s_{\mathrm{tab}} + w\,s_{\mathrm{3D}}$, with $w = 0.35$ from a nested criterion; the score becomes $+0.326$.
 
 \section{Results}
 \label{sec:results}
@@ -166,52 +165,49 @@ For the 3D channel, heavy atoms of the complex are nodes, atoms within 4~\AA{} a
 \begin{figure}[!htb]
   \centering
   \includegraphics[width=\linewidth]{figure1}
-  \caption{(a)~Predicted against measured adjacent-pair \logSF{} for the 905 development pairs, extractants held out; the dashed line is the identity. (b)~Per adjacent pair: Spearman $\rho$ between predicted and measured extractant rankings, and the top-quartile hit rate against chance. (c)~Slope of the Ln--donor distance against the Shannon radius (the compliance \cL{}) for the 71 ligands under three Hamiltonians: points are ligands, shaded shapes their kernel density, bars the mean; 1 is exact agreement with the radii. (d)~Learning curve: small points are the 52 individual runs (four CV seeds, three nested draws) at their own training size, large markers the mean per fraction; solid and dotted lines the hyperbolic and power-law extrapolations; dashed line the full training set.}
+  \caption{(a)~Predicted against measured adjacent-pair \logSF{} for the 905 pairs, extractants held out; the dashed line is the identity. (b)~Per adjacent pair: Spearman $\rho$ between predicted and measured extractant rankings, and the top-quartile hit rate against chance. (c)~Slope of the Ln--donor distance against the Shannon radius (the compliance \cL{}) for the 71 ligands under three Hamiltonians: points are ligands, shaded shapes their kernel density, bars the mean; 1 is exact agreement with the radii. (d)~Learning curve: small points are the 52 individual runs (four CV seeds, three nested draws) at their own training size, large markers the mean per fraction; solid and dotted lines the hyperbolic and power-law extrapolations; dashed line the full training set.}
   \label{fig:main}
 \end{figure}
 
 \begin{table}[t]
   \centering
-  \caption{Adjacent-pair \logSF{} $R^2$, extractants held out (development 905 pairs; expanded 1{,}220).}
+  \caption{Adjacent-pair \logSF{} $R^2$ on the 905 pairs, extractants held out. Pair identity alone scores $+0.066$.}
   \label{tab:main}
-  \begin{tabular}{lcc}
+  \begin{tabular}{lc}
     \toprule
-    Model & Development & Expanded \\
+    Model & $R^2$ \\
     \midrule
-    CatBoost on \logD{} & $+0.268$ & -- \\
-    3D encoder, standalone & $+0.266$ & -- \\
-    Level + shape, Eq.~\eqref{eq:anchored} & $+0.318$ & $+0.280$ \\
-    Level + shape + 3D shape, $w = 0.35$ & $\mathbf{+0.326}$ & $\mathbf{+0.288}$ \\
+    CatBoost on \logD{} & $+0.268$ \\
+    3D encoder, standalone & $+0.266$ \\
+    Level + shape, Eq.~\eqref{eq:anchored} & $+0.318$ \\
+    Level + shape + 3D shape, $w = 0.35$ & $\mathbf{+0.326}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \paragraph{The correlation is real and it is ligand-specific.}
-Predicted and measured separation factors correlate at $r = 0.59$ on held-out extractants (Figure~\ref{fig:main}a); a cluster bootstrap over extractants puts $\adjR$ between $+0.21$ and $+0.38$. With position means and extractant means both removed (10 and 13\,\% of the variance), the model still scores $+0.23$ on the ligand-by-position interaction, which is the selectivity itself.
+Predicted and measured separation factors correlate at $r = 0.59$ on held-out extractants (Figure~\ref{fig:main}a); a cluster bootstrap over extractants puts $\adjR$ between $+0.21$ and $+0.38$, and shuffling predictions within each pair position, which keeps the series shape all ligands share, gives $-0.05$. With position means and extractant means both removed (10 and 13\,\% of the variance), the model still scores $+0.23$ on the ligand-by-position interaction, which is the selectivity itself.
 
 \paragraph{What a screening user gets.}
-Ten percent of the pairs carry 71\,\% of the variance, so \adjR{} mostly describes large separations; the questions a user asks are better answered directly (Figure~\ref{fig:main}b). Ranking held-out extractants for a given adjacent pair gives a mean Spearman correlation of 0.46 over the twelve positions, and the predicted top quartile contains a measured top-quartile ligand 50\,\% of the time against 25\,\% by chance. As a detector of separations with $\mathrm{SF} \geq 2$ (base rate 0.20) the same predictions give AUC 0.81. Split-conformal intervals \citep{vovk2005} hold their nominal coverage.
+Ten percent of the pairs carry 71\,\% of the variance, so \adjR{} mostly describes large separations; the questions a user asks are better answered directly (Figure~\ref{fig:main}b). Ranking held-out extractants for a given adjacent pair gives a mean Spearman correlation of 0.46 over the twelve positions, and the predicted top quartile contains a measured top-quartile ligand 50\,\% of the time against 25\,\% by chance. As a detector of separations with $\mathrm{SF} \geq 2$ (base rate 0.20) the same predictions give AUC 0.81. Split-conformal intervals \citep{vovk2005}, calibrated leave-one-extractant-out, cover 79\,\% and 90\,\% at nominal 80 and 90.
 
-\paragraph{The 3D gain holds on held-out pairs.}
-The blend improves on the level/shape model by less than the seed-to-seed spread of one encoder run (sd 0.0285), so we fixed $w = 0.35$ in advance and scored the 444 held-out pairs once: the blend scored $+0.1207$ against $+0.1051$ for the tabular model, and the same contrast is $+0.0146$ on the development pairs and $+0.0149$ on the union of 1{,}349, all against a seed-matched anchored baseline. Geometry helps when it can only move the shape; as 84 derived columns in a flat model it takes the score from $+0.278$ to $-0.022$.
+\paragraph{The 3D gain is small.}
+The blend improves on the level/shape model by $+0.008$ ($+0.318 \to +0.326$; eight CatBoost seeds, a 32-seed encoder ensemble, $w$ chosen by a nested criterion). That is below the seed-to-seed spread of a single encoder run (sd 0.0285), which is why the encoder enters only as a large ensemble and why we claim no more than a small effect. Geometry helps when it can only move the shape; as 84 derived columns in a flat model it takes the score from $+0.278$ to $-0.022$.
 
 \section{What 3D structure can add, and how to check before training}
 \label{sec:geom}
 Eight 3D encoders trained on these complexes, spanning two architectures, three neighbourhood cutoffs and several losses, are almost interchangeable: disjoint eight-seed halves of one configuration agree at $r = 0.990$, ensembles of two different configurations at $0.986$, and the effective rank of the eight prediction vectors is 1.05, whereas a tabular arm of matched strength agrees with a 3D arm at only $0.893$.
 
-The reason is in the parameter file: GFN2-xTB fits Ce and Lu and interpolates every lanthanide parameter linearly in $Z$ between them (residual $5.7 \times 10^{-7}$), so along the series an optimised metal--donor shell responds to the metal through one scalar, the radius the tabular model already has. For 71 ligands we substitute all fifteen lanthanides into one relaxed complex, re-optimise under each Hamiltonian with one binary and one protocol, and regress the mean metal--donor distance on the Shannon radius; the slope \cL{} equals 1.00 when the complex contracts exactly as the ionic radii do (Figure~\ref{fig:main}c). GFN2-xTB gives $\cL = 0.405 \pm 0.145$. g-xTB \citep{gxtb}, with the f electrons in the valence, gives $1.078 \pm 0.094$ and is closer to 1.00 on 70 of 71 ligands. Ln-xTB \citep{lnxtb2026}, an element-by-element refit of the GFN2 lanthanide parameters, recovers the mean ($1.081 \pm 0.214$) but not a smooth series: a line explains 43\,\% of its metal dependence against 82\,\% for g-xTB.
+The reason is in the parameter file: GFN2-xTB fits Ce and Lu and interpolates every lanthanide parameter linearly in $Z$ between them (residual $5.7 \times 10^{-7}$), so along the series an optimised metal--donor shell responds to the metal through one scalar, the radius the tabular model already has. For 71 ligands we substitute all fifteen lanthanides into one relaxed complex, re-optimise under each Hamiltonian with one binary and one protocol, and regress the mean metal--donor distance on the Shannon radius; the slope \cL{} equals 1.00 when the complex contracts exactly as the ionic radii do (Figure~\ref{fig:main}c). GFN2-xTB gives $\cL = 0.405 \pm 0.145$. g-xTB \citep{gxtb}, with the f electrons in the valence, gives $1.078 \pm 0.094$ and is closer to 1.00 on 70 of 71 ligands. Ln-xTB \citep{lnxtb2026}, an element-by-element refit of the GFN2 lanthanide parameters, recovers the mean ($1.081 \pm 0.214$) but not a smooth series: a line explains 43\,\% of its metal dependence against 82\,\% for g-xTB, with a $-0.10$~\AA{} dip at gadolinium shared by every ligand.
 
-Fixing the contraction does not, by itself, change what a model can learn. g-xTB geometries in place of GFN2-xTB change the score by $+0.005$ ($p = 0.68$, eight paired seeds); rebuilding the complexes in correspondence or relaxing them in solvent makes it worse (Appendix~\ref{app:controls}). Under every Hamiltonian the ligand-specific compliance does not correlate with measured selectivity ($r = 0.11$, $-0.02$, $0.17$ on 44 ligands); what changes with the Hamiltonian is a profile shared by all ligands.
+Fixing the contraction does not, by itself, change what a model can learn. g-xTB geometries in place of GFN2-xTB change the score by $+0.005$ ($p = 0.68$, eight paired seeds); rebuilding the complexes in correspondence or relaxing them in solvent makes it worse (Appendix~\ref{app:controls}). Under every Hamiltonian the ligand-specific compliance does not correlate with measured selectivity ($r = 0.11$, $-0.02$, $0.17$ on 44 ligands); what changes with the Hamiltonian is a profile shared by all ligands. The benchmark is the practical product: one CPU-day tells whether generated geometries carry more than one number about the metal, before any encoder is trained.
 
 \paragraph{How much data the problem needs.}
 \label{sec:data-need}
-Seventy-six extractants contribute scored pairs, so the obvious worry is that the model is starved. It is not: trained on a random fraction of each fold's extractants, test folds untouched, the score climbs from $+0.15$ with eight extractants to $+0.30$ with forty-six and then flattens at $+0.31$ with all sixty-one (Figure~\ref{fig:main}d). The last third of the data is worth $+0.005$, inside seed noise; the two fitted extrapolations put the gain from doubling the extractant count between $+0.01$ and $+0.04$. What is missing is what separates ligands within one class (Appendix~\ref{app:am}).
+Seventy-six extractants contribute scored pairs, so the obvious worry is that the model is starved. It is not: trained on a random fraction of each fold's extractants, test folds untouched, the score climbs from $+0.15$ with eight extractants to $+0.30$ with forty-six and then flattens at $+0.31$ with all sixty-one (Figure~\ref{fig:main}d). The last third of the data is worth $+0.005$, inside seed noise; the two fitted extrapolations put the gain from doubling the extractant count between $+0.01$ and $+0.04$. A few dozen well-measured ligands are enough; what is missing is what separates ligands within one class (Appendix~\ref{app:am}).
 
 \paragraph{Limitations and conclusion.}
-The 3D gain is small against seed variability and rests on a single held-out test. No ceiling is identified: separations reproduce to about 0.16 on a spread of 0.22, but 70\,\% of scored pairs have no replicate. What it predicts well is which ligands are selective and where their large separations lie. The step that mattered was asking the model the right question: the shape of a series, not its level.
-
-\section*{Acknowledgements}
-The authors thank TODO.
+The 3D gain is small against seed variability. No ceiling is identified: separations reproduce to about 0.16 on a spread of 0.22, but 70\,\% of scored pairs have no replicate, and within one extractant the model's series shape is weak (median per-extractant $R^2 = 0.09$). What it predicts well is which ligands are selective and where their large separations lie. The step that mattered was asking the model the right question: the shape of a series, not its level.
 
 \bibliographystyle{unsrtnat}
 \bibliography{refs}
@@ -222,12 +218,11 @@ The authors thank TODO.
 Code, out-of-fold predictions and every negative result: \url{https://github.com/mironovb/lanthanidestrain}.
 \paragraph{Blocks.} The ten binned condition descriptors that define a block are acid class, acid strength, nitrate activity, pH, diluent family, modifier class, temperature, contact time, phase ratio and metal concentration. Pairs with a measured \logSF{} of exactly zero, which arise when both metals sit at a detection limit, are excluded. Promethium is absent, so Nd--Sm is not an adjacent pair.
 \paragraph{Hyperparameters.} CatBoost: 1{,}500 iterations, learning rate 0.04, depth 9, $\ell_2$ regularisation 3, feature subsampling 0.3, quantile loss $\alpha = 0.6$, identical for the level and shape models. 3D encoder: width 96, three continuous-filter layers, 64 radial basis functions to 5~\AA{}, cutoff 4~\AA{}, heavy atoms only, dropout 0.15, head width 256, Adam at $2 \times 10^{-3}$ with weight decay $10^{-4}$, 60 epochs with early stopping on a validation fold, batches of 64 rows grouped by block so the contrast term always has pairs, pair-contrast weight 4 with adjacent pairs weighted $3\times$. Blend weight: nested selection over $\{0, 0.05, \dots, 1\}$ with equal weight per extractant.
-\paragraph{Confirmation set.} The 444 pairs come from lanthanide rows with computed but uncurated geometries; their identities were recorded before any 3D model was trained on the expanded population, and they were scored once with $w$ fixed at 0.35.
 \paragraph{Learning curve.} Fractions 0.125, 0.25, 0.5, 0.75 and 1 of each fold's training extractants, nested within a draw. The full-data run reproduces the stored champion exactly. Because the anchor is one number per extractant it cancels in every adjacent pair, so the level model does not affect the score and only the shape model's training set matters.
 
 \section{Controls}
 \label{app:controls}
-Interventions under the same protocol, development pairs; $\Delta R^2$ relative to the best comparable system.
+Interventions under the same protocol on the 905 pairs; $\Delta R^2$ relative to the best comparable system.
 \begin{center}
   \small
   \begin{tabular}{lc}
