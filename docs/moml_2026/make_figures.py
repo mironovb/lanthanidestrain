@@ -40,12 +40,13 @@ def letter(ax, ch):
 
 
 # ------------------------------------------------------------ figure 1a
-def fig1a(ch=None):
+def fig1a(ch=None, ax=None):
     P = pair_table()
     dy, dp = P.dy.to_numpy(), P.dp.to_numpy()
     r = np.corrcoef(dy, dp)[0, 1]
     assert len(P) == 905, len(P)
-    fig, ax = fs.figure(3.4, 3.4)
+    own = ax is None
+    fig, ax = fs.figure(3.4, 3.4) if own else (ax.figure, ax)
     m = float(max(np.abs(dy).max(), np.abs(dp).max())) + 0.15   # limits from the data
     lim = (-m, m)
     ax.plot(lim, lim, ls="--", lw=0.7, color=fs.OI["black"], zorder=1)
@@ -58,19 +59,20 @@ def fig1a(ch=None):
     ax.text(0.04, 0.96, f"r = {r:.2f}\n{len(P)} pairs\n{P.ex.nunique()} extractants held out",
             transform=ax.transAxes, va="top", ha="left", linespacing=1.4)
     letter(ax, ch)
-    fs.finish(fig, "fig1a_parity")
+    if own: fs.finish(fig, "fig1a_parity")
     return r
 
 
 # ------------------------------------------------------------ figure 1b
-def fig1b(ch=None):
+def fig1b(ch=None, ax=None):
     D = json.loads((REPO / "automl/reports/decision_quality.json").read_text())
     R = D["ranking"]["by_position"]
     pos = list(R.keys())[::-1]                      # La-Ce at the top
     rho = np.array([R[p]["spearman"] for p in pos])
     hit = np.array([R[p]["top_quartile_hit_rate"] for p in pos])
     chance = D["ranking"]["chance_hit_rate"]
-    fig, ax = fs.figure(3.8, 3.7)      # wider so the full name fits inside the axes
+    own = ax is None
+    fig, ax = fs.figure(3.8, 3.7) if own else (ax.figure, ax)   # wide enough for the full name
     y = np.arange(len(pos)); h = 0.38
     ax.barh(y + h / 2, rho, height=h, color=fs.COLOR["model"])
     ax.barh(y - h / 2, hit, height=h, color=fs.COLOR["hit"])
@@ -92,7 +94,7 @@ def fig1b(ch=None):
     ax.set_xlabel("ranking of held-out extractants")
     ax.tick_params(axis="y", length=0)
     letter(ax, ch)
-    fs.finish(fig, "fig1b_ranking")
+    if own: fs.finish(fig, "fig1b_ranking")
 
 
 # ------------------------------------------------------------ figure 2 data
@@ -129,10 +131,11 @@ def fig2a(df, comp):
     return fam.split("||")[0], cn
 
 
-def fig2b(comp, ch=None):
+def fig2b(comp, ch=None, ax=None):
     cw = comp.pivot(index="family", columns="arm", values="c_L")[[h for h, _ in HAM]].dropna()
     assert len(cw) == 71, len(cw)
-    fig, ax = fs.figure(3.8, 3.7)
+    own = ax is None
+    fig, ax = fs.figure(3.8, 3.7) if own else (ax.figure, ax)
     data = [cw[a].to_numpy() for a, _ in HAM]
     # violins computed directly: Gaussian KDE with Scott's bandwidth, evaluated
     # 1.5 bandwidths beyond the data so the ends taper instead of being cut,
@@ -166,12 +169,12 @@ def fig2b(comp, ch=None):
     ax.set_ylabel("Ln–donor contraction slope\n(1 = Shannon radii)")
     ax.text(0.98, 0.03, f"{len(cw)} ligands", transform=ax.transAxes, ha="right", va="bottom")
     letter(ax, ch)
-    fs.finish(fig, "fig2b_compliance")
+    if own: fs.finish(fig, "fig2b_compliance")
     return {n: (float(cw[a].mean()), float(cw[a].std(ddof=1))) for a, n in HAM}
 
 
 # ------------------------------------------------------------ figure 3
-def fig3(ch=None):
+def fig3(ch=None, ax=None):
     """Learning curve over training extractants (automl/topo/learning_curve.py)."""
     p = REPO / "automl/reports/learning_curve_both.json"
     if not p.exists():
@@ -180,7 +183,8 @@ def fig3(ch=None):
     R = pd.DataFrame(D["runs"]); F = D["fits"]
     pts = pd.DataFrame(F["points"])
     n_full = float(pts.n.max()); col = fs.COLOR["model"]
-    fig, ax = fs.figure(3.8, 3.7)
+    own = ax is None
+    fig, ax = fs.figure(3.8, 3.7) if own else (ax.figure, ax)
     # every run at its own training size, then the mean per fraction
     ax.scatter(R.n_train_groups_pairs, R.adj_r2, s=9, color=col, alpha=0.45, linewidths=0, zorder=2)
     ax.plot(pts.n, pts.r2, "o", ms=6.5, color=col, mec="white", mew=0.8, zorder=4)
@@ -206,8 +210,20 @@ def fig3(ch=None):
     ax.set_ylabel("adjacent-pair log SF R²")
     ax.text(0.03, 0.97, f"{len(R)} runs", transform=ax.transAxes, ha="left", va="top")
     letter(ax, ch)
-    fs.finish(fig, "fig3_learning_curve")
+    if own: fs.finish(fig, "fig3_learning_curve")
     return F["verdict"]
+
+
+def figure1(comp):
+    """All four panels on one grid: equal cells, common margins, aligned letters."""
+    import matplotlib.pyplot as plt
+    fs.style()
+    fig = plt.figure(figsize=(8.8, 7.6))
+    gs = fig.add_gridspec(2, 2, left=0.09, right=0.975, bottom=0.085, top=0.965,
+                          wspace=0.40, hspace=0.42)
+    axs = [fig.add_subplot(gs[i, j]) for i in range(2) for j in range(2)]
+    fig1a("a", ax=axs[0]); fig1b("b", ax=axs[1]); fig2b(comp, "c", ax=axs[2]); fig3("d", ax=axs[3])
+    fs.finish(fig, "figure1")
 
 
 def main() -> int:
@@ -220,6 +236,8 @@ def main() -> int:
         if "c" in only:
             comp = pd.DataFrame(json.loads((SER / "compliance_test.json").read_text())["compliance"]); fig2b(comp, "c")
         if "d" in only: fig3("d")
+        if "all" in only:
+            comp = pd.DataFrame(json.loads((SER / "compliance_test.json").read_text())["compliance"]); figure1(comp)
         return 0
     r = fig1a("a"); fig1b("b")
     df = series_records()
@@ -228,6 +246,7 @@ def main() -> int:
     print(f"fig1a r = {r:.3f}; fig2a example ligand {lig} (CN {cn}); fig2b {stats}")
     v = fig3("d")
     if v: print("fig3 verdict:", v)
+    figure1(comp)
     return 0
 
 
