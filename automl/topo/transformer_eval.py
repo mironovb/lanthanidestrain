@@ -178,6 +178,23 @@ def legacy_analysis() -> dict:
             "w_dist_mean": float(np.mean([w[0] for w in ws])),
             "w_other_mean": float(np.mean([w[1] for w in ws]))}
 
+    # descriptive weight curves (not nested): pair-weighted R2 and the
+    # equal-extractant MSE the nested procedure minimises, on a coarse grid.
+    # Shows whether a nested weight of 0.00 is a knife-edge or a real gap.
+    wgrid = [0.0, 0.1, 0.2, 0.3, 0.35, 0.4, 0.5, 0.7, 1.0]
+    exu = pd.unique(grp)
+    out["w_curve"] = {"w": wgrid, "sources": {}}
+    for name in encoders:
+        r2s, eqs = [], []
+        for w in wgrid:
+            pred = (1 - w) * dps["tab"] + w * dps[name]
+            r2s.append(ev._r2(dy, pred))
+            eqs.append(float(np.mean([np.mean((dy[grp == g] - pred[grp == g]) ** 2)
+                                      for g in exu])))
+        out["w_curve"]["sources"][name] = {
+            "r2": r2s, "equal_extractant_mse": eqs,
+            "disp_ratio": float(np.std(dps[name]) / np.std(dps["tab"]))}
+
     # pair-level correlations
     names = list(dps)
     M = np.corrcoef([dps[n] for n in names])
@@ -186,6 +203,12 @@ def legacy_analysis() -> dict:
                        n: float(np.corrcoef(dps[n], dy - dps["tab"])[0, 1])
                        for n in names if n != "tab"}}
 
+    print("  w-curve (pair R2 | equal-extractant MSE) at w = "
+          + " ".join(f"{w:.2f}" for w in wgrid))
+    for name, rec in out["w_curve"]["sources"].items():
+        print(f"    {name:9s} "
+              + " ".join(f"{v:+.3f}" for v in rec["r2"]) + " | "
+              + " ".join(f"{v:.4f}" for v in rec["equal_extractant_mse"]))
     for name, rec in out["standalone"].items():
         extra = (f"  per-seed {rec['per_seed_mean']:+.4f} ± "
                  f"{rec['per_seed_sd']:.4f} (n={rec['n_seeds']})"
