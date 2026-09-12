@@ -134,21 +134,23 @@ def fig2b(comp, ch=None):
     assert len(cw) == 71, len(cw)
     fig, ax = fs.figure(3.8, 3.7)
     data = [cw[a].to_numpy() for a, _ in HAM]
-    parts = ax.violinplot(data, positions=range(len(HAM)), widths=0.8, points=300,
-                          showmeans=False, showmedians=False, showextrema=False)
+    parts = ax.violinplot(data, positions=range(len(HAM)), widths=0.85, points=400,
+                          bw_method=0.35, showmeans=False, showmedians=False, showextrema=False)
     rng = np.random.default_rng(0)
     for i, ((arm, name), body, v) in enumerate(zip(HAM, parts["bodies"], data)):
-        body.set_facecolor(HCOL[arm]); body.set_alpha(0.25); body.set_edgecolor(HCOL[arm]); body.set_linewidth(0.8)
-        ax.scatter(i + rng.uniform(-0.10, 0.10, len(v)), v, s=7, color=HCOL[arm], linewidths=0, zorder=3)
-        ax.hlines(v.mean(), i - 0.30, i + 0.30, color=HCOL[arm], lw=2.0, zorder=4)
+        body.set_facecolor(HCOL[arm]); body.set_alpha(0.45)
+        body.set_edgecolor("white"); body.set_linewidth(0.6)
+        ax.scatter(i + rng.uniform(-0.07, 0.07, len(v)), v, s=5, color=HCOL[arm], alpha=0.9,
+                   linewidths=0, zorder=3)
+        ax.hlines(v.mean(), i - 0.26, i + 0.26, color=HCOL[arm], lw=2.4, zorder=5)
     ax.axhline(1.0, ls="--", lw=0.7, color=fs.OI["black"], zorder=2)
-    ax.text(-0.45, 0.98, "Shannon radii", ha="left", va="top", color=fs.OI["black"])
+    ax.text(-0.45, 0.98, "exact", ha="left", va="top", color=fs.OI["black"])
     ax.set_xticks(range(len(HAM)))
     ax.set_xticklabels([f"{n}\nmean {v.mean():.2f}" for (_, n), v in zip(HAM, data)])
     ax.tick_params(axis="x", length=0)
     ax.set_xlim(-0.5, len(HAM) - 0.5); ax.set_ylim(0, 1.9)
     ax.set_yticks([0, 0.5, 1.0, 1.5])
-    ax.set_ylabel("contraction compliance c$_L$")
+    ax.set_ylabel("Ln–donor contraction slope\n(1 = Shannon radii)")
     ax.text(0.98, 0.03, f"{len(cw)} ligands", transform=ax.transAxes, ha="right", va="bottom")
     letter(ax, ch)
     fs.finish(fig, "fig2b_compliance")
