@@ -69,17 +69,25 @@ def fig1b(ch=None):
     pos = list(R.keys())[::-1]                      # La-Ce at the top
     rho = np.array([R[p]["spearman"] for p in pos])
     hit = np.array([R[p]["top_quartile_hit_rate"] for p in pos])
+    chance = D["ranking"]["chance_hit_rate"]
     fig, ax = fs.figure(3.4, 3.4)
     y = np.arange(len(pos)); h = 0.38
-    h1 = ax.barh(y + h / 2, rho, height=h, color=fs.COLOR["model"], label="Spearman ρ")
-    h2 = ax.barh(y - h / 2, hit, height=h, color=fs.COLOR["hit"], label="top-quartile hit rate")
-    h3 = ax.axvline(D["ranking"]["chance_hit_rate"], ls="--", lw=0.9, color=fs.NEUTRAL,
-                    label="hit rate by chance")
+    ax.barh(y + h / 2, rho, height=h, color=fs.COLOR["model"])
+    ax.barh(y - h / 2, hit, height=h, color=fs.COLOR["hit"])
+    ax.vlines(chance, -0.7, len(pos) - 1 + 0.75, ls="--", lw=0.7, color=fs.OI["black"], zorder=3)
+    # names written beside the shortest row's bars, where the axes are empty
+    top = len(pos) - 1
+    # series names as coloured text in the empty band above the bars (one line,
+    # right-aligned); the chance level is named in its tick label
+    top = len(pos) - 1
+    ax.text(1.0, top + 1.05, "top-quartile hit rate", ha="right", va="bottom", color=fs.COLOR["hit"])
+    ax.text(0.40, top + 1.05, "Spearman ρ", ha="right", va="bottom", color=fs.COLOR["model"])
     ax.set_yticks(y); ax.set_yticklabels(pos)
-    ax.set_xlim(0, 1.0); ax.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
+    ax.set_ylim(-0.7, top + 1.9)
+    ax.set_xlim(0, 1.0); ax.set_xticks([0, chance, 0.5, 0.75, 1.0])
+    ax.set_xticklabels(["0", f"{chance:.2f}\nchance", "0.5", "0.75", "1"])
     ax.set_xlabel("ranking of held-out extractants")
     ax.tick_params(axis="y", length=0)
-    fs.legend_above(ax, [h1, h2, h3], [h.get_label() for h in (h1, h2, h3)], ncol=1)
     letter(ax, ch)
     fs.finish(fig, "fig1b_ranking")
 
