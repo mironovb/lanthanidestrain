@@ -110,7 +110,7 @@ legacy-fitted weight of zero would make the contrast identically zero and
 test nothing); for the tabular sources, the legacy-fitted weight, which is
 zero, so their held-out contrast is zero by construction and no claim is
 made for them. Models for this look were trained on the expanded population
-(5,946 rows), four attention seeds against the fifteen distance-encoder seeds
+(5,946 rows), four attention seeds against the eight distance-encoder seeds
 of I15.
 
 | pairs | tabular level/shape | + distance encoder shape, w 0.35 | + attention encoder shape, w 0.35 | attention vs tabular | attention vs distance |
@@ -125,7 +125,7 @@ encoder the attention encoder is ahead on the 444, behind on the 905 and
 level on the union: a tie between the two 3D encoders, now established on
 held-out data rather than by inspection of the legacy population alone. Per
 seed on the expanded population the attention encoder scores +0.152 +- 0.024
-(4 seeds) against +0.144 +- 0.018 for the distance encoder (15 seeds).
+(4 seeds) against +0.147 +- 0.020 for the distance encoder (8 seeds).
 
 ## 4. Why the tabular and set transformers lose
 
