@@ -7,7 +7,8 @@ anchored system (anchor + tabular shape from the CatBoost 8-seed ensemble):
 
   attn      attention-based 3D encoder (dense; and the <= cutoff sparse control)
   ft        FT-Transformer level/shape models (tabular)
-  blocktf   set transformer over the metals of a block (shape only)
+  blocktf   set transformer over the rows of a block (shape only)
+  celltf    set transformer over the (block, metal) cells (shape only)
 
 Modes
   (default)   legacy-population analysis: standalone scores, blends with
@@ -89,12 +90,14 @@ SOURCES = {
     "attn_sp": (str(ART / "topo_tf_attn/oof_tfattnsp_s*.parquet"), "oof"),
     "ft":      (str(ART / "anchored_ft/oof_ft_anch_s*.parquet"), "shape"),
     "blocktf": (str(ART / "block_tf/oof_blocktf_s*.parquet"), "shape"),
+    "celltf":  (str(ART / "cell_tf/oof_celltf_s*.parquet"), "shape"),
 }
 SOURCES_HAS3D = {
     "attn":    (str(ART / "topo_tf_attn/oof_tfattnh3d_s*.parquet"), "oof"),
     "attn_sp": (str(ART / "topo_tf_attn/oof_tfattnsph3d_s*.parquet"), "oof"),
     "ft":      (str(ART / "anchored_ft/oof_ft_anch_has3d_s*.parquet"), "shape"),
     "blocktf": (str(ART / "block_tf/oof_blocktf_has3d_s*.parquet"), "shape"),
+    "celltf":  (str(ART / "cell_tf/oof_celltf_has3d_s*.parquet"), "shape"),
 }
 
 

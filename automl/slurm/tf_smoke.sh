@@ -10,6 +10,11 @@
 #SBATCH --error=/home/gridsan/bmironov/lanthanidestrain/automl/logs/tf_smoke_%j.err
 # GPU smoke tests for the three transformer experiments: they must run end
 # to end on the real data before any seed campaign is queued.
+# Capacity gate with --pair-loss-weight 0: the contrast objective never
+# batches rows from single-member blocks, and the 60-row smoke subset is
+# mostly singletons, so under the pair loss every encoder (dist included,
+# 0.53) plateaus near 0.5 regardless of architecture.  Bisected 12 Sep:
+# attn base 0.49, exact distances 0.49, layers=0 0.52, no pair loss 1.00.
 set -uo pipefail
 REPO=/home/gridsan/bmironov/lanthanidestrain
 source /etc/profile.d/modules.sh
@@ -21,12 +26,12 @@ OUT="${REPO}/automl/artifacts/topo_tf_smoke"; mkdir -p "${OUT}"
 
 echo "=== 1. attention encoder, dense, --smoke ==="
 python3 -u -m automl.topo.train --arch attn --preset baseline_2d \
-  --filtration-max 4.0 --heavy-only --pair-loss-weight 4.0 --rbf-bins 64 \
+  --filtration-max 4.0 --heavy-only --pair-loss-weight 0.0 --rbf-bins 64 \
   --select-on adjacent --folds 5 --repeats 1 --seed 42 --deterministic \
   --smoke --tag smoke_attn --out-dir "${OUT}" || echo "SMOKE 1 FAILED"
 echo "=== 2. attention encoder, sparse, --smoke ==="
 python3 -u -m automl.topo.train --arch attn --attn-sparse --preset baseline_2d \
-  --filtration-max 4.0 --heavy-only --pair-loss-weight 4.0 --rbf-bins 64 \
+  --filtration-max 4.0 --heavy-only --pair-loss-weight 0.0 --rbf-bins 64 \
   --select-on adjacent --folds 5 --repeats 1 --seed 42 --deterministic \
   --smoke --tag smoke_attnsp --out-dir "${OUT}" || echo "SMOKE 2 FAILED"
 echo "=== 3. FT-Transformer, 1 seed, 1 repeat, 6 epochs ==="

@@ -193,9 +193,10 @@ def run_cell(name, df, Xn, Xb, seed, device, shape: bool, q=0.6,
             level[te] += lv
             if shape:
                 key_tr = pd.Series(g[tr])
-                resid = y[tr] - key_tr.map(
+                resid = np.zeros(len(y), np.float32)   # full length: fit_predict
+                resid[tr] = y[tr] - key_tr.map(        # indexes it with tr/te
                     pd.Series(y[tr]).groupby(key_tr).mean()).to_numpy()
-                sv = fit_predict(Xn, Xb, resid.astype(np.float32), tr, te, q,
+                sv = fit_predict(Xn, Xb, resid, tr, te, q,
                                  seed + rep + 1000, device, groups=g, **hp)
                 shp[te] += sv
             cnt[te] += 1

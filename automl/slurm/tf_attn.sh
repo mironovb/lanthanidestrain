@@ -17,6 +17,7 @@
 #   POP     ok_only (default) | has3d  -- has3d adds --edge-asset has3d
 #   SPARSE  1 -> --attn-sparse (the <= cutoff control)
 #   OUTDIR  artefact dir (default topo_tf_attn)
+#   EXTRA_ARGS  appended verbatim to every train.py call (e.g. "--lr 1e-3")
 set -uo pipefail
 REPO=/home/gridsan/bmironov/lanthanidestrain
 source /etc/profile.d/modules.sh
@@ -35,7 +36,7 @@ for SEED in ${SEEDS:-42 51 67 83 91 103 107 109}; do
   python3 -u -m automl.topo.train --arch attn --preset baseline_2d \
     --filtration-max 4.0 --heavy-only --pair-loss-weight 4.0 --rbf-bins 64 \
     --select-on adjacent --epochs 60 --folds 5 --repeats 3 --seed "${SEED}" \
-    --deterministic ${EXTRA} \
+    --deterministic ${EXTRA} ${EXTRA_ARGS:-} \
     --tag "${TAGBASE}_s${SEED}" --out-dir "${OUT}"
 done
-echo "TF_ATTN DONE pop=${POP} sparse=${SPARSE} $(date -Is)"
+echo "TF_ATTN DONE pop=${POP} sparse=${SPARSE} extra=[${EXTRA_ARGS:-}] $(date -Is)"

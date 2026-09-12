@@ -157,7 +157,7 @@ def fit_predict(X, y, comp, midx, groups, tr, te, seed, device, epochs=200,
             p = model(Xb, mb, mk).cpu().numpy()
             for i, b in enumerate(bl):
                 out[b] = p[i, :len(b)]
-    return out * ysd
+    return out[te] * ysd
 
 
 def main() -> int:

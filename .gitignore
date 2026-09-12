@@ -11,3 +11,4 @@ catboost_info/
 # Ln-xTB parameter tree: only the patched GFN2 file is ours; the rest are stock xtb copies
 /automl/artifacts/lnxtb/share/xtb/*
 !/automl/artifacts/lnxtb/share/xtb/param_gfn2-xtb.txt
+automl/scratch/
