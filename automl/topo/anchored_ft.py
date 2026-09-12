@@ -115,7 +115,7 @@ def load_table(population: str):
 
 def fit_predict(Xn, Xb, y, tr, te, q, seed, device, epochs=150, dim=64,
                 layers=3, heads=8, dropout=0.1, lr=1e-3, wd=1e-4, bs=128,
-                patience=8, val_frac=0.15, groups=None):
+                patience=8, val_frac=0.15, groups=None, bit_tokens=8):
     """Train on tr with an inner extractant-grouped validation split for
     early stopping; return predictions on te (in original units)."""
     rng = np.random.default_rng(seed)
@@ -137,7 +137,7 @@ def fit_predict(Xn, Xb, y, tr, te, q, seed, device, epochs=150, dim=64,
 
     torch.manual_seed(seed)
     model = FTTransformer(Xn.shape[1], Xb.shape[1], dim, layers, heads,
-                          dropout).to(device)
+                          dropout, bit_tokens=bit_tokens).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
     T = lambda a: torch.as_tensor(a, device=device)
     Xn_f, Xb_f, y_f = T(std_n(Xn[fit])), T(Xb[fit]), T(((y[fit] - ymu) / ysd)
@@ -239,6 +239,16 @@ def main() -> int:
     ap.add_argument("--epochs", type=int, default=150)
     ap.add_argument("--dim", type=int, default=64)
     ap.add_argument("--layers", type=int, default=3)
+    ap.add_argument("--dropout", type=float, default=0.1)
+    ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--wd", type=float, default=1e-4)
+    ap.add_argument("--bs", type=int, default=128)
+    ap.add_argument("--patience", type=int, default=8,
+                    help="validation checks (every 2 epochs) without gain")
+    ap.add_argument("--bit-tokens", type=int, default=8,
+                    help="ECFP bits are folded into this many tokens")
+    ap.add_argument("--tag", default="",
+                    help="suffix on the cell name, e.g. _v2, for sweeps")
     args = ap.parse_args()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     df, Xn, Xb = load_table(args.population)
@@ -249,25 +259,30 @@ def main() -> int:
     for cell in args.cells:
         oofs = []
         for sd in args.seeds:
-            res = run_cell(cell + pop, df, Xn, Xb, sd, device,
+            res = run_cell(cell + args.tag + pop, df, Xn, Xb, sd, device,
                            repeats=args.repeats, epochs=args.epochs,
-                           dim=args.dim, layers=args.layers, **CELLS[cell])
+                           dim=args.dim, layers=args.layers,
+                           dropout=args.dropout, lr=args.lr, wd=args.wd,
+                           bs=args.bs, patience=args.patience,
+                           bit_tokens=args.bit_tokens, **CELLS[cell])
             rows.append(res)
             print(f"  {res['cell']:24s} adj_R2={res['adj_r2']:+.4f} "
                   f"P2={res['adj_pearson2']:+.4f} disp={res['adj_disp']:.3f} "
                   f"logD_R2={res['logD_r2']:+.4f}", flush=True)
-            oofs.append(pd.read_parquet(ART / f"oof_{cell + pop}_s{sd}.parquet"))
+            oofs.append(pd.read_parquet(
+                ART / f"oof_{cell + args.tag + pop}_s{sd}.parquet"))
         if len(oofs) > 1:
             ens = oofs[0][["safe_exp_id", "y"]].copy()
             for c in ("oof", "level", "shape"):
                 ens[c] = np.mean([o[c].to_numpy() for o in oofs], axis=0)
-            ens.to_parquet(ART / f"oof_{cell + pop}_ens{len(oofs)}.parquet",
-                           index=False)
+            ens.to_parquet(
+                ART / f"oof_{cell + args.tag + pop}_ens{len(oofs)}.parquet",
+                index=False)
             dy, dp = ev.adjacent_pair_arrays(
                 ens["y"].to_numpy(), ens["oof"].to_numpy(),
                 df["composition_key"].to_numpy(),
                 df["lanthanide_index"].to_numpy())
-            r = {"cell": f"{cell + pop}_ens{len(oofs)}",
+            r = {"cell": f"{cell + args.tag + pop}_ens{len(oofs)}",
                  "adj_r2": ev._r2(dy, dp),
                  "adj_pearson2": float(np.corrcoef(dy, dp)[0, 1] ** 2),
                  "adj_disp": float(np.std(dp) / np.std(dy)),

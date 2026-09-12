@@ -1,0 +1,41 @@
+{
+ "frozen_from": "legacy 905-pair analysis (transformer_eval.py)",
+ "w_dist_fixed": 0.35,
+ "sources": {
+  "attn": {
+   "w_fixed": 0.35,
+   "w_median_legacy": 0.0,
+   "test": "encoder substitution at the I15 weight",
+   "primary": "sign of R2(blend, fixed w) - R2(tabular only) on the 444 held-out pairs",
+   "secondary": "R2(blend source) - R2(blend dist, w=0.35) on the same pairs"
+  },
+  "attn_sp": {
+   "w_fixed": 0.35,
+   "w_median_legacy": 0.0,
+   "test": "encoder substitution at the I15 weight",
+   "primary": "sign of R2(blend, fixed w) - R2(tabular only) on the 444 held-out pairs",
+   "secondary": "R2(blend source) - R2(blend dist, w=0.35) on the same pairs"
+  },
+  "ft": {
+   "w_fixed": 0.0,
+   "w_median_legacy": 0.0,
+   "test": "legacy-fitted nested weight",
+   "primary": "sign of R2(blend, fixed w) - R2(tabular only) on the 444 held-out pairs",
+   "secondary": "R2(blend source) - R2(blend dist, w=0.35) on the same pairs"
+  },
+  "blocktf": {
+   "w_fixed": 0.0,
+   "w_median_legacy": 0.0,
+   "test": "legacy-fitted nested weight",
+   "primary": "sign of R2(blend, fixed w) - R2(tabular only) on the 444 held-out pairs",
+   "secondary": "R2(blend source) - R2(blend dist, w=0.35) on the same pairs"
+  },
+  "celltf": {
+   "w_fixed": 0.0,
+   "w_median_legacy": 0.0,
+   "test": "legacy-fitted nested weight",
+   "primary": "sign of R2(blend, fixed w) - R2(tabular only) on the 444 held-out pairs",
+   "secondary": "R2(blend source) - R2(blend dist, w=0.35) on the same pairs"
+  }
+ }
+}

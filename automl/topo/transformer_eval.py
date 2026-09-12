@@ -28,6 +28,8 @@ from __future__ import annotations
 
 import argparse
 import glob
+import os
+import re
 import json
 from pathlib import Path
 
@@ -75,7 +77,12 @@ def per_seed_scores(pattern: str, col: str = "oof") -> list[float]:
                                     "lanthanide_index"])
     vals = []
     for p in sorted(glob.glob(pattern)):
-        d = pd.read_parquet(p).merge(meta, on="safe_exp_id")
+        d = pd.read_parquet(p)
+        # train.py parquets already carry the keys; the tabular ones do not
+        need = [c for c in ("composition_key", "lanthanide_index")
+                if c not in d.columns]
+        if need:
+            d = d.merge(meta[["safe_exp_id"] + need], on="safe_exp_id")
         dy, dp = ev.adjacent_pair_arrays(d["y"].to_numpy(float),
                                          d[col].to_numpy(float),
                                          d["composition_key"].to_numpy(),
@@ -107,6 +114,16 @@ def legacy_analysis() -> dict:
     snn, _ = load_cell("topo_c17", "c17_plw4")
     encoders = {"dist": dist, "snn": snn}
     n_seeds = {"dist": n_dist}
+    # Seed-count-matched distance reference: the 8 lowest-numbered seeds of
+    # the 32 (fixed rule, not a chosen subset), so a transformer source with
+    # 8 seeds is compared with an ensemble of the same size.
+    c15 = str(ART / "topo_c15/oof_c15_plw4_s*.parquet")
+    seeds_all = sorted({int(re.search(r"_s(\d+)_", os.path.basename(q)).group(1))
+                        for q in glob.glob(c15)})
+    d8, n8 = glob_ensemble(c15, seeds=seeds_all[:8])
+    if d8 is not None:
+        encoders["dist8"] = d8
+        n_seeds["dist8"] = n8
     for name, (pat, col) in SOURCES.items():
         fr, n = glob_ensemble(pat, col)
         if fr is not None:
@@ -153,7 +170,7 @@ def legacy_analysis() -> dict:
     # two sources at once, with the distance encoder
     out["blend_with_dist"] = {}
     for name in encoders:
-        if name == "dist":
+        if name in ("dist", "dist8"):
             continue
         pred, ws = nested_2(dy, dps["tab"], dps["dist"], dps[name], grp)
         out["blend_with_dist"][name] = {
@@ -189,8 +206,18 @@ def freeze_rule(res: dict) -> None:
             "w_dist_fixed": W_DIST, "sources": {}}
     for name in SOURCES:
         if name in res["blend"]:
+            w_leg = round(float(res["blend"][name]["w_median"]), 2)
+            # 3D encoders are tested by SUBSTITUTION: the attention encoder
+            # takes the distance encoder's place at the I15 weight (0.35),
+            # everything else unchanged.  A legacy-fitted weight of zero
+            # would make the held-out contrast identically zero, which tests
+            # nothing.  Tabular shape sources keep the legacy-fitted weight.
+            w_fix = W_DIST if name in ("attn", "attn_sp") else w_leg
             rule["sources"][name] = {
-                "w_fixed": round(float(res["blend"][name]["w_median"]), 2),
+                "w_fixed": w_fix, "w_median_legacy": w_leg,
+                "test": ("encoder substitution at the I15 weight"
+                         if name in ("attn", "attn_sp")
+                         else "legacy-fitted nested weight"),
                 "primary": "sign of R2(blend, fixed w) - R2(tabular only) "
                            "on the 444 held-out pairs",
                 "secondary": "R2(blend source) - R2(blend dist, w=0.35) on "
