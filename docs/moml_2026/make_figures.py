@@ -195,7 +195,7 @@ def fig3(ch=None):
     # below the flattening solid line
     xr = 2.0 * n_full * 1.14                       # right edge, clear of the full-data line
     ax.text(xr, y_p[-1] + 0.008, "power law", va="bottom", ha="right", color=col)
-    ax.text(xr, y_h[-1] - 0.008, "hyperbolic", va="top", ha="right", color=col)
+    ax.text(xr, y_h[-1] - 0.022, "hyperbolic", va="top", ha="right", color=col)
     # full-data line stops below its label so the two never touch
     ax.vlines(n_full, 0.09, 0.34, ls="--", lw=0.7, color=fs.OI["black"], zorder=1)
     ax.text(n_full, 0.085, f"all {n_full:.0f}", ha="center", va="top", color=fs.OI["black"])
