@@ -77,23 +77,14 @@ def fig1b(ch=None):
     ax.vlines(chance, -0.7, len(pos) - 1 + 0.8, ls="--", lw=0.7, color=fs.OI["black"], zorder=3)
     # names written beside the shortest row's bars, where the axes are empty
     top = len(pos) - 1
-    # series names in the empty pocket to the right of the shortest rows.  A
-    # 12 pt line is about one row tall, so a name centred on row k must clear
-    # the bars of row k, the orange bar of the row above (k+1) and the blue bar
-    # of the row below (k-1).  The orange name is two lines and takes two rows.
+    # series names beside the Ce-Pr bars, near the top where the eye starts:
+    # single lines, each cleared past the bars above/below it in x
     top = len(pos) - 1
-    def clear_x(rows):
-        lo, hi = min(rows), max(rows)
-        xs = [max(rho[k], hit[k]) for k in rows]
-        if hi + 1 <= top: xs.append(hit[hi + 1])
-        if lo - 1 >= 0: xs.append(rho[lo - 1])
-        return max(xs) + 0.03
-    kb = min(range(len(pos)), key=lambda k: clear_x([k]))
-    pairs = [(k, k - 1) for k in range(1, len(pos)) if kb not in (k, k - 1)]
-    ko = min(pairs, key=lambda pr: clear_x(list(pr)))
-    ax.text(clear_x([kb]), kb, "Spearman ρ", va="center", ha="left", color=fs.COLOR["model"])
-    ax.text(clear_x(list(ko)), np.mean(ko), "top-quartile\nhit rate", va="center", ha="left",
-            color=fs.COLOR["hit"], linespacing=1.1)
+    k = pos.index("Ce-Pr")
+    x_blue = max(rho[k], hit[k + 1]) + 0.03            # clears the La-Ce orange bar above
+    x_orng = max(hit[k], rho[k - 1]) + 0.03            # clears the Pr-Nd blue bar below
+    ax.text(x_blue, k + h / 2, "Spearman ρ", va="center", ha="left", color=fs.COLOR["model"])
+    ax.text(x_orng, k - h / 2, "hit rate", va="center", ha="left", color=fs.COLOR["hit"])
     ax.text(chance, top + 0.85, "chance", ha="center", va="bottom", color=fs.OI["black"])
     ax.set_yticks(y); ax.set_yticklabels(pos)
     ax.set_ylim(-0.7, top + 1.7)
