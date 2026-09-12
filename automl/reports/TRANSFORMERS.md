@@ -100,7 +100,10 @@ criterion the attention blend gets worse with weight (0.0492 at w = 0 to
 0.0497 at w = 0.3) while the distance blend improves (to 0.0486): the
 attention encoder's gain sits in the pair-rich extractants and costs the
 small ones. The three tabular transformers lower both criteria at every
-weight.
+weight. Averaging the two encoders into one 3D shape source (mean of the
+32-seed distance and 8-seed attention predictions) peaks at +0.3282 (w =
+0.3) against +0.3277 for the distance encoder alone, and scores +0.3249
+nested against +0.3258: no gain from a second encoder in either form.
 
 ## 3. Held-out confirmation, the one look
 
