@@ -70,20 +70,21 @@ def fig1b(ch=None):
     rho = np.array([R[p]["spearman"] for p in pos])
     hit = np.array([R[p]["top_quartile_hit_rate"] for p in pos])
     chance = D["ranking"]["chance_hit_rate"]
-    fig, ax = fs.figure(3.4, 3.4)
+    fig, ax = fs.figure(3.8, 3.7)      # wider so the full name fits inside the axes
     y = np.arange(len(pos)); h = 0.38
     ax.barh(y + h / 2, rho, height=h, color=fs.COLOR["model"])
     ax.barh(y - h / 2, hit, height=h, color=fs.COLOR["hit"])
     ax.vlines(chance, -0.7, len(pos) - 1 + 0.8, ls="--", lw=0.7, color=fs.OI["black"], zorder=3)
     # names written beside the shortest row's bars, where the axes are empty
     top = len(pos) - 1
-    # one line in the band above the bars: chance at its line, then the two
-    # series names in their own colours, right-aligned; nothing touches a bar
+    # names beside the first two rows: "Spearman ρ" centred on the La-Ce row
+    # after its longer bar, the full hit-rate name centred on the Ce-Pr row;
+    # chance at the top of its line
     top = len(pos) - 1
-    yb = top + 0.85
-    ax.text(chance, yb, "chance", ha="center", va="bottom", color=fs.OI["black"])
-    ax.text(0.76, yb, "Spearman ρ", ha="right", va="bottom", color=fs.COLOR["model"])
-    ax.text(1.00, yb, "hit rate", ha="right", va="bottom", color=fs.COLOR["hit"])
+    k1, k2 = pos.index("La-Ce"), pos.index("Ce-Pr")
+    ax.text(max(rho[k1], hit[k1]) + 0.03, k1, "Spearman ρ", va="center", ha="left", color=fs.COLOR["model"])
+    ax.text(max(rho[k2], hit[k2]) + 0.03, k2, "top-quartile hit rate", va="center", ha="left", color=fs.COLOR["hit"])
+    ax.text(chance, top + 0.85, "chance", ha="center", va="bottom", color=fs.OI["black"])
     ax.set_yticks(y); ax.set_yticklabels(pos)
     ax.set_ylim(-0.7, top + 1.7)
     ax.set_xlim(0, 1.0); ax.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
