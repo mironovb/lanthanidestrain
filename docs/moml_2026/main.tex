@@ -143,7 +143,7 @@ A separation factor is only defined between measurements made under the same con
   \logSF_{i,i+1} = \logD_{\mathrm{Ln}_i} - \logD_{\mathrm{Ln}_{i+1}} .
   \label{eq:target}
 \end{equation}
-Models are trained on \logD{} row by row and evaluated after this construction is applied to their out-of-fold predictions; the score \adjR{} is the coefficient of determination of predicted against measured \logSF{} over all adjacent pairs. The differencing is what makes the problem tractable: raw \logD{} scatters by 0.7--0.9 within a (block, metal) group, whereas adjacent separations reproduce to about 0.16 across independent condition sets on a spread of 0.22.
+Models are trained on \logD{} row by row and evaluated after this construction is applied to their out-of-fold predictions; the score \adjR{} is the coefficient of determination of predicted against measured \logSF{} over all adjacent pairs. The differencing is what makes the problem tractable: raw \logD{} scatters by 0.7--0.9 within a (block, metal) group, adjacent separations reproduce to about 0.16.
 
 Every number below is out-of-fold under five-fold cross-validation grouped by extractant, repeated three times. The development population has 905 adjacent pairs on 76 extractants; a second set of 444 pairs, from rows outside it, was set aside before any 3D model was built and used only for the final test; their union has 1{,}349 pairs.
 
