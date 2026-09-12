@@ -77,15 +77,13 @@ def fig1b(ch=None):
     ax.vlines(chance, -0.7, len(pos) - 1 + 0.8, ls="--", lw=0.7, color=fs.OI["black"], zorder=3)
     # names written beside the shortest row's bars, where the axes are empty
     top = len(pos) - 1
-    # series names beside the Ce-Pr bars, near the top where the eye starts:
-    # single lines, each cleared past the bars above/below it in x
+    # one line in the band above the bars: chance at its line, then the two
+    # series names in their own colours, right-aligned; nothing touches a bar
     top = len(pos) - 1
-    k = pos.index("Ce-Pr")
-    x_blue = max(rho[k], hit[k + 1]) + 0.03            # clears the La-Ce orange bar above
-    x_orng = max(hit[k], rho[k - 1]) + 0.03            # clears the Pr-Nd blue bar below
-    ax.text(x_blue, k + h / 2, "Spearman ρ", va="center", ha="left", color=fs.COLOR["model"])
-    ax.text(x_orng, k - h / 2, "hit rate", va="center", ha="left", color=fs.COLOR["hit"])
-    ax.text(chance, top + 0.85, "chance", ha="center", va="bottom", color=fs.OI["black"])
+    yb = top + 0.85
+    ax.text(chance, yb, "chance", ha="center", va="bottom", color=fs.OI["black"])
+    ax.text(0.76, yb, "Spearman ρ", ha="right", va="bottom", color=fs.COLOR["model"])
+    ax.text(1.00, yb, "hit rate", ha="right", va="bottom", color=fs.COLOR["hit"])
     ax.set_yticks(y); ax.set_yticklabels(pos)
     ax.set_ylim(-0.7, top + 1.7)
     ax.set_xlim(0, 1.0); ax.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
