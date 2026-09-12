@@ -31,6 +31,7 @@ remaining signal is not.
 | Metal-feature weighting (I19) | ×2 neutral (+0.321 vs +0.319), ×5 harmful (+0.273), ×10 worse (+0.237) | tested, negative | I19 |
 | Actinide transfer (I20) | zero-shot Am/Eu **−0.136**; joint Ln+Am training **+0.467** on 312 held-out-extractant pairs, but a no-model ligand-family mean scores +0.472 and within-family skill is +0.02; lanthanide metric unchanged (+0.002 ± 0.020) | tested; family-level only | `automl/an_ln/`, I20 |
 | Topology beyond the distance encoder | **nothing to add**: simplicial encoder gets blend weight 0.01 (encoders 0.963-correlated), triangles no better than edges, persistence features collapse the shape model (78 % of the damage from within-block variation) | tested, negative | `TOPOLOGY_TESTS.md`, I17 |
+| Transformers (I23) | attention encoder over atoms **ties** the distance encoder as the 3D shape source (per seed +0.203 ± 0.021 vs +0.205 ± 0.031; held-out 444: +0.1309 vs +0.1207, contrast over tabular +0.0258, PASS; union 1,349: tie); FT-Transformer +0.146 and set transformers +0.13 / +0.09 standalone, weight 0.00 in every blend | tested; best system unchanged | `TRANSFORMERS.md`, I23 |
 
 ---
 
@@ -201,6 +202,7 @@ Arguably more transferable than any headline.
 | [`automl/reports/C8_RESULTS.md`](automl/reports/C8_RESULTS.md) | why the one positive 3D arm was calibration |
 | [`automl/reports/NOISE_FLOOR.md`](automl/reports/NOISE_FLOOR.md) | the 200× correction to the noise-floor claim |
 | [`automl/reports/SYNTHESIS.md`](automl/reports/SYNTHESIS.md) | the topology campaign, positive and negative |
+| [`automl/reports/TRANSFORMERS.md`](automl/reports/TRANSFORMERS.md) | transformers in all three places of the level/shape system: the atom-level attention encoder ties the distance encoder (held-out PASS), the tabular and set transformers lose |
 | [`docs/README_2026-07-22.md`](docs/README_2026-07-22.md) | the archived README for the topology result |
 
 Every confirmatory test has a **pre-registration committed before its data

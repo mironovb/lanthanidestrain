@@ -1,0 +1,296 @@
+{
+ "rule": {
+  "frozen_from": "legacy 905-pair analysis (transformer_eval.py)",
+  "w_dist_fixed": 0.35,
+  "sources": {
+   "attn": {
+    "w_fixed": 0.35,
+    "w_median_legacy": 0.0,
+    "test": "encoder substitution at the I15 weight",
+    "primary": "sign of R2(blend, fixed w) - R2(tabular only) on the 444 held-out pairs",
+    "secondary": "R2(blend source) - R2(blend dist, w=0.35) on the same pairs"
+   },
+   "attn_sp": {
+    "w_fixed": 0.35,
+    "w_median_legacy": 0.0,
+    "test": "encoder substitution at the I15 weight",
+    "primary": "sign of R2(blend, fixed w) - R2(tabular only) on the 444 held-out pairs",
+    "secondary": "R2(blend source) - R2(blend dist, w=0.35) on the same pairs"
+   },
+   "ft": {
+    "w_fixed": 0.0,
+    "w_median_legacy": 0.0,
+    "test": "legacy-fitted nested weight",
+    "primary": "sign of R2(blend, fixed w) - R2(tabular only) on the 444 held-out pairs",
+    "secondary": "R2(blend source) - R2(blend dist, w=0.35) on the same pairs"
+   },
+   "blocktf": {
+    "w_fixed": 0.0,
+    "w_median_legacy": 0.0,
+    "test": "legacy-fitted nested weight",
+    "primary": "sign of R2(blend, fixed w) - R2(tabular only) on the 444 held-out pairs",
+    "secondary": "R2(blend source) - R2(blend dist, w=0.35) on the same pairs"
+   },
+   "celltf": {
+    "w_fixed": 0.0,
+    "w_median_legacy": 0.0,
+    "test": "legacy-fitted nested weight",
+    "primary": "sign of R2(blend, fixed w) - R2(tabular only) on the 444 held-out pairs",
+    "secondary": "R2(blend source) - R2(blend dist, w=0.35) on the same pairs"
+   }
+  }
+ },
+ "sources": {
+  "attn": {
+   "n_seeds": 4,
+   "w_fixed": 0.35,
+   "fresh": {
+    "blend_src": {
+     "n": 444,
+     "r2": 0.1308511412618557,
+     "pearson2": 0.13850696912314633
+    },
+    "tabular": {
+     "n": 444,
+     "r2": 0.10508157590687539,
+     "pearson2": 0.10653424278993691
+    },
+    "blend_dist": {
+     "n": 444,
+     "r2": 0.1206581464767792,
+     "pearson2": 0.12370262065825179
+    },
+    "primary_contrast": 0.025769565354980317,
+    "vs_dist_contrast": 0.010192994785076515
+   },
+   "legacy": {
+    "blend_src": {
+     "n": 905,
+     "r2": 0.3050432759213044,
+     "pearson2": 0.3191937571299962
+    },
+    "tabular": {
+     "n": 905,
+     "r2": 0.2963609888108252,
+     "pearson2": 0.2999310920501061
+    },
+    "blend_dist": {
+     "n": 905,
+     "r2": 0.31093850242662147,
+     "pearson2": 0.3264743564913632
+    },
+    "primary_contrast": 0.008682287110479248,
+    "vs_dist_contrast": -0.005895226505317042
+   },
+   "all": {
+    "blend_src": {
+     "n": 1349,
+     "r2": 0.24467578702986914,
+     "pearson2": 0.2565323585771438
+    },
+    "tabular": {
+     "n": 1349,
+     "r2": 0.23005377029181207,
+     "pearson2": 0.23197507218843674
+    },
+    "blend_dist": {
+     "n": 1349,
+     "r2": 0.24497430650830776,
+     "pearson2": 0.2556772793552293
+    },
+    "primary_contrast": 0.014622016738057075,
+    "vs_dist_contrast": -0.00029851947843861915
+   },
+   "primary_pass": true
+  },
+  "attn_sp": {
+   "status": "no expanded-population runs"
+  },
+  "ft": {
+   "n_seeds": 4,
+   "w_fixed": 0.0,
+   "fresh": {
+    "blend_src": {
+     "n": 444,
+     "r2": 0.10508157590687539,
+     "pearson2": 0.10653424278993691
+    },
+    "tabular": {
+     "n": 444,
+     "r2": 0.10508157590687539,
+     "pearson2": 0.10653424278993691
+    },
+    "blend_dist": {
+     "n": 444,
+     "r2": 0.1206581464767792,
+     "pearson2": 0.12370262065825179
+    },
+    "primary_contrast": 0.0,
+    "vs_dist_contrast": -0.015576570569903803
+   },
+   "legacy": {
+    "blend_src": {
+     "n": 905,
+     "r2": 0.2963609888108252,
+     "pearson2": 0.2999310920501061
+    },
+    "tabular": {
+     "n": 905,
+     "r2": 0.2963609888108252,
+     "pearson2": 0.2999310920501061
+    },
+    "blend_dist": {
+     "n": 905,
+     "r2": 0.31093850242662147,
+     "pearson2": 0.3264743564913632
+    },
+    "primary_contrast": 0.0,
+    "vs_dist_contrast": -0.01457751361579629
+   },
+   "all": {
+    "blend_src": {
+     "n": 1349,
+     "r2": 0.23005377029181207,
+     "pearson2": 0.23197507218843683
+    },
+    "tabular": {
+     "n": 1349,
+     "r2": 0.23005377029181207,
+     "pearson2": 0.23197507218843674
+    },
+    "blend_dist": {
+     "n": 1349,
+     "r2": 0.24497430650830776,
+     "pearson2": 0.2556772793552293
+    },
+    "primary_contrast": 0.0,
+    "vs_dist_contrast": -0.014920536216495695
+   },
+   "primary_pass": false
+  },
+  "blocktf": {
+   "n_seeds": 4,
+   "w_fixed": 0.0,
+   "fresh": {
+    "blend_src": {
+     "n": 444,
+     "r2": 0.10508157590687539,
+     "pearson2": 0.10653424278993691
+    },
+    "tabular": {
+     "n": 444,
+     "r2": 0.10508157590687539,
+     "pearson2": 0.10653424278993691
+    },
+    "blend_dist": {
+     "n": 444,
+     "r2": 0.1206581464767792,
+     "pearson2": 0.12370262065825179
+    },
+    "primary_contrast": 0.0,
+    "vs_dist_contrast": -0.015576570569903803
+   },
+   "legacy": {
+    "blend_src": {
+     "n": 905,
+     "r2": 0.2963609888108252,
+     "pearson2": 0.2999310920501061
+    },
+    "tabular": {
+     "n": 905,
+     "r2": 0.2963609888108252,
+     "pearson2": 0.2999310920501061
+    },
+    "blend_dist": {
+     "n": 905,
+     "r2": 0.31093850242662147,
+     "pearson2": 0.3264743564913632
+    },
+    "primary_contrast": 0.0,
+    "vs_dist_contrast": -0.01457751361579629
+   },
+   "all": {
+    "blend_src": {
+     "n": 1349,
+     "r2": 0.23005377029181207,
+     "pearson2": 0.23197507218843683
+    },
+    "tabular": {
+     "n": 1349,
+     "r2": 0.23005377029181207,
+     "pearson2": 0.23197507218843674
+    },
+    "blend_dist": {
+     "n": 1349,
+     "r2": 0.24497430650830776,
+     "pearson2": 0.2556772793552293
+    },
+    "primary_contrast": 0.0,
+    "vs_dist_contrast": -0.014920536216495695
+   },
+   "primary_pass": false
+  },
+  "celltf": {
+   "n_seeds": 4,
+   "w_fixed": 0.0,
+   "fresh": {
+    "blend_src": {
+     "n": 444,
+     "r2": 0.10508157590687539,
+     "pearson2": 0.10653424278993691
+    },
+    "tabular": {
+     "n": 444,
+     "r2": 0.10508157590687539,
+     "pearson2": 0.10653424278993691
+    },
+    "blend_dist": {
+     "n": 444,
+     "r2": 0.1206581464767792,
+     "pearson2": 0.12370262065825179
+    },
+    "primary_contrast": 0.0,
+    "vs_dist_contrast": -0.015576570569903803
+   },
+   "legacy": {
+    "blend_src": {
+     "n": 905,
+     "r2": 0.2963609888108252,
+     "pearson2": 0.2999310920501061
+    },
+    "tabular": {
+     "n": 905,
+     "r2": 0.2963609888108252,
+     "pearson2": 0.2999310920501061
+    },
+    "blend_dist": {
+     "n": 905,
+     "r2": 0.31093850242662147,
+     "pearson2": 0.3264743564913632
+    },
+    "primary_contrast": 0.0,
+    "vs_dist_contrast": -0.01457751361579629
+   },
+   "all": {
+    "blend_src": {
+     "n": 1349,
+     "r2": 0.23005377029181207,
+     "pearson2": 0.23197507218843683
+    },
+    "tabular": {
+     "n": 1349,
+     "r2": 0.23005377029181207,
+     "pearson2": 0.23197507218843674
+    },
+    "blend_dist": {
+     "n": 1349,
+     "r2": 0.24497430650830776,
+     "pearson2": 0.2556772793552293
+    },
+    "primary_contrast": 0.0,
+    "vs_dist_contrast": -0.014920536216495695
+   },
+   "primary_pass": false
+  }
+ }
+}

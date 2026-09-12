@@ -1512,3 +1512,56 @@ distinguishes ligands within a family, or a target with less measurement
 noise. Curation of new full-series extractants moves from first to third
 priority; the stability-constant pretraining and designed replication
 remain, and any next modelling step must add within-family information.
+
+### I23. Transformers: an attention encoder over the atoms ties the distance encoder as the 3D shape source; tabular and set transformers lose to gradient boosting
+**ESTABLISHED** for the attention encoder (one pre-registered held-out look,
+PASS); **NEGATIVE** for the FT-Transformer and the set transformers (iteration
+set only, no held-out claim). `automl/reports/TRANSFORMERS.md`,
+`transformer_eval.json`, `transformer_rule.json` (frozen at `fed0f6a`),
+`transformer_confirm.json`; models in `automl/topo/attn_gnn.py`,
+`anchored_ft.py`, `block_transformer.py`, `cell_transformer.py`.
+
+Three places a transformer can take in the level/shape system, each under
+the standard protocol (leave-extractants-out 5 x 3, out-of-fold, adjacent-pair
+log SF R^2). Legacy 905 pairs:
+
+| model | seeds | per-seed mean +- sd | ensemble standalone | blend with the tabular shape (nested w) |
+|---|---|---|---|---|
+| distance encoder (I15 reference) | 32 | +0.205 +- 0.031 | +0.266 | +0.3258 (w 0.35) |
+| attention encoder over atoms, dense | 8 | +0.203 +- 0.021 | +0.236 | +0.3173 (w 0.00) |
+| attention encoder, <= 4 A only | 4 | +0.213 +- 0.003 | +0.241 | +0.3180 (w 0.00) |
+| FT-Transformer, level and shape | 4 | +0.100 +- 0.049 | +0.146 | +0.3182 (w 0.00) |
+| set transformer over block rows | 8 | -0.051 +- 0.151 | +0.127 | +0.3174 (w 0.00) |
+| set transformer over block cells | 8 | +0.024 +- 0.082 | +0.091 | +0.3182 (w 0.00) |
+
+The nested zero weight for the attention encoder is a property of the
+equal-extractant criterion, not of the signal: at a fixed weight the dense
+attention blend peaks at +0.3273 (w 0.2) against +0.3277 for the distance
+encoder and +0.3258 for the distance encoder at the matched 8 seeds, and the
+two encoders' pair predictions correlate at 0.936. Held-out, under the rule
+frozen before the look (attention substituted for the distance encoder at
+the fixed weight 0.35, expanded-population models, 4 seeds): frozen 444 pairs
+tabular +0.1051, distance blend +0.1207, attention blend **+0.1309**
+(primary contrast +0.0258, PASS; I15's own contrast there was +0.0156);
+legacy 905: +0.3050 against +0.3109 for the distance blend; union 1,349:
++0.2447 against +0.2450. A tie between the two 3D encoders, on held-out
+data. Added on top of the distance encoder the attention encoder earns
+weight 0.00. Dense attention over all atom pairs and attention restricted to
+the message-passing neighbourhood score the same: long-range geometry adds
+nothing. A fourth encoder architecture lands on the same predictions
+(I17's effective rank 1.05).
+
+The tabular transformers under-fit the level (out-of-fold log D R^2 0.27 to
+0.39 per seed against 0.49 to 0.51 for CatBoost) and reduce the pair score
+at every blend weight; a one-seed hyperparameter sweep moves seed 42 from
++0.078 to at most +0.102. The set transformers are data-limited: 205
+multi-metal blocks carry a block-centred signal, and on one fold the training
+L1 falls from 0.74 to 0.16 while the validation L1 never improves on its
+epoch-0 value. The best system (+0.318 tabular, +0.326 with the distance
+encoder) is unchanged.
+
+Method note for the register: the `--smoke` capacity gate had never been run
+with the pair loss. Under it every encoder plateaus near 0.5 (distance 0.53,
+attention 0.49) because the contrast objective never batches rows from
+single-member blocks and the 60-row smoke subset is mostly singletons;
+without it both fit to 1.00. The gate now runs with the pair loss off.
