@@ -1554,7 +1554,8 @@ nothing. A fourth encoder architecture lands on the same predictions
 The tabular transformers under-fit the level (out-of-fold log D R^2 0.27 to
 0.39 per seed against 0.49 to 0.51 for CatBoost) and reduce the pair score
 at every blend weight; a one-seed hyperparameter sweep moves seed 42 from
-+0.078 to at most +0.102. The set transformers are data-limited: 205
++0.078 to at most +0.175 (batch size 32), still below CatBoost's +0.30 per
+seed; the 4-seed follow-up of that setting is in `TRANSFORMERS.md` section 7. The set transformers are data-limited: 205
 multi-metal blocks carry a block-centred signal, and on one fold the training
 L1 falls from 0.74 to 0.16 while the validation L1 never improves on its
 epoch-0 value. The best system (+0.318 tabular, +0.326 with the distance

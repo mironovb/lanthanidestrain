@@ -133,8 +133,12 @@ FT-Transformer. Out-of-fold log D R^2 is 0.27 to 0.39 per seed against 0.49
 to 0.51 for the CatBoost level/shape model; the model is under-fitting the
 level, and the adjacent-pair score follows (ensemble +0.146 against +0.318).
 A one-seed sweep on the legacy population (seed 42, reference +0.078): longer
-patience +0.099, learning rate 3e-4 +0.079, dim 128 with four layers +0.099
-(remaining variants of the sweep in `anchored_ft.csv`). Unlike CatBoost, the
+patience +0.099, learning rate 3e-4 +0.079, dim 128 with four layers +0.099,
+32 bit tokens +0.102, weight decay 1e-2 with dropout 0.2 +0.118, batch size
+32 with learning rate 5e-4 +0.175 (log D R^2 0.34). Small batches are the one
+setting that moves it; the 4-seed runs of that setting, alone and with the
+stronger regularisation, are in `anchored_ft.csv` under `ft_anch_bs32` and
+`ft_anch_bs32wd` (section 7). Unlike CatBoost, the
 transformer does better flat (+0.171) than as a level/shape pair (+0.146):
 the block-centred residual is a small-signal target it cannot fit from 3,700
 rows. Both variants are unstable across seeds (flat: +0.158, +0.119, +0.218,
