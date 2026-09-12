@@ -1,5 +1,7 @@
 # MoML 2026 short paper
 
+`moml2026_overleaf.zip` (contents in `overleaf/`) is the upload package: `main.tex`, `figures/`, and a README with the steps; add `log_2022.sty` from the MoML template in Overleaf.
+
 `main.tex` is self-contained: the bibliography is embedded with `filecontents`
 (`refs.bib` is written on the first compile). MoML rules: **2–4 pages of main
 text; references and appendices do not count**; LoG-2022 style. Deadline

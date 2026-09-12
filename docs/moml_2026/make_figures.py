@@ -218,9 +218,9 @@ def figure1(comp):
     """All four panels on one grid: equal cells, common margins, aligned letters."""
     import matplotlib.pyplot as plt
     fs.style()
-    fig = plt.figure(figsize=(8.8, 7.6))
-    gs = fig.add_gridspec(2, 2, left=0.09, right=0.975, bottom=0.085, top=0.965,
-                          wspace=0.40, hspace=0.42)
+    fig = plt.figure(figsize=(8.8, 7.2))
+    gs = fig.add_gridspec(2, 2, left=0.085, right=0.985, bottom=0.085, top=0.97,
+                          wspace=0.33, hspace=0.38)
     axs = [fig.add_subplot(gs[i, j]) for i in range(2) for j in range(2)]
     fig1a("a", ax=axs[0]); fig1b("b", ax=axs[1]); fig2b(comp, "c", ax=axs[2]); fig3("d", ax=axs[3])
     fs.finish(fig, "figure1")
