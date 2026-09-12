@@ -191,13 +191,15 @@ def fig3(ch=None):
     y_p = pw["R_inf"] - pw["k"] * xx ** (-pw["c"])
     ax.plot(xx, y_h, color=col, lw=1.0, ls="-", zorder=3)
     ax.plot(xx, y_p, color=col, lw=1.0, ls=":", zorder=3)
-    # fit names just outside the right edge of the axes, on their lines' level
-    ax.text(xx[-1] * 1.06, y_h[-1], "hyperbolic", va="center", ha="left", color=col, clip_on=False)
-    ax.text(xx[-1] * 1.06, y_p[-1], "power law", va="center", ha="left", color=col, clip_on=False)
+    # fit names inside the axes at the right end: above the rising dotted line,
+    # below the flattening solid line
+    xr = 2.0 * n_full * 1.14                       # right edge, clear of the full-data line
+    ax.text(xr, y_p[-1] + 0.008, "power law", va="bottom", ha="right", color=col)
+    ax.text(xr, y_h[-1] - 0.008, "hyperbolic", va="top", ha="right", color=col)
     # full-data line stops below its label so the two never touch
-    ax.vlines(n_full, 0.05, 0.36, ls="--", lw=0.7, color=fs.OI["black"], zorder=1)
-    ax.text(n_full, 0.365, f"all {n_full:.0f}", ha="center", va="bottom", color=fs.OI["black"])
-    ax.set_xscale("log"); ax.set_xlim(pts.n.min() * 0.8, 2.0 * n_full * 1.02)
+    ax.vlines(n_full, 0.09, 0.34, ls="--", lw=0.7, color=fs.OI["black"], zorder=1)
+    ax.text(n_full, 0.085, f"all {n_full:.0f}", ha="center", va="top", color=fs.OI["black"])
+    ax.set_xscale("log"); ax.set_xlim(pts.n.min() * 0.8, 2.0 * n_full * 1.16)
     ax.set_xticks([10, 20, 40, 80]); ax.set_xticklabels(["10", "20", "40", "80"]); ax.minorticks_off()
     ax.set_ylim(0.05, 0.40); ax.set_yticks([0.1, 0.2, 0.3, 0.4])
     ax.set_xlabel("training extractants with adjacent pairs")
