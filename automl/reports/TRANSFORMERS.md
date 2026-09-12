@@ -196,3 +196,22 @@ data.
   `tf_ft_sweep.sh`
 - artefacts: `automl/artifacts/topo_tf_attn/` (per-seed OOF parquets and
   run configs), `anchored_ft/`, `block_tf/`, `cell_tf/`
+
+## 7. Tuned FT-Transformer at four seeds
+
+The one sweep setting that moved seed 42 (batch size 32, learning rate 5e-4,
+patience 20), alone and with the stronger regularisation, at the same four
+seeds as the default run. Legacy population, iteration set.
+
+| setting | per-seed R^2, mean +- sd | ensemble standalone | nested blend weight | blend R^2 |
+|---|---|---|---|---|
+| default (batch 128, lr 1e-3, patience 8) | +0.100 +- 0.049 | +0.146 | 0.00 | +0.3182 |
+| batch 32, lr 5e-4, patience 20 | +0.124 +- 0.046 | +0.166 | 0.00 | +0.3182 |
+| batch 32, lr 5e-4, patience 20, wd 1e-2, dropout 0.2 | +0.109 +- 0.049 | +0.165 | 0.00 | +0.3182 |
+
+Per seed the small-batch setting scores +0.175, +0.149, +0.101 and +0.073:
+the +0.175 of the sweep was the best of four, not a shift. At a fixed weight
+all three settings lower the blend monotonically (w = 0.1: +0.3134 to
++0.3148; w = 0.3: +0.2968 to +0.3000, against +0.3182 without them). The
+FT-Transformer question is closed at +0.166 standalone against +0.318 for
+the CatBoost level/shape pair, with no weight in the blend.
