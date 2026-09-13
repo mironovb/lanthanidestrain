@@ -218,7 +218,7 @@ A separation factor is only defined between measurements made under the same con
 \end{equation}
 Models are trained on \logD{} row by row and evaluated after this construction is applied to their out-of-fold predictions; the score \adjR{} is the coefficient of determination of predicted against measured \logSF{} over all adjacent pairs.
 
-Every number below is out of fold under five-fold cross-validation with whole extractants held out, repeated three times; the construction above then gives 905 adjacent pairs on 76 extractants. The only exception is the two rows of Table~\ref{tab:main} marked ``random rows'', where the five folds hold out rows at random instead of extractants (mean of three runs).
+Every model score below is out of fold under five-fold cross-validation with whole extractants held out, repeated three times with different fold assignments, except the two rows of Table~\ref{tab:main} marked ``random rows'', where the folds hold out rows at random and a held-out row's extractant stays in the training set (mean of three runs). The block construction above gives 905 adjacent pairs on 76 extractants.
 
 \section{Model}
 \label{sec:model}
