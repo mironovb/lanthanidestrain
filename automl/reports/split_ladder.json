@@ -1,0 +1,83 @@
+{
+ "n_rows": 4746,
+ "n_extractants": 162,
+ "learner": "CatBoost champion on log D: {\"iterations\": 1500, \"learning_rate\": 0.04, \"depth\": 9, \"l2_leaf_reg\": 3.0, \"rsm\": 0.3, \"loss_function\": \"Quantile:alpha=0.6\"}",
+ "variance": {
+  "between_block_level": 0.6833640868361905,
+  "within_block_shape": 0.3166359131638095,
+  "n_blocks": 552,
+  "cell_level": {
+   "n_cells": 1849,
+   "between_block_level": 0.8745532438048894,
+   "within_block_shape": 0.12544675619511036
+  }
+ },
+ "replicates": {
+  "n_pairs_with_replicates": 268,
+  "median_sd_of_separation": 0.7851212624058342,
+  "sd_of_all_separations": 0.270544598824064,
+  "note": "rows inside one (block, metal) cell differ in conditions within the bin; this scatter is condition variation, not replicate noise -- see CEILING_NOTE.md for the replicate figure"
+ },
+ "random_rows": {
+  "per_seed": [
+   {
+    "logD_r2": 0.8502302444907878,
+    "logD_mae": 0.3350469092015585,
+    "adj_r2": 0.22784392568415068,
+    "adj_pearson": 0.5706681253920338,
+    "n_pairs": 905
+   },
+   {
+    "logD_r2": 0.8517483609309036,
+    "logD_mae": 0.3314896826751498,
+    "adj_r2": 0.2129367929442405,
+    "adj_pearson": 0.5703202165583866,
+    "n_pairs": 905
+   },
+   {
+    "logD_r2": 0.8522226346000922,
+    "logD_mae": 0.32932837117473546,
+    "adj_r2": 0.27799948840595057,
+    "adj_pearson": 0.6090346539787511,
+    "n_pairs": 905
+   }
+  ],
+  "logD_r2": 0.8514004133405946,
+  "logD_mae": 0.3319549876838146,
+  "adj_r2": 0.23959340234478058,
+  "adj_pearson": 0.5833409986430572,
+  "sd_logD_r2": 0.0010407714595985608,
+  "sd_adj_r2": 0.034085572263566614
+ },
+ "extractants_held_out": {
+  "per_seed": [
+   {
+    "logD_r2": 0.502280468629043,
+    "logD_mae": 0.8848194274001715,
+    "adj_r2": 0.23177797962357372,
+    "adj_pearson": 0.4966341700638598,
+    "n_pairs": 905
+   },
+   {
+    "logD_r2": 0.48161151120981305,
+    "logD_mae": 0.8873830077608497,
+    "adj_r2": 0.19231416400995427,
+    "adj_pearson": 0.4739355005299836,
+    "n_pairs": 905
+   },
+   {
+    "logD_r2": 0.4814409152627227,
+    "logD_mae": 0.8971903436064234,
+    "adj_r2": 0.19080140123653966,
+    "adj_pearson": 0.4667364832739888,
+    "n_pairs": 905
+   }
+  ],
+  "logD_r2": 0.4884442983671929,
+  "logD_mae": 0.8897975929224815,
+  "adj_r2": 0.20496451495668921,
+  "adj_pearson": 0.4791020512892774,
+  "sd_logD_r2": 0.011982778533398207,
+  "sd_adj_r2": 0.02323345709066679
+ }
+}

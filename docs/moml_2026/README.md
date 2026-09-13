@@ -30,4 +30,6 @@ letters, legends outside the axes, one vector PDF per panel):
 `main_v1_long.tex` is the earlier, longer draft kept for reference.
 Every number in the text is traceable to `automl/reports/` (SCIENTIFIC_FINDINGS
 I14–I22, C6–C8/C15/C17/C19 reports, anchored_3d_confirm.json,
-decision_quality.json, learning_curve_both.json, lnxtb_benchmark.json).
+decision_quality.json, learning_curve_both.json, lnxtb_benchmark.json,
+split_ladder.json for the random-rows / extractants-held-out ladder of Table 1
+and the 87.5 / 12.5 % variance split at the cell level).
